@@ -25,7 +25,7 @@ import dolfin_util as du
 def custom_func(mesh,V,particles):
 	f = Function(V)
 	for p in particles:
-		du.alter_cell(mesh,f,p.pos,p.charge)
+		du.alter_cellid(mesh,f,p.id,p.charge)
 	return f
 
 # Create mesh and define function space
