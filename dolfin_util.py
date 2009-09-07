@@ -25,8 +25,8 @@ def cell_index(mesh,point):
 
 def vert_index(mesh,point):
 	indices = mesh.cells()[cell_index(mesh,point)]
-	return indices[0]
-	#return indices[rndi(0,len(indices)-1)]
+	#return indices[0]
+	return indices[rndi(0,len(indices)-1)]
 
 def set_cell(mesh,function,point,value):
 	index = vert_index(mesh,point)

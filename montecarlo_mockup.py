@@ -14,10 +14,12 @@ class Particle():
 		self.id = du.vert_index(mesh,self.pos)
 		self.meshpos = mesh.coordinates()[self.id]
 
-
 #globals
+sim_total_force = array([0.,0.])
+sim_force_count = 0
 total_force = array([0.,0.])
 force_count = 0
+self_force = array([0.,0.])
 
 #functions
 def random_momentum():
@@ -51,7 +53,6 @@ def MonteCarlo(mesh,potential_field,density_func,particles):
 	#next_step density function array
 	nextDensity = density_func.vector().array()
 	for p in particles:
-		#du.alter_cellid(mesh,density_func,p.id,-p.charge)
 		nextDensity[p.id] -= p.charge #remove from old location
 		randomElectronMovement(p,electric_field,
 					density_func,mesh)
@@ -61,12 +62,14 @@ def MonteCarlo(mesh,potential_field,density_func,particles):
 			reaper.append(p)
 		else:
 			p.id = du.vert_index(mesh,p.pos) #get new p.id
+			p.meshpos = mesh.coordinates()[p.id] #lock to grid
 			nextDensity[p.id] += p.charge
 	for reaped in reaper:
 		particles.remove(reaped)#already removed cell
 	if count != 0:
 		print "Avg momentum:",total_momentum/count,count
 		print "Avg force:",total_force/force_count,force_count
+		print "Avg sim force:",sim_total_force/sim_force_count,sim_force_count
 	density_func.vector().set(nextDensity)
 	
 
@@ -81,8 +84,10 @@ def randomElectronMovement(particle,electric_field,density_func,mesh):
 	p.momentum += 100*drift(mesh,electric_field,p)*dt
 	p.pos += p.momentum*dt/mass_particle
 	p.dx += p.momentum*dt/mass_particle
-	p.meshpos = mesh.coordinates()[p.id]
 	#check for out of bounds
+	#	this needs to be changed, we should
+	#	do all momentum changes BEFORE movement
+	#	this guarantees that we are on the mesh.
 	#if(dot(e.dx,e.dx) > meanpathlength**2):
 	#	e.dx = array([0.,0.])
 	#	e.momentum += array([0,0])#scatter(e.momentum,e.pos,mesh)
@@ -96,10 +101,14 @@ def randomElectronMovement(particle,electric_field,density_func,mesh):
 #F = dp/dt
 def drift(mesh,func,particle):
 	global total_force,force_count
+	global sim_total_force,sim_force_count
+	global self_force
 	p = particle
-	force = du.get_vec(mesh,func,p.meshpos)*100*p.charge
-#	total_force += force
-#	force_count += 1
+	force = du.get_vec(mesh,func,p.meshpos)*100*p.charge-self_force
+	total_force += force
+ 	force_count += 1
+	sim_force_count += 1
+	sim_total_force += force
 	return force
 
 def scatter(momentum,pos,mesh):
