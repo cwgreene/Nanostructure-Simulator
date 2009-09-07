@@ -20,6 +20,7 @@ from dolfin import *
 import montecarlo_mockup as mc
 import numpy as np
 import dolfin_util as du
+import time
 #dolfin_set("linear algebra backend","Epetra"
 
 def custom_func(mesh,V,particles):
@@ -29,7 +30,9 @@ def custom_func(mesh,V,particles):
 	return f
 
 # Create mesh and define function space
-mesh = UnitSquare(50,50)
+meshSizeX = 50
+meshSizeY = 50
+mesh = UnitSquare(meshSizeX,meshSizeY)
 #plot(mesh)
 V = FunctionSpace(mesh, "Lagrange", 2)
 
@@ -49,12 +52,12 @@ u = TrialFunction(V)
 
 #function
 particles = []
-for x in np.arange(.1,1.,.1):
-	for y in np.arange(.1,1.,.1):
+for x in np.arange(0,1.,1./meshSizeX):
+	for y in np.arange(0.,1.,1./meshSizeY):
 		#electrons
-		particles += mc.init_electrons(10,[[x,y]],charge=-1,mesh=mesh)
+		particles += mc.init_electrons(1,[[x,y]],charge=-1,mesh=mesh)
 		#holes
-		particles += mc.init_electrons(9,[[x,y]],charge=1,mesh=mesh)
+		particles += mc.init_electrons(1,[[x,y]],charge=1,mesh=mesh)
 f = custom_func(mesh,V,particles)
 file = File("poisson_attract.pvd")
 dfile = File("density_attract.pvd")
@@ -70,8 +73,11 @@ for x in range(200):
 	# Plot solution
 	file << sol
 	dfile << f
+	print "Starting Step ",x
+	start = time.time()
 	mc.MonteCarlo(mesh,sol,f,particles)
-	print x
+	print "Took: ",time.time()-start
+	plot(f)
 	du.delete(problem)
 file << sol
 dfile << f

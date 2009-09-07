@@ -12,7 +12,8 @@ class Particle():
 		self.lifetime = int(lifetime)
 		self.charge = charge
 		self.id = du.vert_index(mesh,self.pos)
-		print self.id
+		self.meshpos = mesh.coordinates()[self.id]
+
 
 #globals
 total_force = array([0.,0.])
@@ -55,13 +56,14 @@ def MonteCarlo(mesh,potential_field,density_func,particles):
 		count += 1
 		if(du.out_of_bounds(mesh,p.pos)): 
 			reaper.append(p)
-		else:
-			du.alter_cellid(mesh,density_func,p.id,p.charge)
+	#	else:
+#			p.id = du.vert_index(mesh,p.pos)
+#			du.alter_cellid(mesh,density_func,p.id,p.charge)
 	for reaped in reaper:
 		particles.remove(reaped)#already removed cell
-	if count != 0:
-		print "Avg momentum:",total_momentum/count,count
-		print "Avg force:",total_force/force_count,force_count
+#	if count != 0:
+#		print "Avg momentum:",total_momentum/count,count
+#		print "Avg force:",total_force/force_count,force_count
 
 def randomElectronMovement(particle,electric_field,density_func,mesh):
 	meanpathlength = 1#getMeanPathLength(cell)
@@ -74,6 +76,7 @@ def randomElectronMovement(particle,electric_field,density_func,mesh):
 	p.momentum += 100*drift(mesh,electric_field,p)*dt
 	p.pos += p.momentum*dt/mass_particle
 	p.dx += p.momentum*dt/mass_particle
+	p.meshpos = mesh.coordinates()[p.id]
 	#check for out of bounds
 	#if(dot(e.dx,e.dx) > meanpathlength**2):
 	#	e.dx = array([0.,0.])
@@ -89,9 +92,9 @@ def randomElectronMovement(particle,electric_field,density_func,mesh):
 def drift(mesh,func,particle):
 	global total_force,force_count
 	p = particle
-	force = du.get_vec(mesh,func,mesh.coordinates()[p.id])*100*p.charge
-	total_force += force
-	force_count += 1
+	force = du.get_vec(mesh,func,p.meshpos)*100*p.charge
+#	total_force += force
+#	force_count += 1
 	return force
 
 def scatter(momentum,pos,mesh):
