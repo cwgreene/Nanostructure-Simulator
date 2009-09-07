@@ -1,0 +1,180 @@
+15:27:54.91  Logging started, 09/03/09                  %%%%%%%%%%%%%%%%%%%%
+15:27:54.91  unsupported opcode 101 at Particle:0                        % %
+15:27:54.94  unsupported free or cell vars in make_pt_to_edge            % %
+15:27:54.94  unsupported opcode 137 at make_pt_to_edge:15                % %
+15:27:54.94  unsupported opcode 136 at <lambda>:3                        % %
+15:27:54.95  unsupported free or cell vars in pullback_function          % %
+15:27:54.95  unsupported free or cell vars in pushforward_function       % %
+15:27:54.95  unsupported opcode 135 at pullback_function:0               % %
+15:27:54.95  unsupported opcode 135 at pushforward_function:0            % %
+15:27:54.95  unsupported opcode 136 at <lambda>:9                        % %
+15:27:54.97  unsupported generator at <genexpr>                          % %
+15:27:54.98  unsupported ** argument in call to debug                    % %
+15:27:55.02  unsupported ** argument in call to debug                    % %
+15:27:55.02  unsupported opcode 84 at <module>:9                         % %
+15:27:55.03  unsupported opcode 90 at <module>:9                         % %
+15:27:55.03  unsupported opcode 101 at form_721c0745caf71f5cc98abc14a9d943d79bfa9ba7_finite_element_0:0% %
+15:27:55.03  unsupported opcode 101 at form_721c0745caf71f5cc98abc14a9d943d79bfa9ba7_dof_map_0:0% %
+15:27:55.03  unsupported opcode 101 at form_721c0745caf71f5cc98abc14a9d943d79bfa9ba7_cell_integral_0:0% %
+15:27:55.03  unsupported opcode 101 at form_721c0745caf71f5cc98abc14a9d943d79bfa9ba7:0% %
+15:27:55.09  unsupported opcode 101 at DirichletBoundary:0               % %
+15:27:55.13  unsupported opcode 84 at <module>:9                         % %
+15:27:55.14  unsupported opcode 90 at <module>:9                         % %
+15:27:55.14  unsupported opcode 101 at form_a0cb19836aa5ab3516bb5fffde544929690121e2_finite_element_0:0% %
+15:27:55.14  unsupported opcode 101 at form_a0cb19836aa5ab3516bb5fffde544929690121e2_dof_map_0:0% %
+15:27:55.14  unsupported opcode 101 at form_a0cb19836aa5ab3516bb5fffde544929690121e2_cell_integral_0:0% %
+15:27:55.14  unsupported opcode 101 at form_a0cb19836aa5ab3516bb5fffde544929690121e2:0% %
+15:27:55.15  unsupported free or cell vars in expression_to_function     % %
+15:27:55.15  unsupported opcode 136 at expression_to_function:589        % %
+15:27:55.15  unsupported generator at <genexpr>                          % %
+15:27:55.15  unsupported generator at <genexpr>                          % %
+15:27:55.15  unsupported generator at <genexpr>                          % %
+15:27:55.15  unsupported generator at <genexpr>                          % %
+15:27:55.17  unsupported generator at <genexpr>                          % %
+15:27:55.17  unsupported opcode 84 at <module>:9                         % %
+15:27:55.18  unsupported opcode 90 at <module>:9                         % %
+15:27:55.18  unsupported opcode 101 at function_dc5dad993022b03b1868c7b6b3318b7d:0% %
+15:27:55.18  unsupported free or cell vars in construct__init__          % %
+15:27:55.18  unsupported opcode 136 at construct__init__:0               % %
+15:27:55.18  unsupported opcode 136 at __init__:38                       % %
+15:27:55.26  unsupported opcode 136 at __init__:39                       % %
+15:27:55.33  unsupported free or cell vars in construct__init__          % %
+15:27:56.65  unsupported opcode 101 at contract_indices:12               % %
+15:27:56.65  unsupported opcode 101 at <module>:0                        % %
+15:27:56.65  unsupported opcode 101 at <module>:0                        % %
+15:27:56.68  unsupported opcode 84 at <module>:9                         % %
+15:27:56.68  unsupported opcode 90 at <module>:9                         % %
+15:27:56.69  unsupported opcode 101 at form_6cbb3441fec18f6123aebb659bb38bb0d286e824_finite_element_0:0% %
+15:27:56.69  unsupported opcode 101 at form_6cbb3441fec18f6123aebb659bb38bb0d286e824_finite_element_1:0% %
+15:27:56.69  unsupported opcode 101 at form_6cbb3441fec18f6123aebb659bb38bb0d286e824_dof_map_0:0% %
+15:27:56.69  unsupported opcode 101 at form_6cbb3441fec18f6123aebb659bb38bb0d286e824_dof_map_1:0% %
+15:27:56.69  unsupported opcode 101 at form_6cbb3441fec18f6123aebb659bb38bb0d286e824_cell_integral_0:0% %
+15:27:56.69  unsupported opcode 101 at form_6cbb3441fec18f6123aebb659bb38bb0d286e824:0% %
+15:27:56.74  unsupported opcode 84 at <module>:9                         % %
+15:27:56.74  unsupported opcode 90 at <module>:9                         % %
+15:27:56.75  unsupported opcode 101 at form_f4356431e922d44cb13abd2d24348f01b72f50ee_finite_element_0:0% %
+15:27:56.75  unsupported opcode 101 at form_f4356431e922d44cb13abd2d24348f01b72f50ee_finite_element_1:0% %
+15:27:56.75  unsupported opcode 101 at form_f4356431e922d44cb13abd2d24348f01b72f50ee_dof_map_0:0% %
+15:27:56.75  unsupported opcode 101 at form_f4356431e922d44cb13abd2d24348f01b72f50ee_dof_map_1:0% %
+15:27:56.75  unsupported opcode 101 at form_f4356431e922d44cb13abd2d24348f01b72f50ee_cell_integral_0:0% %
+15:27:56.76  unsupported opcode 101 at form_f4356431e922d44cb13abd2d24348f01b72f50ee:0% %
+15:27:57.18  unsupported opcode 84 at <module>:9                         % %
+15:27:57.18  unsupported opcode 90 at <module>:9                         % %
+15:27:57.19  unsupported opcode 101 at form_a05f213c764f56ef07828c4b592f3617cbca9bff_finite_element_0:0% %
+15:27:57.19  unsupported opcode 101 at form_a05f213c764f56ef07828c4b592f3617cbca9bff_dof_map_0:0% %
+15:27:57.19  unsupported opcode 101 at form_a05f213c764f56ef07828c4b592f3617cbca9bff_cell_integral_0:0% %
+15:27:57.19  unsupported opcode 101 at form_a05f213c764f56ef07828c4b592f3617cbca9bff:0% %
+15:27:57.19  unsupported generator at <genexpr>                          % %
+15:27:57.24  unsupported opcode 84 at <module>:9                         % %
+15:27:57.24  unsupported opcode 90 at <module>:9                         % %
+15:27:57.25  unsupported opcode 101 at form_30ebeec78343545655bd7813f989b8111998ce74_finite_element_0_0:0% %
+15:27:57.25  unsupported opcode 101 at form_30ebeec78343545655bd7813f989b8111998ce74_finite_element_0_1:0% %
+15:27:57.25  unsupported opcode 101 at form_30ebeec78343545655bd7813f989b8111998ce74_finite_element_0:0% %
+15:27:57.25  unsupported opcode 101 at form_30ebeec78343545655bd7813f989b8111998ce74_dof_map_0_0:0% %
+15:27:57.25  unsupported opcode 101 at form_30ebeec78343545655bd7813f989b8111998ce74_dof_map_0_1:0% %
+15:27:57.25  unsupported opcode 101 at form_30ebeec78343545655bd7813f989b8111998ce74_dof_map_0:0% %
+15:27:57.25  unsupported opcode 101 at form_30ebeec78343545655bd7813f989b8111998ce74_cell_integral_0:0% %
+15:27:57.25  unsupported opcode 101 at form_30ebeec78343545655bd7813f989b8111998ce74:0% %
+15:27:57.31  unsupported opcode 84 at <module>:9                         % %
+15:27:57.31  unsupported opcode 90 at <module>:9                         % %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_finite_element_0_0:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_finite_element_0_1:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_finite_element_0:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_finite_element_1_0:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_finite_element_1_1:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_finite_element_1:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_dof_map_0_0:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_dof_map_0_1:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_dof_map_0:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_dof_map_1_0:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_dof_map_1_1:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_dof_map_1:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075_cell_integral_0:0% %
+15:27:57.33  unsupported opcode 101 at form_dc1254c9c80bfb2748176e338139e42681d17075:0% %
+15:27:57.33  unsupported free or cell vars in _extract_domains           % %
+15:27:57.33  unsupported opcode 135 at _extract_domains:0                % %
+15:27:57.42  unsupported opcode 101 at <module>:0                        % %
+15:27:57.42  unsupported opcode 101 at <module>:0                        % %
+15:27:57.44  unsupported opcode 84 at <module>:9                         % %
+15:27:57.44  unsupported opcode 90 at <module>:9                         % %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556_finite_element_0_0:0% %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556_finite_element_0_1:0% %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556_finite_element_0:0% %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556_finite_element_1:0% %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556_dof_map_0_0:0% %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556_dof_map_0_1:0% %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556_dof_map_0:0% %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556_dof_map_1:0% %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556_cell_integral_0:0% %
+15:27:57.46  unsupported opcode 101 at form_83cf97e1cafc04c1512ca0a8344cfae412e23556:0% %
+15:28:01.05  unsupported opcode 101 at <module>:0                        % %
+15:28:01.05  unsupported opcode 101 at <module>:0                        % %
+15:28:01.71  unsupported opcode 101 at <module>:0                        % %
+15:28:01.71  unsupported opcode 101 at <module>:0                        % %
+15:28:05.26  unsupported opcode 101 at <module>:0                        % %
+15:28:05.26  unsupported opcode 101 at <module>:0                        % %
+15:28:05.94  unsupported opcode 101 at <module>:0                        % %
+15:28:05.94  unsupported opcode 101 at <module>:0                        % %
+15:28:09.54  unsupported opcode 101 at <module>:0                        % %
+15:28:09.54  unsupported opcode 101 at <module>:0                        % %
+15:28:10.20  unsupported opcode 101 at <module>:0                        % %
+15:28:10.20  unsupported opcode 101 at <module>:0                        % %
+15:28:13.82  unsupported opcode 101 at <module>:0                        % %
+15:28:13.82  unsupported opcode 101 at <module>:0                        % %
+15:28:14.50  unsupported opcode 101 at <module>:0                        % %
+15:28:14.50  unsupported opcode 101 at <module>:0                        % %
+15:28:18.13  unsupported opcode 101 at <module>:0                        % %
+15:28:18.13  unsupported opcode 101 at <module>:0                        % %
+15:28:18.81  unsupported opcode 101 at <module>:0                        % %
+15:28:18.81  unsupported opcode 101 at <module>:0                        % %
+15:28:22.34  unsupported opcode 101 at <module>:0                        % %
+15:28:22.34  unsupported opcode 101 at <module>:0                        % %
+15:28:23.02  unsupported opcode 101 at <module>:0                        % %
+15:28:23.02  unsupported opcode 101 at <module>:0                        % %
+15:28:24.57  unsupported opcode 135 at text:138                          % %
+15:28:24.59  unsupported generator at generate_tokens                    % %
+15:28:24.59  unsupported opcode 136 at tokeneater:16                     % %
+15:28:24.67  unsupported opcode 136 at syspath_cleanup:0                 % %
+15:28:24.67  unsupported opcode 90 at <module>:3                         % %
+15:28:24.67  unsupported opcode 101 at Completer:0                       % %
+15:28:24.67  unsupported opcode 101 at IPCompleter:0                     % %
+15:28:24.68  unsupported ** argument in call to register                 % %
+15:28:24.68  unsupported free or cell vars in multiple_replace           % %
+15:28:24.68  unsupported opcode 136 at multiple_replace:24               % %
+15:28:24.69  unsupported opcode 136 at <lambda>:0                        % %
+15:28:24.69  unsupported free or cell vars in multiple_replace           % %
+15:28:24.69  unsupported free or cell vars in multiple_replace           % %
+15:28:24.69  unsupported free or cell vars in multiple_replace           % %
+15:28:24.69  unsupported free or cell vars in multiple_replace           % %
+15:28:24.69  unsupported free or cell vars in multiple_replace           % %
+15:28:24.73  unsupported opcode 90 at <module>:3                         % %
+15:28:24.73  unsupported opcode 101 at _SpoofOut:0                       % %
+15:28:24.73  unsupported opcode 101 at _OutputRedirectingPdb:0           % %
+15:28:24.73  unsupported opcode 101 at Example:0                         % %
+15:28:24.73  unsupported opcode 101 at DocTest:0                         % %
+15:28:24.73  unsupported opcode 101 at DocTestParser:0                   % %
+15:28:24.73  unsupported opcode 101 at DocTestFinder:0                   % %
+15:28:24.73  unsupported opcode 101 at DocTestRunner:0                   % %
+15:28:24.73  unsupported opcode 101 at OutputChecker:0                   % %
+15:28:24.73  unsupported opcode 101 at DocTestFailure:0                  % %
+15:28:24.73  unsupported opcode 101 at UnexpectedException:0             % %
+15:28:24.73  unsupported opcode 101 at DebugRunner:0                     % %
+15:28:24.73  unsupported opcode 101 at Tester:0                          % %
+15:28:24.73  unsupported opcode 101 at DocTestCase:0                     % %
+15:28:24.73  unsupported opcode 101 at DocFileCase:0                     % %
+15:28:24.73  unsupported opcode 101 at _TestClass:0                      % %
+15:28:24.73  unsupported ** argument in call to dhook_wrap               % %
+15:28:24.73  unsupported opcode 135 at dhook_wrap:0                      % %
+15:28:24.73  unsupported free or cell vars in multiple_replace           % %
+15:28:24.73  unsupported free or cell vars in multiple_replace           % %
+15:28:24.73  unsupported free or cell vars in multiple_replace           % %
+15:28:24.73  unsupported generator at iglob                              % %
+15:28:24.74  unsupported opcode 101 at <module>:0                        % %
+15:28:24.74  unsupported opcode 101 at <module>:0                        % %
+15:28:24.74  unsupported opcode 101 at <module>:0                        % %
+15:28:24.74  unsupported opcode 101 at <module>:0                        % %
+15:28:24.74  unsupported opcode 101 at <module>:0                        % %
+15:28:24.74  unsupported opcode 101 at <module>:0                        % %
+15:28:24.74  unsupported opcode 101 at <module>:0                        % %
+15:28:26.18  memory usage: 9276+ kb                                        %
+15:28:26.18  program exit, 09/03/09                     %%%%%%%%%%%%%%%%%%%%
