@@ -47,8 +47,8 @@ def MonteCarlo(mesh,potential_field,density_func,particles):
 	total_force = array([0.,0.])
 	count = 0
 	force_count = 0
+
 	for p in particles:
-		p.id = du.vert_index(mesh,p.pos)
 		du.alter_cellid(mesh,density_func,p.id,-p.charge)
 		randomElectronMovement(p,electric_field,
 					density_func,mesh)
@@ -56,14 +56,15 @@ def MonteCarlo(mesh,potential_field,density_func,particles):
 		count += 1
 		if(du.out_of_bounds(mesh,p.pos)): 
 			reaper.append(p)
-	#	else:
-#			p.id = du.vert_index(mesh,p.pos)
-#			du.alter_cellid(mesh,density_func,p.id,p.charge)
+		else:
+			p.id = du.vert_index(mesh,p.pos)
+			du.alter_cellid(mesh,density_func,p.id,p.charge)
 	for reaped in reaper:
 		particles.remove(reaped)#already removed cell
-#	if count != 0:
-#		print "Avg momentum:",total_momentum/count,count
-#		print "Avg force:",total_force/force_count,force_count
+	if count != 0:
+		print "Avg momentum:",total_momentum/count,count
+		print "Avg force:",total_force/force_count,force_count
+	
 
 def randomElectronMovement(particle,electric_field,density_func,mesh):
 	meanpathlength = 1#getMeanPathLength(cell)
