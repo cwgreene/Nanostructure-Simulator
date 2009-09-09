@@ -55,9 +55,9 @@ particles = []
 for x in np.arange(0,1.,1./meshSizeX):
 	for y in np.arange(0.,1.,1./meshSizeY):
 		#electrons
-		particles += mc.init_electrons(1,[[x,y]],charge=-1,mesh=mesh)
+		particles += mc.init_electrons(1,[[x,y]],charge=-10,mesh=mesh)
 		#holes
-		particles += mc.init_electrons(1,[[x,y]],charge=1,mesh=mesh)
+		particles += mc.init_electrons(1,[[x,y]],charge=10,mesh=mesh)
 f = custom_func(mesh,V,particles)
 file = File("poisson_attract.pvd")
 dfile = File("density_attract.pvd")
@@ -77,7 +77,7 @@ for x in range(200):
 	start = time.time()
 	mc.MonteCarlo(mesh,sol,f,particles)
 	print "Took: ",time.time()-start
-	plot(f)
+#	plot(f)
 	du.delete(problem)
 file << sol
 dfile << f

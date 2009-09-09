@@ -56,7 +56,9 @@ a = dot(grad(v), grad(u))*dx
 L = v*f*dx
 
 # Compute solution
-problem = VariationalProblem(a, L, bc)
+pproblem = VariationalProblem(a, L, bc)
+u = problem.solve()
+roblem = VariationalProblem(a, L, bc)
 u = problem.solve()
 
 # Plot solution

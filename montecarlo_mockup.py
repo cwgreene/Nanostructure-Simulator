@@ -3,6 +3,7 @@ import dolfin_util as du
 from dolfin import *
 from numpy import *
 import itertools as it
+import time
 
 class Particle():
 	def __init__(self,pos,momentum,dx,lifetime,charge,mesh):
@@ -39,10 +40,16 @@ def negGradient(mesh,field):
 	V = VectorFunctionSpace(mesh,"Lagrange",1,2)
 	return project(grad(-field),V)
 
+def reap_list(full,remove_ids):
+	remove_ids.sort()
+	for id in remove_ids():
+		full.pop(id)
+
 def MonteCarlo(mesh,potential_field,density_func,particles):
 	#electrons = init_electrons()
 	global total_force,force_count
 	electric_field = negGradient(mesh,potential_field)
+	#plot(electric_field)
 	reaper = []
 
 	total_momentum = array([0.,0.])
@@ -52,20 +59,25 @@ def MonteCarlo(mesh,potential_field,density_func,particles):
 
 	#next_step density function array
 	nextDensity = density_func.vector().array()
-	for p in particles:
+	start = time.time()
+	for index in xrange(len(particles)):
+		p = particles[index]
 		nextDensity[p.id] -= p.charge #remove from old location
 		randomElectronMovement(p,electric_field,
 					density_func,mesh)
 		total_momentum += p.momentum
 		count += 1
 		if(du.out_of_bounds(mesh,p.pos)): #need to figure out exit
-			reaper.append(p)
+			reaper.append(index)
 		else:
 			p.id = du.vert_index(mesh,p.pos) #get new p.id
 			p.meshpos = mesh.coordinates()[p.id] #lock to grid
 			nextDensity[p.id] += p.charge
-	for reaped in reaper:
-		particles.remove(reaped)#already removed cell
+	print (time.time()-start),len(reaped)
+	start = time.time()
+#	for reaped in reaper:
+#		particles.remove(reaped)#already removed cell
+	print (time.time()-start)
 	if count != 0:
 		print "Avg momentum:",total_momentum/count,count
 		print "Avg force:",total_force/force_count,force_count
