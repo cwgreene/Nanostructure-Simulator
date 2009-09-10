@@ -61,25 +61,35 @@ for x in np.arange(0,1.,1./meshSizeX):
 f = custom_func(mesh,V,particles)
 file = File("poisson_attract.pvd")
 dfile = File("density_attract.pvd")
-for x in range(200):
+adfile = File("avg_density.pvd")
+avfile = File("avg_voltage.pvd")
+avg_dens = mc.AverageFunc(f.vector().array())
+
+def PoissonSolve(density):
 	u = TrialFunction(V)
 	v = TestFunction(V)
 
 	a = dot(grad(v), grad(u))*dx
-	L = v*f*dx
+	L = v*density*dx
 	# Compute solution
 	problem = VariationalProblem(a, L, bc)
 	sol = problem.solve()
+
+for x in range(200):
+	sol = PoissonSolve(f)
 	# Plot solution
 	file << sol
 	dfile << f
 	print "Starting Step ",x
 	start = time.time()
-	mc.MonteCarlo(mesh,sol,f,particles)
+	mc.MonteCarlo(mesh,sol,f,particles,avg_dens)
 	print "Took: ",time.time()-start
 #	plot(f)
-	du.delete(problem)
 file << sol
 dfile << f
+
+#dump average
+f.vector().set(avg_dens.func)
+adfile << f
 # Hold plot
 interactive()

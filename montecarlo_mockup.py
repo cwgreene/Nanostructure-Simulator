@@ -5,6 +5,14 @@ from numpy import *
 import itertools as it
 import time
 
+class AverageFunc():
+	def __init__(self,func):
+		self.func = func
+		self.count = 1
+	def inc(self,func):
+		self.count += 1
+		self.func += func/self.count
+
 class Particle():
 	def __init__(self,pos,momentum,dx,lifetime,charge,mesh):
 		self.pos = array(pos)
@@ -52,7 +60,7 @@ def replenish(mesh,density,boundary,particles):
 	print "prior particles",len(particles)
 	holes = []
 	electrons = []
-	for point in boundary():
+	for point in boundary:
 		if point[0] < .5:
 			holes.append(point)
 		else:
@@ -66,7 +74,7 @@ def replenish(mesh,density,boundary,particles):
 	print "parts",len(parts)
 	print "total particles",len(particles)
 
-def MonteCarlo(mesh,potential_field,density_func,particles):
+def MonteCarlo(mesh,potential_field,density_func,particles,avg_dens):
 	#electrons = init_electrons()
 	global total_force,force_count
 	electric_field = negGradient(mesh,potential_field)
@@ -105,6 +113,7 @@ def MonteCarlo(mesh,potential_field,density_func,particles):
 		print "Avg force:",total_force/force_count,force_count
 		print "Avg sim force:",sim_total_force/sim_force_count,sim_force_count
 	replenish(mesh,nextDensity,bd,particles)
+	avg_dens.inc(nextDensity)
 	density_func.vector().set(nextDensity)
 
 def randomElectronMovement(particle,electric_field,density_func,mesh):
