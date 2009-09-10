@@ -37,7 +37,7 @@ def init_electrons(num,points,charge=-1,mesh=None):
 	return electrons
 
 def negGradient(mesh,field):
-	V = VectorFunctionSpace(mesh,"Lagrange",1,2)
+	V = VectorFunctionSpace(mesh,"CG",1,2)
 	return project(grad(-field),V)
 
 def reap_list(full,remove_ids):
@@ -49,10 +49,20 @@ def reap_list(full,remove_ids):
 
 def replenish(mesh,density,boundary,particles):
 	print "boundary",len(boundary)
-	parts = init_electrons(1,boundary,-1,mesh)
+	print "prior particles",len(particles)
+	holes = []
+	electrons = []
+	for point in boundary():
+		if point[0] < .5:
+			holes.append(point)
+		else:
+			electrons.append(point)
+	parts = init_electrons(1,electrons,-10,mesh)
+	parts = init_electrons(1,holes,10,mesh)
 	for p in parts:
-		density[p.id] += 1
-	particles += parts
+		density[p.id] += p.charge
+	for x in parts:
+		particles.append(x)
 	print "parts",len(parts)
 	print "total particles",len(particles)
 

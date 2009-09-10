@@ -34,7 +34,7 @@ meshSizeX = 50
 meshSizeY = 50
 mesh = UnitSquare(meshSizeX,meshSizeY)
 #plot(mesh)
-V = FunctionSpace(mesh, "Lagrange", 2)
+V = FunctionSpace(mesh, "CG", 2)
 
 # Define Dirichlet boundary (x = 0 or x = 1)
 class DirichletBoundary(SubDomain):

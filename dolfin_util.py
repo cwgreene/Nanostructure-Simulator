@@ -7,10 +7,9 @@ import itertools as it
 def boundary_dict(mesh):
 	cells = ArrayUInt()
 	bmesh = BoundaryMesh(mesh)
-	mesh.intersection(bmesh,cells,False)
 	boundary_coordinates = []
-	for x in mesh.coordinates():
-		boundary_coordinates.append(x)
+	for x in bmesh.coordinates():
+		boundary_coordinates.append(np.array(x))
 	return boundary_coordinates
 		
 
@@ -48,6 +47,7 @@ def cell_index(mesh,point):
 	return result
 
 def vert_index(mesh,point):
+	#print point
 	indices = mesh.cells()[cell_index(mesh,point)]
 	#return indices[0]
 	return indices[rndi(0,len(indices)-1)]
