@@ -24,12 +24,14 @@ class Particle():
 		self.meshpos = mesh.coordinates()[self.id]
 
 #globals
-sim_total_force = array([0.,0.])
-sim_force_count = 0
-total_force = array([0.,0.])
-force_count = 0
-self_force = array([0.,0.])
+sim_total_force = {10:array([0.,0.]),-10:array([0.,0.])}
+sim_force_count = {10:0,-10:0}
+total_force = {10:array([0.,0.]),-10:array([0.,0.])}
+force_count = {10:0,-10:0}
+sim_total_p = {10:array([0.,0.]),-10:array([0.,0.])}
+sim_p_count = {10:0,-10:0}
 
+self_force= {10:array([0.,0.]),-10:array([0.,0.])}
 #functions
 def random_momentum():
 	return (rd.random()-.5)*2,(rd.random()-.5)*2
@@ -38,7 +40,7 @@ def init_electrons(num,points,charge=-1,mesh=None):
 	electrons = []
 	for point in points:
 		for i in xrange(num):
-			dx = array([0,0])
+			dx = array([0.,0.])
 			lifetime = 0
 			electrons.append(Particle(point,random_momentum(),
 					 dx,lifetime,charge,mesh))
@@ -66,7 +68,7 @@ def replenish(mesh,density,boundary,particles):
 		else:
 			electrons.append(point)
 	parts = init_electrons(1,electrons,-10,mesh)
-	parts = init_electrons(1,holes,10,mesh)
+	parts += init_electrons(1,holes,10,mesh)
 	for p in parts:
 		density[p.id] += p.charge
 	for x in parts:
@@ -74,17 +76,21 @@ def replenish(mesh,density,boundary,particles):
 	print "parts",len(parts)
 	print "total particles",len(particles)
 
+def print_avg(name,value,count):
+	print "Avg",name+":",value/count,count
+
 def MonteCarlo(mesh,potential_field,density_func,particles,avg_dens):
 	#electrons = init_electrons()
-	global total_force,force_count
+	global total_force,force_count,sim_total_p,sim_p_count
 	electric_field = negGradient(mesh,potential_field)
 	#plot(electric_field)
 	reaper = []
 
-	total_momentum = array([0.,0.])
-	total_force = array([0.,0.])
-	count = 0
-	force_count = 0
+	total_momentum ={10:array([0.,0.]),-10:array([0.,0.])}
+	total_force = {10:array([0.,0.]),-10:array([0.,0.])}
+
+	count = {10:0,-10:0}
+	force_count = {10:0,-10:0}
 
 	#next_step density function array
 	nextDensity = density_func.vector().array()
@@ -95,8 +101,8 @@ def MonteCarlo(mesh,potential_field,density_func,particles,avg_dens):
 		nextDensity[p.id] -= p.charge #remove from old location
 		randomElectronMovement(p,electric_field,
 					density_func,mesh)
-		total_momentum += p.momentum
-		count += 1
+		total_momentum[p.charge] += p.momentum
+		count[p.charge] += 1
 		if(du.out_of_bounds(mesh,p.pos)): #need to figure out exit
 			reaper.append(index)
 			#print du.closest_exit(bd,p.pos)
@@ -108,10 +114,17 @@ def MonteCarlo(mesh,potential_field,density_func,particles,avg_dens):
 	start = time.time()
 	reap_list(particles,reaper)
 	print (time.time()-start)
+
 	if count != 0:
-		print "Avg momentum:",total_momentum/count,count
-		print "Avg force:",total_force/force_count,force_count
-		print "Avg sim force:",sim_total_force/sim_force_count,sim_force_count
+		legend = {-10:"electrons",10:"holes"}
+		for t in legend:
+			print legend[t]
+			sim_total_p[t] += total_momentum[t]
+			sim_p_count[t] += count[t]
+			print_avg("momentum",total_momentum[t],count[t])
+			print_avg("force",total_force[t],force_count[t])
+			print_avg("SMMomentum",sim_total_p[t],sim_p_count[t])
+			print_avg("SMForce",sim_total_force[t],sim_force_count[t])
 	replenish(mesh,nextDensity,bd,particles)
 	avg_dens.inc(nextDensity)
 	density_func.vector().set(nextDensity)
@@ -147,11 +160,11 @@ def drift(mesh,func,particle):
 	global sim_total_force,sim_force_count
 	global self_force
 	p = particle
-	force = du.get_vec(mesh,func,p.meshpos)*100*p.charge-self_force
-	total_force += force
- 	force_count += 1
-	sim_force_count += 1
-	sim_total_force += force
+	force = du.get_vec(mesh,func,p.meshpos)*100*p.charge-self_force[p.charge]
+	total_force[p.charge] += force
+ 	force_count[p.charge] += 1
+	sim_force_count[p.charge] += 1
+	sim_total_force[p.charge] += force
 	return force
 
 def scatter(momentum,pos,mesh):
