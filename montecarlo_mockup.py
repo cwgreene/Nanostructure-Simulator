@@ -42,8 +42,19 @@ def negGradient(mesh,field):
 
 def reap_list(full,remove_ids):
 	remove_ids.sort()
-	for id in remove_ids():
-		full.pop(id)
+	count = 0
+	for id in remove_ids:
+		full.pop(id-count)
+		count += 1
+
+def replenish(mesh,density,boundary,particles):
+	print "boundary",len(boundary)
+	parts = init_electrons(1,boundary,-1,mesh)
+	for p in parts:
+		density[p.id] += 1
+	particles += parts
+	print "parts",len(parts)
+	print "total particles",len(particles)
 
 def MonteCarlo(mesh,potential_field,density_func,particles):
 	#electrons = init_electrons()
@@ -60,6 +71,7 @@ def MonteCarlo(mesh,potential_field,density_func,particles):
 	#next_step density function array
 	nextDensity = density_func.vector().array()
 	start = time.time()
+	bd = du.boundary_dict(mesh)
 	for index in xrange(len(particles)):
 		p = particles[index]
 		nextDensity[p.id] -= p.charge #remove from old location
@@ -69,21 +81,21 @@ def MonteCarlo(mesh,potential_field,density_func,particles):
 		count += 1
 		if(du.out_of_bounds(mesh,p.pos)): #need to figure out exit
 			reaper.append(index)
+			#print du.closest_exit(bd,p.pos)
 		else:
 			p.id = du.vert_index(mesh,p.pos) #get new p.id
 			p.meshpos = mesh.coordinates()[p.id] #lock to grid
 			nextDensity[p.id] += p.charge
-	print (time.time()-start),len(reaped)
+	print (time.time()-start),len(reaper)
 	start = time.time()
-#	for reaped in reaper:
-#		particles.remove(reaped)#already removed cell
+	reap_list(particles,reaper)
 	print (time.time()-start)
 	if count != 0:
 		print "Avg momentum:",total_momentum/count,count
 		print "Avg force:",total_force/force_count,force_count
 		print "Avg sim force:",sim_total_force/sim_force_count,sim_force_count
+	replenish(mesh,nextDensity,bd,particles)
 	density_func.vector().set(nextDensity)
-	
 
 def randomElectronMovement(particle,electric_field,density_func,mesh):
 	meanpathlength = 1#getMeanPathLength(cell)

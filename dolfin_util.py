@@ -2,6 +2,30 @@ import numpy as np
 from dolfin import *
 import traceback
 from random import randint as rndi
+import itertools as it
+
+def boundary_dict(mesh):
+	cells = ArrayUInt()
+	bmesh = BoundaryMesh(mesh)
+	mesh.intersection(bmesh,cells,False)
+	boundary_coordinates = []
+	for x in mesh.coordinates():
+		boundary_coordinates.append(x)
+	return boundary_coordinates
+		
+
+def closest_exit(boundary_coordinates,point):
+	disp = np.array(boundary_coordinates[0]) -point
+	min = np.dot(disp,disp)
+	min_x = np.array(boundary_coordinates[0])
+	for pos in boundary_coordinates[1:]:
+		disp = np.array(pos) - point
+		dist = np.dot(disp,disp)
+		if dist < min:
+			min = dist
+			min_x = pos
+	return min_x
+	
 
 def delete(swig):
 	swig.__swig_destroy__(swig)
