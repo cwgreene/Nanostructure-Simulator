@@ -21,6 +21,8 @@ import montecarlo_mockup as mc
 import numpy as np
 import dolfin_util as du
 import time
+import mcoptions,sys
+options = mcoptions.get_options()
 #dolfin_set("linear algebra backend","Epetra"
 
 def custom_func(mesh,V,particles):
@@ -76,7 +78,7 @@ def PoissonSolve(density):
 	sol = problem.solve()
 	return sol
 
-for x in range(200):
+for x in range(options.num):
 	sol = PoissonSolve(f)
 	# Plot solution
 	file << sol
