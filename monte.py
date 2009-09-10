@@ -74,6 +74,7 @@ def PoissonSolve(density):
 	# Compute solution
 	problem = VariationalProblem(a, L, bc)
 	sol = problem.solve()
+	return sol
 
 for x in range(200):
 	sol = PoissonSolve(f)
