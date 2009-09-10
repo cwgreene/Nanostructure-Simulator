@@ -11,7 +11,7 @@ class AverageFunc():
 		self.count = 1
 	def inc(self,func):
 		self.count += 1
-		self.func += func/self.count
+		self.func += func/(self.count*1.)
 
 class Particle():
 	def __init__(self,pos,momentum,dx,lifetime,charge,mesh):
