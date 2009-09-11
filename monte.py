@@ -101,5 +101,5 @@ adfile << f
 avgE=mc.negGradient(mesh,PoissonSolve(f))
 avggradfile << avgE
 # Hold plot
-plot(mc.negGradient(mesh,avgE)
+plot(mc.negGradient(mesh,avgE))
 interactive()
