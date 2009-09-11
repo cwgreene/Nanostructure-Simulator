@@ -28,8 +28,8 @@ options = mcoptions.get_options()
 
 def custom_func(mesh,V,particles):
 	f = Function(V)
-	for p in particles:
-		du.alter_cellid(mesh,f,p.id,p.charge)
+#	for p in particles:
+#		du.alter_cellid(mesh,f,p.id,p.charge)
 	return f
 
 # Create mesh and define function space
@@ -42,7 +42,10 @@ V = FunctionSpace(mesh, "CG", 2)
 # Define Dirichlet boundary (x = 0 or x = 1)
 class DirichletBoundary(SubDomain):
     def inside(self, x, on_boundary):
-        return on_boundary
+        if on_boundary:
+		if np.linalg.norm(x[0])+np.linalg.norm(x[1]) < .5:
+			return True
+	return False
 # Define boundary condition
 u0 = Constant(mesh, 0.0)
 bc = DirichletBC(V, u0, DirichletBoundary())
@@ -54,14 +57,15 @@ u = TrialFunction(V)
 #function
 particles = []
 
-particles += mc.init_electrons(1,mesh.coordinates(),charge=-10,mesh=mesh)
+particles += mc.init_electrons(10,mesh.coordinates(),charge=-10,mesh=mesh)
 #holes
-particles += mc.init_electrons(1,mesh.coordinates(),charge=10,mesh=mesh)
+particles += mc.init_electrons(10,mesh.coordinates(),charge=10,mesh=mesh)
 f = custom_func(mesh,V,particles)
 file = File("data/poisson_attract.pvd")
 dfile = File("data/density_attract.pvd")
 adfile = File("data/avg_density.pvd")
 avfile = File("data/avg_voltage.pvd")
+gradfile = File("data/grad_force.pvd")
 avg_dens = mc.AverageFunc(f.vector().array())
 
 def PoissonSolve(density):
@@ -82,7 +86,9 @@ for x in range(options.num):
 	dfile << f
 	print "Starting Step ",x
 	start = time.time()
-	mc.MonteCarlo(mesh,sol,f,particles,avg_dens)
+	electric_field = negGradient(mesh,potential_field)
+	gradfile << electric_field
+	mc.MonteCarlo(mesh,sol,electric_field,f,particles,avg_dens)
 	print "Took: ",time.time()-start
 #	plot(f)
 file << sol
@@ -92,5 +98,5 @@ dfile << f
 f.vector().set(avg_dens.func)
 adfile << f
 # Hold plot
-plot(PoissonSolve(f))
+plot(mc.negGradient(mesh,PoissonSolve(f)))
 interactive()

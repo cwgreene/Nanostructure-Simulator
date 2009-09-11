@@ -63,12 +63,12 @@ def replenish(mesh,density,boundary,particles):
 	holes = []
 	electrons = []
 	for point in boundary:
-		if linalg.norm(point[0])+linalg.norm(point[1]) < .5:
+		if linalg.norm(point[0])+linalg.norm(point[1]) < .25:
 			holes.append(point)
 		else:
 			electrons.append(point)
-	parts = init_electrons(1,electrons,-10,mesh)
-	parts += init_electrons(1,holes,10,mesh)
+	parts = init_electrons(10,electrons,-10,mesh)
+	parts += init_electrons(10,holes,10,mesh)
 	for p in parts:
 		density[p.id] += p.charge
 	for x in parts:
@@ -79,10 +79,9 @@ def replenish(mesh,density,boundary,particles):
 def print_avg(name,value,count):
 	print "Avg",name+":",value/count,count
 
-def MonteCarlo(mesh,potential_field,density_func,particles,avg_dens):
+def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_dens):
 	#electrons = init_electrons()
 	global total_force,force_count,sim_total_p,sim_p_count
-	electric_field = negGradient(mesh,potential_field)
 	#plot(electric_field)
 	reaper = []
 

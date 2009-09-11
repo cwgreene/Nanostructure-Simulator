@@ -49,8 +49,18 @@ def cell_index(mesh,point):
 def vert_index(mesh,point):
 	#print point
 	indices = mesh.cells()[cell_index(mesh,point)]
+	coord = mesh.coordinates()
 	#return indices[0]
-	return indices[rndi(0,len(indices)-1)]
+	disp = point-coord[indices[0]]
+	min = np.dot(disp,disp)
+	min_id = indices[0]
+	for id in indices[1:]:
+		disp = point-coord[id]
+		dist = np.dot(disp,disp)
+		if dist < min:
+			min = dist
+			min_id=id
+	return min_id
 
 def set_cell(mesh,function,point,value):
 	index = vert_index(mesh,point)
