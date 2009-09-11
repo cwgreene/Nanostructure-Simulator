@@ -66,6 +66,7 @@ dfile = File("data/density_attract.pvd")
 adfile = File("data/avg_density.pvd")
 avfile = File("data/avg_voltage.pvd")
 gradfile = File("data/grad_force.pvd")
+avggradfile = File("data/avg_force.pvd")
 avg_dens = mc.AverageFunc(f.vector().array())
 
 def PoissonSolve(density):
@@ -97,6 +98,8 @@ dfile << f
 #dump average
 f.vector().set(avg_dens.func)
 adfile << f
+avgE=mc.negGradient(mesh,PoissonSolve(f))
+avggradfile << avgE
 # Hold plot
-plot(mc.negGradient(mesh,PoissonSolve(f)))
+plot(mc.negGradient(mesh,avgE)
 interactive()
