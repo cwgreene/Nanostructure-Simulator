@@ -22,6 +22,7 @@ import numpy as np
 import dolfin_util as du
 import time
 import mcoptions,sys
+import trianglemesh as tm
 options = mcoptions.get_options()
 #dolfin_set("linear algebra backend","Epetra"
 
@@ -34,16 +35,14 @@ def custom_func(mesh,V,particles):
 # Create mesh and define function space
 meshSizeX = 50
 meshSizeY = 50
-mesh = UnitSquare(meshSizeX,meshSizeY)
+mesh = tm.innertriangle(5)#UnitSquare(meshSizeX,meshSizeY)
 #plot(mesh)
 V = FunctionSpace(mesh, "CG", 2)
 
 # Define Dirichlet boundary (x = 0 or x = 1)
 class DirichletBoundary(SubDomain):
     def inside(self, x, on_boundary):
-        return (x[0] < DOLFIN_EPS  or (x[0] > 1.0 - DOLFIN_EPS) or 
-		x[1] < DOLFIN_EPS or (x[1] > 1.0 -DOLFIN_EPS))
-
+        return on_boundary
 # Define boundary condition
 u0 = Constant(mesh, 0.0)
 bc = DirichletBC(V, u0, DirichletBoundary())
@@ -54,17 +53,15 @@ u = TrialFunction(V)
 
 #function
 particles = []
-for x in np.arange(0,1.,1./meshSizeX):
-	for y in np.arange(0.,1.,1./meshSizeY):
-		#electrons
-		particles += mc.init_electrons(1,[[x,y]],charge=-10,mesh=mesh)
-		#holes
-		particles += mc.init_electrons(1,[[x,y]],charge=10,mesh=mesh)
+
+particles += mc.init_electrons(1,mesh.coordinates(),charge=-10,mesh=mesh)
+#holes
+particles += mc.init_electrons(1,mesh.coordinates(),charge=10,mesh=mesh)
 f = custom_func(mesh,V,particles)
-file = File("poisson_attract.pvd")
-dfile = File("density_attract.pvd")
-adfile = File("avg_density.pvd")
-avfile = File("avg_voltage.pvd")
+file = File("data/poisson_attract.pvd")
+dfile = File("data/density_attract.pvd")
+adfile = File("data/avg_density.pvd")
+avfile = File("data/avg_voltage.pvd")
 avg_dens = mc.AverageFunc(f.vector().array())
 
 def PoissonSolve(density):
@@ -95,4 +92,5 @@ dfile << f
 f.vector().set(avg_dens.func)
 adfile << f
 # Hold plot
+plot(PoissonSolve(f))
 interactive()

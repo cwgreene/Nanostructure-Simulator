@@ -63,7 +63,7 @@ def replenish(mesh,density,boundary,particles):
 	holes = []
 	electrons = []
 	for point in boundary:
-		if point[0] < .5:
+		if linalg.norm(point[0])+linalg.norm(point[1]) < .5:
 			holes.append(point)
 		else:
 			electrons.append(point)
