@@ -40,15 +40,26 @@ mesh = tm.innertriangle(5)#UnitSquare(meshSizeX,meshSizeY)
 V = FunctionSpace(mesh, "CG", 2)
 
 # Define Dirichlet boundary (x = 0 or x = 1)
-class DirichletBoundary(SubDomain):
+class InnerTriangle(SubDomain):
     def inside(self, x, on_boundary):
         if on_boundary:
 		if np.linalg.norm(x[0])+np.linalg.norm(x[1]) < .5:
 			return True
 	return False
+
+class OuterTriangle(SubDomain):
+    def inside(self, x, on_boundary):
+        if on_boundary:
+		if np.linalg.norm(x[0])+np.linalg.norm(x[1]) > .5:
+			return True
+	return False
+
 # Define boundary condition
 u0 = Constant(mesh, 0.0)
-bc = DirichletBC(V, u0, DirichletBoundary())
+u1 = Constant(mesh, 0.001)
+bc0 = DirichletBC(V, u0, InnerTriangle())
+bc1 = DirichletBC(V, u1, OuterTriangle())
+bcs = [bc0,bc1]
 
 # Define variational problem
 v = TestFunction(V)
@@ -57,9 +68,9 @@ u = TrialFunction(V)
 #function
 particles = []
 
-particles += mc.init_electrons(10,mesh.coordinates(),charge=-10,mesh=mesh)
+particles += mc.init_electrons(1,mesh.coordinates(),charge=-10,mesh=mesh)
 #holes
-particles += mc.init_electrons(10,mesh.coordinates(),charge=10,mesh=mesh)
+particles += mc.init_electrons(1,mesh.coordinates(),charge=10,mesh=mesh)
 f = custom_func(mesh,V,particles)
 file = File("data/poisson_attract.pvd")
 dfile = File("data/density_attract.pvd")
@@ -76,7 +87,7 @@ def PoissonSolve(density):
 	a = dot(grad(v), grad(u))*dx
 	L = v*density*dx
 	# Compute solution
-	problem = VariationalProblem(a, L, bc)
+	problem = VariationalProblem(a, L, bcs)
 	sol = problem.solve()
 	return sol
 
@@ -87,7 +98,7 @@ for x in range(options.num):
 	dfile << f
 	print "Starting Step ",x
 	start = time.time()
-	electric_field = negGradient(mesh,potential_field)
+	electric_field = mc.negGradient(mesh,sol)
 	gradfile << electric_field
 	mc.MonteCarlo(mesh,sol,electric_field,f,particles,avg_dens)
 	print "Took: ",time.time()-start
@@ -101,5 +112,5 @@ adfile << f
 avgE=mc.negGradient(mesh,PoissonSolve(f))
 avggradfile << avgE
 # Hold plot
-plot(mc.negGradient(mesh,avgE))
+plot(avgE)
 interactive()

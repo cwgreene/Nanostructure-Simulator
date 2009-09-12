@@ -1,6 +1,7 @@
 import itertools as it
-import grid
-import fdm
+import numpy as np
+#import grid
+#import fdm
 
 def vec(p1,p2):
 	"""takes in two indexable objects with at least two dimensions and constructs a two dimensional vector"""

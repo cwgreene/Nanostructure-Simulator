@@ -4,6 +4,7 @@ from dolfin import *
 from numpy import *
 import itertools as it
 import time
+import triangle
 
 class AverageFunc():
 	def __init__(self,func):
@@ -11,7 +12,7 @@ class AverageFunc():
 		self.count = 1
 	def inc(self,func):
 		self.count += 1
-		self.func += func/(self.count*1.)
+		self.func = (self.func*(self.count-1)+func)/(self.count*1.)
 
 class Particle():
 	def __init__(self,pos,momentum,dx,lifetime,charge,mesh):
@@ -60,15 +61,22 @@ def reap_list(full,remove_ids):
 def replenish(mesh,density,boundary,particles):
 	print "boundary",len(boundary)
 	print "prior particles",len(particles)
+	vert1 = array([-.5,-.288675])
+	vert2 = array([.5,-.288675])
+	vert3 = array([0.,.57735])
+
+	outertriangle = array([vert1,vert2,vert3])
+	innertriangle = outertriangle*.25
+
 	holes = []
 	electrons = []
-	for point in boundary:
-		if linalg.norm(point[0])+linalg.norm(point[1]) < .25:
+	for point in mesh.coordinates():
+		if triangle.point_in_triangle(point,innertriangle):
 			holes.append(point)
 		else:
 			electrons.append(point)
-	parts = init_electrons(10,electrons,-10,mesh)
-	parts += init_electrons(10,holes,10,mesh)
+	parts = init_electrons(1,electrons,-10,mesh)
+	parts += init_electrons(1,holes,10,mesh)
 	for p in parts:
 		density[p.id] += p.charge
 	for x in parts:
