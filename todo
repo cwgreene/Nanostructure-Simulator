@@ -1,0 +1,24 @@
+Things to get done:
+
+1) Renormalize the mesh so that ALL mesh cells are the same size. If we don't
+do this, we mess up the charge_density calculations.
+
+a)how to do this:
+	Figure out how to make a submesh, and then intersect the mesh
+we don't want out.
+
+	Alternatively, write script to tile the triangle by hand.
+
+2) Get more realistic replenish working.
+
+3) Scattering and recombination. To a certain exten the gradients
+provide this to a limited extent, so it is perhaps not critical for a
+qualitative evaluation of the problem.
+
+4) FIGURE out if the lack of a true depletion region is realistic or not.
+Easiest way is to generate code for the N-Gon mesh and hollowed internal
+thingy.
+
+5) VERY IMPORTANT: Extract current information. Don't forget! Easy calc is
+just find out if nearest exit was an inner or outer boundary and then just
+add in the charge. This shouldn't be too hard.
