@@ -31,6 +31,7 @@ total_force = {10:array([0.,0.]),-10:array([0.,0.])}
 force_count = {10:0,-10:0}
 sim_total_p = {10:array([0.,0.]),-10:array([0.,0.])}
 sim_p_count = {10:0,-10:0}
+current_values = []
 
 self_force= {10:array([0.,0.]),-10:array([0.,0.])}
 #functions
@@ -87,9 +88,23 @@ def replenish(mesh,density,boundary,particles):
 def print_avg(name,value,count):
 	print "Avg",name+":",value/count,count
 
+def current_exit(particle,boundary):
+	vert1 = array([-.5,-.288675])
+	vert2 = array([.5,-.288675])
+	vert3 = array([0.,.57735])
+
+	outertriangle = array([vert1,vert2,vert3])
+	innertriangle = outertriangle*.25
+
+	exit = du.closest_exit(boundary,particle.pos)
+	if triangle.point_in_triangle(exit,innertriangle):
+		return particle.charge*-1
+	else:
+		return particle.charge
+
 def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_dens):
 	#electrons = init_electrons()
-	global total_force,force_count,sim_total_p,sim_p_count
+	global total_force,force_count,sim_total_p,sim_p_count,current_values
 	#plot(electric_field)
 	reaper = []
 
@@ -98,6 +113,8 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_de
 
 	count = {10:0,-10:0}
 	force_count = {10:0,-10:0}
+
+	current = 0
 
 	#next_step density function array
 	nextDensity = density_func.vector().array()
@@ -112,7 +129,7 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_de
 		count[p.charge] += 1
 		if(du.out_of_bounds(mesh,p.pos)): #need to figure out exit
 			reaper.append(index)
-			#print du.closest_exit(bd,p.pos)
+			current += current_exit(p,bd)#du.closest_exit(bd,p.pos)
 		else:
 			p.id = du.vert_index(mesh,p.pos) #get new p.id
 			p.meshpos = mesh.coordinates()[p.id] #lock to grid
@@ -132,6 +149,8 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_de
 			print_avg("force",total_force[t],force_count[t])
 			print_avg("SMMomentum",sim_total_p[t],sim_p_count[t])
 			print_avg("SMForce",sim_total_force[t],sim_force_count[t])
+	current_values.append(current)
+	print current_values
 	replenish(mesh,nextDensity,bd,particles)
 	avg_dens.inc(nextDensity)
 	density_func.vector().set(nextDensity)

@@ -56,7 +56,7 @@ class OuterTriangle(SubDomain):
 
 # Define boundary condition
 u0 = Constant(mesh, 0.0)
-u1 = Constant(mesh, 0.001)
+u1 = Constant(mesh, options.V)
 bc0 = DirichletBC(V, u0, InnerTriangle())
 bc1 = DirichletBC(V, u1, OuterTriangle())
 bcs = [bc0,bc1]
