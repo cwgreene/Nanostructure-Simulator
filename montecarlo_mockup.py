@@ -9,13 +9,23 @@ import triangle
 class ParticleMesh(Mesh):
 	def __init__(self,mesh):
 		Mesh.__init__(self,mesh)
-		self.invert_indices = {}
+		self.point_index = {}
 		self.particles_point = {}
-		for x,id in izip(mesh.coordinates(),it.count()):
-			self.invert_indices[tuple(x)] = id
-			self.particles_point[tuple(x)] = []
+		self.p_region = {}
+		self.n_region = {}
 
-	
+		#init point->index map, point->particle map
+		for x,id in it.izip(mesh.coordinates(),it.count()):
+			self.point_index[tuple(x)] = id
+			self.particles_point[tuple(x)] = []
+	def populate_regions(self,p_region_func):
+		self.in_p_region = p_region_func
+		def n_region_func(x):
+			return not p_region_func
+		self.in_n_region = n_region_func
+		for x in self.coordinates():
+			if(p_region_func(x)):
+				return x
 
 class AverageFunc():
 	def __init__(self,func):
@@ -40,7 +50,7 @@ class Particle():
 			print self.pos,self.pos[0],self.pos[1]
 			raise
 		self.meshpos = mesh.coordinates()[self.id]
-		particles_point.append(self)
+		mesh.particles_point[tuple(self.meshpos)].append(self)
 
 #globals
 sim_total_force = {10:array([0.,0.]),-10:array([0.,0.])}
@@ -54,11 +64,6 @@ current_values = []
 self_force= {10:array([0.,0.]),-10:array([0.,0.])}
 
 #functions
-def init_particle_mesh(mesh):
-	for x,id in izip(mesh.coordinates(),it.count()):
-		invert_indices[tuple(x)] = id
-		particles_point[tuple(x)] = []
-
 def random_momentum():
 	theta = rd.random()*2*pi
 	magnitude = rd.random()
@@ -85,26 +90,26 @@ def reap_list(full,remove_ids):
 		full.pop(id-count)
 		count += 1
 
-def replenish_boundary(mesh,density,particles,holes,electrons)
+def replenish_boundary(mesh,density,particles,holes,electrons):
 	#these are the thermal equilibrium holes and
 	#electrons provided by the contacts
 	bmesh = BoundaryMesh(mesh)
-	coord = bmesh.coordinates()
-	for point in coord:
-		if triangle.point_in_triangle(point,innertriangle):
-			diff = difference(outer_value,density)
-			for x in xrange(difference(outer_value,density)):
-				holes.append(point)
+	boundary = bmesh.coordinates()
+	for point in boundary:
+		id = mesh.point_index[tuple(point)]
+		if mesh.in_p_region(point):
+		#if triangle.point_in_triangle(point,innertriangle):
+			holes.append(array(point))
 		else:
-			electrons.append(point)
+			electrons.append(array(point))
 
 def photo_generate(mesh,density,particles,holes,electrons):
 	#these are the photogenerated electron hole pairs
 	plot(mesh)
 	coord = mesh.coordinates()
 	for point in coord:
-		holes.append(point)
-		electrons.append(point)
+		holes.append(array(point))
+		electrons.append(array(point))
 
 
 def replenish(mesh,density,boundary,particles):
@@ -120,8 +125,8 @@ def replenish(mesh,density,boundary,particles):
 	holes = []
 	electrons = []
 	
-	replenish_boundary(mesh,density,particles)
-#	photo_generate(mesh,density,particles)
+	replenish_boundary(mesh,density,particles,holes,electrons)
+#	photo_generate(mesh,density,particles,holes,electrons)
 
 	new_particles = init_electrons(1,electrons,-10,mesh)
 	new_particles += init_electrons(1,holes,10,mesh)

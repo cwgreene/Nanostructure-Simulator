@@ -37,7 +37,10 @@ def custom_func(mesh,V,particles):
 thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
 meshSizeX = 50
 meshSizeY = 50
-mesh = ParticleMesh(tm.innertriangle(5,.10,thetriangle))
+
+mesh = mc.ParticleMesh(tm.innertriangle(5,.10,thetriangle))
+mesh.populate_regions(lambda x: triangle.point_in_triangle(x,thetriangle*.5))
+
 plot(mesh)
 V = FunctionSpace(mesh, "CG", 2)
 
@@ -73,7 +76,6 @@ particles = []
 particles += mc.init_electrons(1,mesh.coordinates(),charge=-10,mesh=mesh)
 particles += mc.init_electrons(1,mesh.coordinates(),charge=10,mesh=mesh)
 f = custom_func(mesh,V,particles)
-init_particle_mesh(mesh)
 
 #init Files
 file = File("data/poisson_attract.pvd")
