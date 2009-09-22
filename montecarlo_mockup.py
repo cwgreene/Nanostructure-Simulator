@@ -6,6 +6,17 @@ import itertools as it
 import time
 import triangle
 
+class ParticleMesh(Mesh):
+	def __init__(self,mesh):
+		Mesh.__init__(self,mesh)
+		self.invert_indices = {}
+		self.particles_point = {}
+		for x,id in izip(mesh.coordinates(),it.count()):
+			self.invert_indices[tuple(x)] = id
+			self.particles_point[tuple(x)] = []
+
+	
+
 class AverageFunc():
 	def __init__(self,func):
 		self.func = func
@@ -21,8 +32,15 @@ class Particle():
 		self.dx = array(dx)
 		self.lifetime = int(lifetime)
 		self.charge = charge
-		self.id = du.vert_index(mesh,self.pos)
+		
+		#mesh_id data
+		try:
+			self.id = du.vert_index(mesh,self.pos)
+		except:#bad,verybad
+			print self.pos,self.pos[0],self.pos[1]
+			raise
 		self.meshpos = mesh.coordinates()[self.id]
+		particles_point.append(self)
 
 #globals
 sim_total_force = {10:array([0.,0.]),-10:array([0.,0.])}
@@ -34,9 +52,17 @@ sim_p_count = {10:0,-10:0}
 current_values = []
 
 self_force= {10:array([0.,0.]),-10:array([0.,0.])}
+
 #functions
+def init_particle_mesh(mesh):
+	for x,id in izip(mesh.coordinates(),it.count()):
+		invert_indices[tuple(x)] = id
+		particles_point[tuple(x)] = []
+
 def random_momentum():
-	return (rd.random()-.5)*2,(rd.random()-.5)*2
+	theta = rd.random()*2*pi
+	magnitude = rd.random()
+	return magnitude*cos(theta),magnitude*sin(theta)
 
 def init_electrons(num,points,charge=-1,mesh=None):
 	electrons = []
@@ -59,6 +85,28 @@ def reap_list(full,remove_ids):
 		full.pop(id-count)
 		count += 1
 
+def replenish_boundary(mesh,density,particles,holes,electrons)
+	#these are the thermal equilibrium holes and
+	#electrons provided by the contacts
+	bmesh = BoundaryMesh(mesh)
+	coord = bmesh.coordinates()
+	for point in coord:
+		if triangle.point_in_triangle(point,innertriangle):
+			diff = difference(outer_value,density)
+			for x in xrange(difference(outer_value,density)):
+				holes.append(point)
+		else:
+			electrons.append(point)
+
+def photo_generate(mesh,density,particles,holes,electrons):
+	#these are the photogenerated electron hole pairs
+	plot(mesh)
+	coord = mesh.coordinates()
+	for point in coord:
+		holes.append(point)
+		electrons.append(point)
+
+
 def replenish(mesh,density,boundary,particles):
 	print "boundary",len(boundary)
 	print "prior particles",len(particles)
@@ -67,22 +115,21 @@ def replenish(mesh,density,boundary,particles):
 	vert3 = array([0.,.57735])
 
 	outertriangle = array([vert1,vert2,vert3])
-	innertriangle = outertriangle*.25
+	innertriangle = outertriangle*.5
 
 	holes = []
 	electrons = []
-	for point in mesh.coordinates():
-		if triangle.point_in_triangle(point,innertriangle):
-			holes.append(point)
-		else:
-			electrons.append(point)
-	parts = init_electrons(1,electrons,-10,mesh)
-	parts += init_electrons(1,holes,10,mesh)
-	for p in parts:
+	
+	replenish_boundary(mesh,density,particles)
+#	photo_generate(mesh,density,particles)
+
+	new_particles = init_electrons(1,electrons,-10,mesh)
+	new_particles += init_electrons(1,holes,10,mesh)
+	for p in new_particles:
 		density[p.id] += p.charge
-	for x in parts:
+	for x in new_particles:
 		particles.append(x)
-	print "parts",len(parts)
+	print "parts",len(new_particles)
 	print "total particles",len(particles)
 
 def print_avg(name,value,count):
@@ -96,11 +143,12 @@ def current_exit(particle,boundary):
 	outertriangle = array([vert1,vert2,vert3])
 	innertriangle = outertriangle*.25
 
+	speed = sqrt(dot(particle.pos,particle.pos))
 	exit = du.closest_exit(boundary,particle.pos)
 	if triangle.point_in_triangle(exit,innertriangle):
-		return particle.charge*-1
+		return particle.charge*-1*speed
 	else:
-		return particle.charge
+		return particle.charge*speed
 
 def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_dens):
 	#electrons = init_electrons()
@@ -119,14 +167,19 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_de
 	#next_step density function array
 	nextDensity = density_func.vector().array()
 	start = time.time()
+	rem_time = 0.
+	mesh_lookup_time = 0.
 	bd = du.boundary_dict(mesh)
 	for index in xrange(len(particles)):
 		p = particles[index]
 		nextDensity[p.id] -= p.charge #remove from old location
+		start2 = time.time()
 		randomElectronMovement(p,electric_field,
 					density_func,mesh)
+		rem_time += time.time()-start2
 		total_momentum[p.charge] += p.momentum
 		count[p.charge] += 1
+		start2 = time.time()
 		if(du.out_of_bounds(mesh,p.pos)): #need to figure out exit
 			reaper.append(index)
 			current += current_exit(p,bd)#du.closest_exit(bd,p.pos)
@@ -134,7 +187,8 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_de
 			p.id = du.vert_index(mesh,p.pos) #get new p.id
 			p.meshpos = mesh.coordinates()[p.id] #lock to grid
 			nextDensity[p.id] += p.charge
-	print (time.time()-start),len(reaper)
+		mesh_lookup_time += time.time()-start2
+	print "Main loop:",(time.time()-start),len(reaper)
 	start = time.time()
 	reap_list(particles,reaper)
 	print (time.time()-start)
@@ -151,7 +205,12 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_de
 			print_avg("SMForce",sim_total_force[t],sim_force_count[t])
 	current_values.append(current)
 	print current_values
+	
+	start = time.time()
 	replenish(mesh,nextDensity,bd,particles)
+	print "Replenish took:",time.time()-start
+	print "random electron movement time:",rem_time
+	print "Mesh lookup time:",mesh_lookup_time
 	avg_dens.inc(nextDensity)
 	density_func.vector().set(nextDensity)
 
@@ -162,7 +221,7 @@ def randomElectronMovement(particle,electric_field,density_func,mesh):
 	
 	p = particle
 	
-	dt = lifetime/100.
+	dt = lifetime/1000.
 	p.momentum += 100*drift(mesh,electric_field,p)*dt
 	p.pos += p.momentum*dt/mass_particle
 	p.dx += p.momentum*dt/mass_particle

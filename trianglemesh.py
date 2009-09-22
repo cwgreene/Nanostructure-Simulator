@@ -25,7 +25,7 @@ def tmesh(refinements=0):
 	refinemesh(mesh,refinements)
 	return mesh
 
-def innertriangle(refinements=0):
+def innertriangle(refinements,scale,triangle):
 	mesh = Mesh()
 	editor = MeshEditor()
 	
@@ -35,15 +35,16 @@ def innertriangle(refinements=0):
 	editor.initCells(6)
 
 	#outer
-	vert1 = np.array([-.5,-.288675])
-	vert2 = np.array([.5,-.288675])
-	vert3 = np.array([0.,.57735])
+	print triangle
+	vert1,vert2,vert3 = np.array(triangle)
+#	vert1 = np.array([-.5,-.288675])
+#	vert2 = np.array([.5,-.288675])
+#	vert3 = np.array([0.,.57735])
 	editor.addVertex(0,*vert1)
 	editor.addVertex(1,*vert2)
 	editor.addVertex(2,*vert3)
 
 	#inner
-	scale = .25
 	editor.addVertex(3,*(vert1*scale))
 	editor.addVertex(4,*(vert2*scale))
 	editor.addVertex(5,*(vert3*scale))
@@ -59,15 +60,27 @@ def innertriangle(refinements=0):
 
 	refinemesh(mesh,refinements)
 	return mesh
-#
 
-def innerouter(divisions):
+
+def innerouter(divisions,inner):
 	vert1 = np.array([-.5,-.288675])
 	vert2 = np.array([.5,-.288675])
 	vert3 = np.array([0.,.57735])
 
 	outer = np.array([vert1,vert2,vert3])
+
+	line1 = (vert3-vert1)/divisions
+	line2 = (vert2-vert1)/divisions
 	
 	#generate_points
-	for x in range(ydivisions):
-		
+	y_points = [vert1]
+	for n in range(divisions-1):
+		y_points.append(line1*(n+1))
+	for n in range(divisions-1):
+		x_points.append(line2*(n+1))
+	x_points.append(vert2)
+
+	for height in range(len(y_points)):
+		for x_point in x_points[height:len(x_points)-height]:
+			vertices.append(y_points[height]+x_point)
+	vertices.append(vert3)

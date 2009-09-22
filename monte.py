@@ -11,8 +11,8 @@ and boundary conditions given by
     u(x, y) = 0 for x = 0 or x = 1
 """
 
-__author__ = "Anders Logg (logg@simula.no)/Chris Greene"
-__date__ = "2007-08-16 -- 2008-12-13 / 2009-08-18"
+__author__ = "Chris Greene"
+__date__ = "2009-08-18"
 __copyright__ = "Copyright (C) 2007-2008 Anders Logg"
 __license__  = "GNU LGPL Version 2.1"
 
@@ -23,6 +23,7 @@ import dolfin_util as du
 import time
 import mcoptions,sys
 import trianglemesh as tm
+import triangle
 options = mcoptions.get_options()
 #dolfin_set("linear algebra backend","Epetra"
 
@@ -33,24 +34,26 @@ def custom_func(mesh,V,particles):
 	return f
 
 # Create mesh and define function space
+thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
 meshSizeX = 50
 meshSizeY = 50
-mesh = tm.innertriangle(5)#UnitSquare(meshSizeX,meshSizeY)
-#plot(mesh)
+mesh = ParticleMesh(tm.innertriangle(5,.10,thetriangle))
+plot(mesh)
 V = FunctionSpace(mesh, "CG", 2)
+
 
 # Define Dirichlet boundary (x = 0 or x = 1)
 class InnerTriangle(SubDomain):
     def inside(self, x, on_boundary):
         if on_boundary:
-		if np.linalg.norm(x[0])+np.linalg.norm(x[1]) < .5:
+		if triangle.point_in_triangle(x,thetriangle*.5):
 			return True
 	return False
 
 class OuterTriangle(SubDomain):
     def inside(self, x, on_boundary):
         if on_boundary:
-		if np.linalg.norm(x[0])+np.linalg.norm(x[1]) > .5:
+		if not triangle.point_in_triangle(x,thetriangle*.5):
 			return True
 	return False
 
@@ -64,14 +67,15 @@ bcs = [bc0,bc1]
 # Define variational problem
 v = TestFunction(V)
 u = TrialFunction(V)
-
-#function
+#init particles
 particles = []
-
+#electrons, holes
 particles += mc.init_electrons(1,mesh.coordinates(),charge=-10,mesh=mesh)
-#holes
 particles += mc.init_electrons(1,mesh.coordinates(),charge=10,mesh=mesh)
 f = custom_func(mesh,V,particles)
+init_particle_mesh(mesh)
+
+#init Files
 file = File("data/poisson_attract.pvd")
 dfile = File("data/density_attract.pvd")
 adfile = File("data/avg_density.pvd")

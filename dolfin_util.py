@@ -38,16 +38,19 @@ def feval(function,points):
 def feval_p(function,point):
 	return feval(function,points)[0]
 
-def cell_index(mesh,point):
-	point = Point(*point)
+def cell_index(mesh,apoint):
+	point = Point(*apoint)
 	cells = ArrayUInt()
 	mesh.intersection(point,cells)
-	result = cells[0]
+	try:
+		result = cells[0]
+	except:
+		print point[0],point[1]
+		raise
 	delete(cells)
 	return result
 
 def vert_index(mesh,point):
-	#print point
 	indices = mesh.cells()[cell_index(mesh,point)]
 	coord = mesh.coordinates()
 	#return indices[0]
