@@ -100,9 +100,11 @@ def replenish_boundary(mesh,density,particles,holes,electrons):
 	for point in boundary:
 		id = mesh.point_index[tuple(point)]
 		if mesh.in_p_region(point):
-			holes.append(array(point))
+			if(density[id] < 0):
+				holes.append(array(point))
 		else:
-			electrons.append(array(point))
+			if(density[id] > 0):
+				electrons.append(array(point))
 
 def photo_generate(mesh,density,particles,holes,electrons):
 	#these are the photogenerated electron hole pairs

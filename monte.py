@@ -39,7 +39,7 @@ meshSizeX = 50
 meshSizeY = 50
 
 mesh = mc.ParticleMesh(tm.innertriangle(5,.10,thetriangle))
-mesh.populate_regions(lambda x: triangle.point_in_triangle(x,thetriangle*.5))
+mesh.populate_regions(lambda x: triangle.point_in_triangle(x,thetriangle*.5),0,0)
 
 plot(mesh)
 V = FunctionSpace(mesh, "CG", 2)
