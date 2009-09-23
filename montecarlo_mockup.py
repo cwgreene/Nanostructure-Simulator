@@ -18,14 +18,16 @@ class ParticleMesh(Mesh):
 		for x,id in it.izip(mesh.coordinates(),it.count()):
 			self.point_index[tuple(x)] = id
 			self.particles_point[tuple(x)] = []
-	def populate_regions(self,p_region_func):
+	def populate_regions(self,p_region_func,doping_p,doping_n):
 		self.in_p_region = p_region_func
 		def n_region_func(x):
 			return not p_region_func
 		self.in_n_region = n_region_func
 		for x in self.coordinates():
 			if(p_region_func(x)):
-				return x
+				self.p_region[tuple(x)] = 10
+			else:
+				self.n_region[tuple(x)] = -10
 
 class AverageFunc():
 	def __init__(self,func):
@@ -98,7 +100,6 @@ def replenish_boundary(mesh,density,particles,holes,electrons):
 	for point in boundary:
 		id = mesh.point_index[tuple(point)]
 		if mesh.in_p_region(point):
-		#if triangle.point_in_triangle(point,innertriangle):
 			holes.append(array(point))
 		else:
 			electrons.append(array(point))
