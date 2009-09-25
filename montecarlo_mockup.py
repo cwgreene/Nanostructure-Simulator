@@ -7,6 +7,9 @@ import time
 import triangle
 
 class ParticleMesh(Mesh):
+	n_carrier_charge = -10
+	p_carrier_charge = 10
+	carrier_charge = 10
 	def __init__(self,mesh):
 		Mesh.__init__(self,mesh)
 		self.point_index = {}
@@ -25,9 +28,9 @@ class ParticleMesh(Mesh):
 		self.in_n_region = n_region_func
 		for x in self.coordinates():
 			if(p_region_func(x)):
-				self.p_region[tuple(x)] = 10
+				self.p_region[tuple(x)] = self.p_carrier_charge
 			else:
-				self.n_region[tuple(x)] = -10
+				self.n_region[tuple(x)] = self.n_carrier_charge
 
 class AverageFunc():
 	def __init__(self,func):
@@ -52,6 +55,7 @@ class Particle():
 			print self.pos,self.pos[0],self.pos[1]
 			raise
 		self.meshpos = mesh.coordinates()[self.id]
+		#particles_point must be update on move
 		mesh.particles_point[tuple(self.meshpos)].append(self)
 
 #globals
@@ -89,10 +93,23 @@ def reap_list(full,remove_ids):
 	remove_ids.sort()
 	count = 0
 	for id in remove_ids:
-		full.pop(id-count)
+		p = full.pop(id-count)
 		count += 1
 
-def replenish_boundary(mesh,density,particles,holes,electrons):
+def handle_region(mesh,density,point,particles,add_list,reaper,sign,id):
+	charge = mesh.carrier_charge*sign
+	
+	#create to balance
+	if(density[id]*sign < 0):
+		for i in xrange(int(-density[id]/charge)):
+			add_list.append(array(point))
+	#remove excess
+	if(density[id]*sign > 0):
+		for i in xrange(int(density[id]/charge)):
+			doom_particle = mesh.particles_point[tuple(point)].pop()
+			reaper.append(particles.index(doom_particle))
+
+def replenish_boundary(mesh,density,particles,holes,electrons,reaper):
 	#these are the thermal equilibrium holes and
 	#electrons provided by the contacts
 	bmesh = BoundaryMesh(mesh)
@@ -100,11 +117,11 @@ def replenish_boundary(mesh,density,particles,holes,electrons):
 	for point in boundary:
 		id = mesh.point_index[tuple(point)]
 		if mesh.in_p_region(point):
-			if(density[id] < 0):
-				holes.append(array(point))
+			handle_region(mesh,density,point,particles,
+					holes,reaper,1,id)
 		else:
-			if(density[id] > 0):
-				electrons.append(array(point))
+			handle_region(mesh,density,point,particles,
+					electrons,reaper,-1,id)
 
 def photo_generate(mesh,density,particles,holes,electrons):
 	#these are the photogenerated electron hole pairs
@@ -115,20 +132,21 @@ def photo_generate(mesh,density,particles,holes,electrons):
 		electrons.append(array(point))
 
 
-def replenish(mesh,density,boundary,particles):
+def replenish(mesh,density,boundary,particles,reaper):
 	print "boundary",len(boundary)
 	print "prior particles",len(particles)
 	vert1 = array([-.5,-.288675])
 	vert2 = array([.5,-.288675])
 	vert3 = array([0.,.57735])
 
-	outertriangle = array([vert1,vert2,vert3])
-	innertriangle = outertriangle*.5
+	#particles_point must be update on move
+#	outertriangle = array([vert1,vert2,vert3])
+#	innertriangle = outertriangle*.5
 
 	holes = []
 	electrons = []
 	
-	replenish_boundary(mesh,density,particles,holes,electrons)
+	replenish_boundary(mesh,density,particles,holes,electrons,reaper)
 #	photo_generate(mesh,density,particles,holes,electrons)
 
 	new_particles = init_electrons(1,electrons,-10,mesh)
@@ -136,6 +154,7 @@ def replenish(mesh,density,boundary,particles):
 	for p in new_particles:
 		density[p.id] += p.charge
 	for x in new_particles:
+		#particles_point must be update on move
 		particles.append(x)
 	print "parts",len(new_particles)
 	print "total particles",len(particles)
@@ -157,6 +176,7 @@ def current_exit(particle,boundary):
 		return particle.charge*-1*speed
 	else:
 		return particle.charge*speed
+
 
 def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_dens):
 	#electrons = init_electrons()
@@ -180,13 +200,21 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_de
 	bd = du.boundary_dict(mesh)
 	for index in xrange(len(particles)):
 		p = particles[index]
-		nextDensity[p.id] -= p.charge #remove from old location
+		
+		#remove from old locations
+		nextDensity[p.id] -= p.charge
+		mesh.particles_point[tuple(p.meshpos)].remove(p)
+
+		#begin movement	
 		start2 = time.time()
 		randomElectronMovement(p,electric_field,
 					density_func,mesh)
 		rem_time += time.time()-start2
+		
+		#stats stuff	
 		total_momentum[p.charge] += p.momentum
 		count[p.charge] += 1
+		
 		start2 = time.time()
 		if(du.out_of_bounds(mesh,p.pos)): #need to figure out exit
 			reaper.append(index)
@@ -194,13 +222,21 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_de
 		else:
 			p.id = du.vert_index(mesh,p.pos) #get new p.id
 			p.meshpos = mesh.coordinates()[p.id] #lock to grid
+			mesh.particles_point[tuple(p.meshpos)].append(p)
 			nextDensity[p.id] += p.charge
 		mesh_lookup_time += time.time()-start2
 	print "Main loop:",(time.time()-start),len(reaper)
+	#replenish, with reaper		
+	start = time.time()
+	replenish(mesh,nextDensity,bd,particles,reaper)
+	replenish_time = time.time()-start
+
+	#reap
 	start = time.time()
 	reap_list(particles,reaper)
-	print (time.time()-start)
-
+	reap_time = time.time()-start
+	reaper = []
+		
 	if count != 0:
 		legend = {-10:"electrons",10:"holes"}
 		for t in legend:
@@ -214,9 +250,8 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,particles,avg_de
 	current_values.append(current)
 	print current_values
 	
-	start = time.time()
-	replenish(mesh,nextDensity,bd,particles)
-	print "Replenish took:",time.time()-start
+	print "Reaper:",reap_time
+	print "Replenish took:",replenish_time
 	print "random electron movement time:",rem_time
 	print "Mesh lookup time:",mesh_lookup_time
 	avg_dens.inc(nextDensity)
@@ -253,7 +288,8 @@ def drift(mesh,func,particle):
 	global sim_total_force,sim_force_count
 	global self_force
 	p = particle
-	force = du.get_vec(mesh,func,p.meshpos)*100*p.charge-self_force[p.charge]
+	force = (du.get_vec(mesh,func,p.meshpos)*
+		100*p.charge-self_force[p.charge])
 	total_force[p.charge] += force
  	force_count[p.charge] += 1
 	sim_force_count[p.charge] += 1
