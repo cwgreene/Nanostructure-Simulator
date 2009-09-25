@@ -27,7 +27,7 @@ import triangle
 options = mcoptions.get_options()
 #dolfin_set("linear algebra backend","Epetra"
 
-def custom_func(mesh,V,particles):
+def custom_func(mesh,V):
 	f = Function(V)
 #	for p in particles:
 #		du.alter_cellid(mesh,f,p.id,p.charge)
@@ -35,15 +35,13 @@ def custom_func(mesh,V,particles):
 
 # Create mesh and define function space
 thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
-meshSizeX = 50
-meshSizeY = 50
-
 mesh = mc.ParticleMesh(tm.innertriangle(5,.10,thetriangle))
-mesh.populate_regions(lambda x: triangle.point_in_triangle(x,thetriangle*.5),0,0)
+mesh.populate_regions(lambda x: 
+			triangle.point_in_triangle(x,thetriangle*.5),
+		      0,0)
 
 plot(mesh)
 V = FunctionSpace(mesh, "CG", 2)
-
 
 # Define Dirichlet boundary (x = 0 or x = 1)
 class InnerTriangle(SubDomain):
@@ -71,11 +69,10 @@ bcs = [bc0,bc1]
 v = TestFunction(V)
 u = TrialFunction(V)
 #init particles
-particles = []
 #electrons, holes
-particles += mc.init_electrons(1,mesh.coordinates(),charge=-10,mesh=mesh)
-particles += mc.init_electrons(1,mesh.coordinates(),charge=10,mesh=mesh)
-f = custom_func(mesh,V,particles)
+mc.init_electrons(1,mesh.coordinates(),charge=-10,mesh=mesh)
+mc.init_electrons(1,mesh.coordinates(),charge=10,mesh=mesh)
+f = custom_func(mesh,V)
 
 #init Files
 file = File("data/poisson_attract.pvd")
@@ -106,7 +103,7 @@ for x in range(options.num):
 	start = time.time()
 	electric_field = mc.negGradient(mesh,sol)
 	gradfile << electric_field
-	mc.MonteCarlo(mesh,sol,electric_field,f,particles,avg_dens)
+	mc.MonteCarlo(mesh,sol,electric_field,f,avg_dens)
 	print "Took: ",time.time()-start
 #	plot(f)
 file << sol
