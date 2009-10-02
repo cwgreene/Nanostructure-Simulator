@@ -70,9 +70,11 @@ v = TestFunction(V)
 u = TrialFunction(V)
 #init particles
 #electrons, holes
-mc.init_electrons(1,mesh.coordinates(),charge=-10,mesh=mesh)
-mc.init_electrons(1,mesh.coordinates(),charge=10,mesh=mesh)
+mc.init_electrons(10,mesh.coordinates(),charge=-10,mesh=mesh)
+mc.init_electrons(10,mesh.coordinates(),charge=10,mesh=mesh)
 f = custom_func(mesh,V)
+g = Function(V)
+g.vector().set(f.vector().array())
 
 #init Files
 file = File("data/poisson_attract.pvd")
@@ -95,10 +97,12 @@ def PoissonSolve(density):
 	return sol
 
 for x in range(options.num):
-	sol = PoissonSolve(f)
+	g.vector().set(avg_dens.func)
+	sol = PoissonSolve(g)
 	# Plot solution
 	file << sol
 	dfile << f
+	adfile << g
 	print "Starting Step ",x
 	start = time.time()
 	electric_field = mc.negGradient(mesh,sol)

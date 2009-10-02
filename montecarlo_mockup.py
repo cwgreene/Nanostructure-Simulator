@@ -46,9 +46,10 @@ class Particle():
 		self.pos = array(pos)
 		self.momentum = array(momentum)
 		self.dx = array(dx)
-		self.lifetime = int(lifetime)
+		self.lifetime = rd.random()*.01#int(lifetime)
 		self.charge = charge
-		
+		self.dead = False
+
 		#mesh_id data
 		try:
 			self.id = du.vert_index(mesh,self.pos)
@@ -69,6 +70,8 @@ force_count = {10:0,-10:0}
 sim_total_p = {10:array([0.,0.]),-10:array([0.,0.])}
 sim_p_count = {10:0,-10:0}
 current_values = []
+avg_lifetime = 0.
+lifetime_count = 1
 
 self_force= {10:array([0.,0.]),-10:array([0.,0.])}
 
@@ -93,11 +96,15 @@ def negGradient(mesh,field):
 	return project(grad(-field),V)
 
 def reap_list(full,remove_ids):
+	global avg_lifetime,lifetime_count
 	remove_ids.sort()
 	count = 0
 	for id in remove_ids:
+		#print id,count
 		p = full.pop(id-count)
 		count += 1
+		avg_lifetime += p.lifetime
+		lifetime_count += 1
 	for id in xrange(len(full)):
 		p = full[id]
 		p.part_id = id
@@ -112,7 +119,6 @@ def handle_region(mesh,density,point,add_list,reaper,sign,id):
 	#remove excess
 	if(density[id]*sign > 0):
 		for i in xrange(int(density[id]/charge)):
-			print "deleting:",i,"Charge:",density[id]
 			doom_particle = mesh.particles_point[tuple(point)].pop()
 			density[id] -= charge
 			reaper.append(doom_particle.part_id)
@@ -186,6 +192,7 @@ def current_exit(particle,boundary):
 def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
 	#electrons = init_electrons()
 	global total_force,force_count,sim_total_p,sim_p_count,current_values
+	global avg_lifetime
 	#plot(electric_field)
 	reaper = []
 
@@ -213,7 +220,7 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
 		#begin movement	
 		start2 = time.time()
 		randomElectronMovement(p,electric_field,
-					density_func,mesh)
+					density_func,mesh,reaper)
 		rem_time += time.time()-start2
 		
 		#stats stuff	
@@ -221,16 +228,25 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
 		count[p.charge] += 1
 		
 		start2 = time.time()
-		if(du.out_of_bounds(mesh,p.pos)): #need to figure out exit
-			reaper.append(index)
-			current += current_exit(p,bd)#du.closest_exit(bd,p.pos)
-		else:
-			p.id = du.vert_index(mesh,p.pos) #get new p.id
-			p.meshpos = mesh.coordinates()[p.id] #lock to grid
-			mesh.particles_point[tuple(p.meshpos)].append(p)
-			nextDensity[p.id] += p.charge
+		if p.dead == False:
+			if(du.out_of_bounds(mesh,p.pos)): #need to figure out exit
+				reaper.append(index)
+				p.dead = True
+				current += current_exit(p,bd)#du.closest_exit(bd,p.pos)
+			else:
+				p.id = du.vert_index(mesh,p.pos) #get new p.id
+				p.meshpos = mesh.coordinates()[p.id] #lock to grid
+				mesh.particles_point[tuple(p.meshpos)].append(p)
+				nextDensity[p.id] += p.charge
 		mesh_lookup_time += time.time()-start2
 	print "Main loop:",(time.time()-start),len(reaper)
+
+	#reap
+	start = time.time()
+	reap_list(mesh.particles,reaper)
+	reap_time = time.time()-start
+	reaper = []
+
 	#replenish, with reaper		
 	start = time.time()
 	replenish(mesh,nextDensity,bd,reaper)
@@ -252,6 +268,8 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
 			print_avg("force",total_force[t],force_count[t])
 			print_avg("SMMomentum",sim_total_p[t],sim_p_count[t])
 			print_avg("SMForce",sim_total_force[t],sim_force_count[t])
+		if lifetime_count !=0:
+			print_avg("lifetime",avg_lifetime,lifetime_count)
 	current_values.append(current)
 	print current_values
 	
@@ -262,15 +280,16 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
 	avg_dens.inc(nextDensity)
 	density_func.vector().set(nextDensity)
 
-def randomElectronMovement(particle,electric_field,density_func,mesh):
+def randomElectronMovement(particle,electric_field,density_func,mesh,reaper):
+	global avg_lifetime
 	meanpathlength = 1#getMeanPathLength(cell)
-	lifetime = 1.#lifetime(cell)
+	lifetime = .001#lifetime(cell)
 	mass_particle = 1
 	
 	p = particle
 	
-	dt = lifetime/1000.
-	p.momentum += 100*drift(mesh,electric_field,p)*dt
+	dt = 1./1000.
+	p.momentum += drift(mesh,electric_field,p)*dt
 	p.pos += p.momentum*dt/mass_particle
 	p.dx += p.momentum*dt/mass_particle
 	#check for out of bounds
@@ -280,11 +299,11 @@ def randomElectronMovement(particle,electric_field,density_func,mesh):
 	#if(dot(e.dx,e.dx) > meanpathlength**2):
 	#	e.dx = array([0.,0.])
 	#	e.momentum += array([0,0])#scatter(e.momentum,e.pos,mesh)
-	#if(e.lifetime > lifetime):
-	#	e.pos = array([.5,.5]) #Send back to middle
-	#	e.lifetime = 0
+	if(p.lifetime < 0):
+		p.dead = True
+		reaper.append(p.part_id)
 	#print e.momentum
-	p.lifetime += dt
+	p.lifetime -= dt
 
 #drift calculates drift force due to forces
 #F = dp/dt

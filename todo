@@ -29,4 +29,6 @@ averages would be the current.
 
 7) are we going fast enough?
 
-8) Need to update moved electrons into inverse list
+8) Okay, we need to be able to dump the state of the simulation,
+and resume it from where we left off. I think this will also help
+reduce the relaxation time when we vary the voltage diff.
