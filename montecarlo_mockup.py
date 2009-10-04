@@ -12,6 +12,7 @@ class ParticleMesh(Mesh):
 	carrier_charge = 10
 	def __init__(self,mesh):
 		Mesh.__init__(self,mesh)
+		self.bd = du.boundary_dict(mesh)
 		self.point_index = {}
 		self.particles_point = {}
 		self.p_region = {}
@@ -27,6 +28,7 @@ class ParticleMesh(Mesh):
 		def n_region_func(x):
 			return not p_region_func
 		self.in_n_region = n_region_func
+		count = 0
 		for x in self.coordinates():
 			if(p_region_func(x)):
 				self.p_region[tuple(x)] = self.p_carrier_charge
@@ -46,7 +48,7 @@ class Particle():
 		self.pos = array(pos)
 		self.momentum = array(momentum)
 		self.dx = array(dx)
-		self.lifetime = rd.random()*.01#int(lifetime)
+		self.lifetime = rd.random()*.4#int(lifetime)
 		self.charge = charge
 		self.dead = False
 
@@ -69,7 +71,6 @@ total_force = {10:array([0.,0.]),-10:array([0.,0.])}
 force_count = {10:0,-10:0}
 sim_total_p = {10:array([0.,0.]),-10:array([0.,0.])}
 sim_p_count = {10:0,-10:0}
-current_values = []
 avg_lifetime = 0.
 lifetime_count = 1
 
@@ -100,7 +101,6 @@ def reap_list(full,remove_ids):
 	remove_ids.sort()
 	count = 0
 	for id in remove_ids:
-		#print id,count
 		p = full.pop(id-count)
 		count += 1
 		avg_lifetime += p.lifetime
@@ -189,9 +189,10 @@ def current_exit(particle,boundary):
 		return particle.charge*speed
 
 
-def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
+def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens,
+		current_values):
 	#electrons = init_electrons()
-	global total_force,force_count,sim_total_p,sim_p_count,current_values
+	global total_force,force_count,sim_total_p,sim_p_count
 	global avg_lifetime
 	#plot(electric_field)
 	reaper = []
@@ -209,7 +210,6 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
 	start = time.time()
 	rem_time = 0.
 	mesh_lookup_time = 0.
-	bd = du.boundary_dict(mesh)
 	for index in xrange(len(mesh.particles)):
 		p = mesh.particles[index]
 		
@@ -228,19 +228,22 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
 		count[p.charge] += 1
 		
 		start2 = time.time()
-		if p.dead == False:
-			if(du.out_of_bounds(mesh,p.pos)): #need to figure out exit
+		if p.dead == False: #if we didn't kill it.
+			if(du.out_of_bounds(mesh,p.pos)): 
+				#need to figure out exit
 				reaper.append(index)
 				p.dead = True
-				current += current_exit(p,bd)#du.closest_exit(bd,p.pos)
+				current += current_exit(p,mesh.bd)
 			else:
-				p.id = du.vert_index(mesh,p.pos) #get new p.id
-				p.meshpos = mesh.coordinates()[p.id] #lock to grid
+				#get new p.id
+				p.id = du.vert_index(mesh,p.pos)
+				#lock to grid
+				p.meshpos = mesh.coordinates()[p.id]
 				mesh.particles_point[tuple(p.meshpos)].append(p)
+				#associate charge with density func
 				nextDensity[p.id] += p.charge
 		mesh_lookup_time += time.time()-start2
 	print "Main loop:",(time.time()-start),len(reaper)
-
 	#reap
 	start = time.time()
 	reap_list(mesh.particles,reaper)
@@ -249,7 +252,7 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
 
 	#replenish, with reaper		
 	start = time.time()
-	replenish(mesh,nextDensity,bd,reaper)
+	replenish(mesh,nextDensity,mesh.bd,reaper)
 	replenish_time = time.time()-start
 
 	#reap
@@ -271,7 +274,7 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens):
 		if lifetime_count !=0:
 			print_avg("lifetime",avg_lifetime,lifetime_count)
 	current_values.append(current)
-	print current_values
+	#print current_values
 	
 	print "Reaper:",reap_time
 	print "Replenish took:",replenish_time

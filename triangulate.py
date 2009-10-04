@@ -94,3 +94,4 @@ def add_down_triangles(unitx,unity,unity2,y,trap):
 	top_pairs = zip(top_row[:-1],top_row[1:])
 	triangles = map(flat,zip(top_pairs,bottom_row))
 	return triangles
+

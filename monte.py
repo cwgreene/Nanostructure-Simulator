@@ -24,6 +24,7 @@ import time
 import mcoptions,sys
 import trianglemesh as tm
 import triangle
+import meshtest
 options = mcoptions.get_options()
 #dolfin_set("linear algebra backend","Epetra"
 
@@ -35,11 +36,10 @@ def custom_func(mesh,V):
 
 # Create mesh and define function space
 thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
-mesh = mc.ParticleMesh(tm.innertriangle(5,.10,thetriangle))
+mesh = mc.ParticleMesh(meshtest.TestMesh())
 mesh.populate_regions(lambda x: 
 			triangle.point_in_triangle(x,thetriangle*.5),
 		      0,0)
-
 plot(mesh)
 V = FunctionSpace(mesh, "CG", 2)
 
@@ -70,13 +70,16 @@ v = TestFunction(V)
 u = TrialFunction(V)
 #init particles
 #electrons, holes
-mc.init_electrons(10,mesh.coordinates(),charge=-10,mesh=mesh)
-mc.init_electrons(10,mesh.coordinates(),charge=10,mesh=mesh)
+print "adding electrons to regions"
+mc.init_electrons(10,mesh.n_region.keys(),charge=-10,mesh=mesh)
+mc.init_electrons(10,mesh.p_region.keys(),charge=10,mesh=mesh)
+print "Creating density functions"
 f = custom_func(mesh,V)
 g = Function(V)
 g.vector().set(f.vector().array())
 
 #init Files
+print "Creating Files"
 file = File("data/poisson_attract.pvd")
 dfile = File("data/density_attract.pvd")
 adfile = File("data/avg_density.pvd")
@@ -96,6 +99,10 @@ def PoissonSolve(density):
 	sol = problem.solve()
 	return sol
 
+current_values = []
+
+print "Beginning Simulation"
+
 for x in range(options.num):
 	g.vector().set(avg_dens.func)
 	sol = PoissonSolve(g)
@@ -107,11 +114,12 @@ for x in range(options.num):
 	start = time.time()
 	electric_field = mc.negGradient(mesh,sol)
 	gradfile << electric_field
-	mc.MonteCarlo(mesh,sol,electric_field,f,avg_dens)
+	mc.MonteCarlo(mesh,sol,electric_field,f,avg_dens,current_values)
 	print "Took: ",time.time()-start
 #	plot(f)
 file << sol
 dfile << f
+print current_values
 
 #dump average
 f.vector().set(avg_dens.func)
