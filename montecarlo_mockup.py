@@ -48,7 +48,7 @@ class Particle():
 		self.pos = array(pos)
 		self.momentum = array(momentum)
 		self.dx = array(dx)
-		self.lifetime = rd.random()*.4#int(lifetime)
+		self.lifetime = 2*rd.random()#int(lifetime)
 		self.charge = charge
 		self.dead = False
 
@@ -117,25 +117,31 @@ def handle_region(mesh,density,point,add_list,reaper,sign,id):
 		for i in xrange(int(-density[id]/charge)):
 			add_list.append(array(point))
 	#remove excess
+	exit_current = 0
 	if(density[id]*sign > 0):
 		for i in xrange(int(density[id]/charge)):
 			doom_particle = mesh.particles_point[tuple(point)].pop()
 			density[id] -= charge
 			reaper.append(doom_particle.part_id)
+			exit_current += current_exit(doom_particle,mesh)
+	return exit_current
 
 def replenish_boundary(mesh,density,holes,electrons,reaper):
 	#these are the thermal equilibrium holes and
 	#electrons provided by the contacts
 	bmesh = BoundaryMesh(mesh)
 	boundary = bmesh.coordinates()
+
+	current = 0
 	for point in boundary:
 		id = mesh.point_index[tuple(point)]
 		if mesh.in_p_region(point):
-			handle_region(mesh,density,point,
+			current += handle_region(mesh,density,point,
 					holes,reaper,1,id)
 		else:
-			handle_region(mesh,density,point,
+			current += handle_region(mesh,density,point,
 					electrons,reaper,-1,id)
+	return current
 
 def photo_generate(mesh,density,holes,electrons):
 	#these are the photogenerated electron hole pairs
@@ -149,41 +155,35 @@ def photo_generate(mesh,density,holes,electrons):
 def replenish(mesh,density,boundary,reaper):
 	print "boundary",len(boundary)
 	print "prior particles",len(mesh.particles)
-	vert1 = array([-.5,-.288675])
-	vert2 = array([.5,-.288675])
-	vert3 = array([0.,.57735])
-
-	#particles_point must be update on move
-#	outertriangle = array([vert1,vert2,vert3])
-#	innertriangle = outertriangle*.5
-
-	holes = []
-	electrons = []
 	
-	replenish_boundary(mesh,density,holes,electrons,reaper)
+	holes = []
+	electrons = []	
+	
+	#currents
+	exit_current = 0
+	enter_current = 0
+	
+	exit_current=replenish_boundary(mesh,density,holes,electrons,reaper)
 #	photo_generate(mesh,density,holes,electrons)
 
 	new_particles = init_electrons(1,electrons,-10,mesh)
 	new_particles += init_electrons(1,holes,10,mesh)
 	for p in new_particles:
 		density[p.id] += p.charge
+		enter_current += -current_exit(p,mesh)
 	print "parts",len(new_particles)
 	print "total particles",len(mesh.particles)
+	return enter_current+exit_current
 
 def print_avg(name,value,count):
 	print "Avg",name+":",value/count,count
 
-def current_exit(particle,boundary):
-	vert1 = array([-.5,-.288675])
-	vert2 = array([.5,-.288675])
-	vert3 = array([0.,.57735])
-
-	outertriangle = array([vert1,vert2,vert3])
-	innertriangle = outertriangle*.25
+def current_exit(particle,mesh):
+	boundary = mesh.bd
 
 	speed = sqrt(dot(particle.pos,particle.pos))
 	exit = du.closest_exit(boundary,particle.pos)
-	if triangle.point_in_triangle(exit,innertriangle):
+	if mesh.in_p_region(exit):
 		return particle.charge*-1*speed
 	else:
 		return particle.charge*speed
@@ -233,7 +233,7 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens,
 				#need to figure out exit
 				reaper.append(index)
 				p.dead = True
-				current += current_exit(p,mesh.bd)
+				current += current_exit(p,mesh)
 			else:
 				#get new p.id
 				p.id = du.vert_index(mesh,p.pos)
@@ -252,10 +252,10 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens,
 
 	#replenish, with reaper		
 	start = time.time()
-	replenish(mesh,nextDensity,mesh.bd,reaper)
+	current += replenish(mesh,nextDensity,mesh.bd,reaper)
 	replenish_time = time.time()-start
 
-	#reap
+	#reap again
 	start = time.time()
 	reap_list(mesh.particles,reaper)
 	reap_time = time.time()-start
@@ -274,7 +274,7 @@ def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens,
 		if lifetime_count !=0:
 			print_avg("lifetime",avg_lifetime,lifetime_count)
 	current_values.append(current)
-	#print current_values
+	print "Current:",current
 	
 	print "Reaper:",reap_time
 	print "Replenish took:",replenish_time

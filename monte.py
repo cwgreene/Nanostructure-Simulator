@@ -21,7 +21,7 @@ import montecarlo_mockup as mc
 import numpy as np
 import dolfin_util as du
 import time
-import mcoptions,sys
+import mcoptions,sys,os
 import trianglemesh as tm
 import triangle
 import meshtest
@@ -35,36 +35,53 @@ def custom_func(mesh,V):
 	return f
 
 # Create mesh and define function space
-thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
-mesh = mc.ParticleMesh(meshtest.TestMesh())
-mesh.populate_regions(lambda x: 
-			triangle.point_in_triangle(x,thetriangle*.5),
-		      0,0)
+#thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
+thetriangle = np.array([[0.,0.],[1.,0.],[.5,.8660254]])
+
+mesh = meshtest.TestMesh()
+mesh.refine()
+mesh = mc.ParticleMesh(mesh)
+#mesh = mc.ParticleMesh(tm.innertriangle(5,.2,thetriangle))
+
+inner = triangle.scale_triangle(thetriangle,.52)
+mesh.populate_regions(lambda x: triangle.point_in_triangle(x,inner), 0,0)
+plot(mesh)
+
+boundarymesh = BoundaryMesh(mesh)
+print len(boundarymesh.coordinates())
 plot(mesh)
 V = FunctionSpace(mesh, "CG", 2)
 
 # Define Dirichlet boundary (x = 0 or x = 1)
+repeated = {}
 class InnerTriangle(SubDomain):
     def inside(self, x, on_boundary):
         if on_boundary:
-		if triangle.point_in_triangle(x,thetriangle*.5):
+		#if (x[0],x[1]) in repeated:
+			#print "repeat:",(x[0],x[1])
+		repeated[(x[0],x[1])] = 0
+		if mesh.in_p_region(x):
+			#print "inner:",x[0],x[1]
 			return True
 	return False
 
 class OuterTriangle(SubDomain):
     def inside(self, x, on_boundary):
         if on_boundary:
-		if not triangle.point_in_triangle(x,thetriangle*.5):
+		if not mesh.in_p_region(x):
+			#print "outer",x[0],x[1]
 			return True
 	return False
 
 # Define boundary condition
-u0 = Constant(mesh, 0.0)
-u1 = Constant(mesh, options.V)
-bc0 = DirichletBC(V, u0, InnerTriangle())
-bc1 = DirichletBC(V, u1, OuterTriangle())
+pBoundary = Constant(mesh, options.V)
+nBoundary = Constant(mesh, 0.0) 
+bc0 = DirichletBC(V, pBoundary, InnerTriangle())
+print "Doom@"
+repeated_particles = {}
+bc1 = DirichletBC(V, nBoundary, OuterTriangle())
+print "Doom@"
 bcs = [bc0,bc1]
-
 # Define variational problem
 v = TestFunction(V)
 u = TrialFunction(V)
@@ -80,13 +97,30 @@ g.vector().set(f.vector().array())
 
 #init Files
 print "Creating Files"
-file = File("data/poisson_attract.pvd")
-dfile = File("data/density_attract.pvd")
-adfile = File("data/avg_density.pvd")
-avfile = File("data/avg_voltage.pvd")
-gradfile = File("data/grad_force.pvd")
-avggradfile = File("data/avg_force.pvd")
+datadir = options.datadir
+file = File(datadir+"/poisson_attract.pvd")
+dfile = File(datadir+"/density_attract.pvd")
+adfile = File(datadir+"/avg_density.pvd")
+avfile = File(datadir+"/avg_voltage.pvd")
+gradfile = File(datadir+"/grad_force.pvd")
+avggradfile = File(datadir+"/avg_force.pvd")
 avg_dens = mc.AverageFunc(f.vector().array())
+
+#other files
+import time
+import re
+def new_results_file():
+	files = os.listdir("results")
+	num=max([0]+map(int,re.findall("([0-9]+)results"," ".join(files))))
+	num += 1
+	filename = ("results/"+str(num)+"results"+
+			"_".join(map(str,time.gmtime())))
+	print "Creating:",filename
+	results_file = open(filename,"w")
+	results_file.write(str(options.V)+"\n")
+	results_file.write(str(options.num)+"\n")
+	return results_file
+		
 
 def PoissonSolve(density):
 	u = TrialFunction(V)
@@ -101,22 +135,34 @@ def PoissonSolve(density):
 
 current_values = []
 
+print "Creating results File"
+rf = new_results_file()
+
 print "Beginning Simulation"
 
 for x in range(options.num):
+	#Solve equation
+	start1 = time.time()
 	g.vector().set(avg_dens.func)
 	sol = PoissonSolve(g)
-	# Plot solution
-	file << sol
-	dfile << f
-	adfile << g
+
+	#handle Monte Carlo
 	print "Starting Step ",x
-	start = time.time()
+	start2 = time.time()
 	electric_field = mc.negGradient(mesh,sol)
 	gradfile << electric_field
 	mc.MonteCarlo(mesh,sol,electric_field,f,avg_dens,current_values)
-	print "Took: ",time.time()-start
-#	plot(f)
+
+	#Report
+	#Write Results
+	file << sol
+	dfile << f
+	adfile << g
+	rf.write(str(current_values[-1]));rf.write("\n");rf.flush()
+
+	end = time.time()
+	print "Monte Took: ",end-start2
+	print "Loop Took:",end-start1
 file << sol
 dfile << f
 print current_values
