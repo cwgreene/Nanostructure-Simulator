@@ -1,82 +1,118 @@
-AverageFunc	montecarlo_mockup.py	/^class AverageFunc(/
-DirichletBoundary	demo.py	/^class DirichletBoundary(/
-DirichletBoundary	minpoisson.py	/^class DirichletBoundary(/
-Grid	grid.py	/^class Grid:/
-InnerTriangle	monte.py	/^class InnerTriangle(/
-MonteCarlo	montecarlo_mockup.py	/^def MonteCarlo(/
-OuterTriangle	monte.py	/^class OuterTriangle(/
-Particle	montecarlo_mockup.py	/^class Particle(/
-PoissonSolve	monte.py	/^def PoissonSolve(/
-PreMesh	premesh.py	/^class PreMesh:/
-__init__	grid.py	/^	def __init__(/
-__init__	montecarlo_mockup.py	/^	def __init__(/
-__init__	montecarlo_mockup.py	/^	def __init__(/
-__init__	premesh.py	/^	def __init__(/
-add_face	premesh.py	/^	def add_face(/
-add_vertex	premesh.py	/^	def add_vertex(/
-alter_cell	dolfin_util.py	/^def alter_cell(/
-alter_cellid	dolfin_util.py	/^def alter_cellid(/
-bottomleft	grid.py	/^def bottomleft(/
-boundary_dict	dolfin_util.py	/^def boundary_dict(/
-cell_index	dolfin_util.py	/^def cell_index(/
-centroid	triangle.py	/^def centroid(/
-closest_exit	dolfin_util.py	/^def closest_exit(/
-compile	premesh.py	/^	def compile(/
-cross	geometric_manip.py	/^def cross(/
-cross	triangle.py	/^def cross(/
-current_exit	montecarlo_mockup.py	/^def current_exit(/
-custom_func	demo.py	/^def custom_func(/
-custom_func	monte.py	/^def custom_func(/
-delete	dolfin_util.py	/^def delete(/
-demo	demo.py	1
-dolfin_util	dolfin_util.py	1
-dot	triangle.py	/^def dot(/
-drift	montecarlo_mockup.py	/^def drift(/
-extremum	grid.py	/^def extremum(/
-extrude	geometric_manip.py	/^def extrude(/
-feval	dolfin_util.py	/^def feval(/
-feval_p	dolfin_util.py	/^def feval_p(/
-geometric_manip	geometric_manip.py	1
-get_cell	dolfin_util.py	/^def get_cell(/
-get_options	mcoptions.py	/^def get_options(/
-get_vec	dolfin_util.py	/^def get_vec(/
-grid	grid.py	1
-inc	montecarlo_mockup.py	/^	def inc(/
-init_electrons	montecarlo_mockup.py	/^def init_electrons(/
-innerouter	trianglemesh.py	/^def innerouter(/
-innertriangle	trianglemesh.py	/^def innertriangle(/
-inside	demo.py	/^    def inside(/
-inside	minpoisson.py	/^    def inside(/
-inside	monte.py	/^    def inside(/
-inside	monte.py	/^    def inside(/
-intersect	geometric_manip.py	/^def intersect(/
-mcoptions	mcoptions.py	1
-mesh_manip	mesh_manip.py	1
-meshtest	meshtest.py	1
-minpoisson	minpoisson.py	1
-monte	monte.py	1
-montecarlo_mockup	montecarlo_mockup.py	1
-negGradient	montecarlo_mockup.py	/^def negGradient(/
-normal	geometric_manip.py	/^def normal(/
-out_of_bounds	dolfin_util.py	/^def out_of_bounds(/
-point_in_triangle	triangle.py	/^def point_in_triangle(/
-points_in_triangle	triangle.py	/^def points_in_triangle(/
-premesh	premesh.py	1
-print_avg	montecarlo_mockup.py	/^def print_avg(/
-randomElectronMovement	montecarlo_mockup.py	/^def randomElectronMovement(/
-random_momentum	montecarlo_mockup.py	/^def random_momentum(/
-reap_list	montecarlo_mockup.py	/^def reap_list(/
-refinemesh	trianglemesh.py	/^def refinemesh(/
-replenish	montecarlo_mockup.py	/^def replenish(/
-scale_triangle	triangle.py	/^def scale_triangle(/
-scatter	montecarlo_mockup.py	/^def scatter(/
-set_cell	dolfin_util.py	/^def set_cell(/
-set_cellid	dolfin_util.py	/^def set_cellid(/
-str_grid	triangle.py	/^def str_grid(/
-test	test.py	1
-tmesh	trianglemesh.py	/^def tmesh(/
-triangle	triangle.py	1
-trianglemesh	trianglemesh.py	1
-upperight	grid.py	/^def upperight(/
-vec	triangle.py	/^def vec(/
-vert_index	dolfin_util.py	/^def vert_index(/
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.7	//
+AverageFunc	montecarlo_mockup.py	/^class AverageFunc():$/;"	c
+BasicTrap	triangulate.py	/^class BasicTrap(Trapezoid):$/;"	c
+DirichletBoundary	demo.py	/^class DirichletBoundary(SubDomain):$/;"	c
+DirichletBoundary	minpoisson.py	/^class DirichletBoundary(SubDomain):$/;"	c
+DirichletBoundary	nonlinear.py	/^class DirichletBoundary(SubDomain):$/;"	c
+DolfinFiles	monte.py	/^class DolfinFiles:$/;"	c
+Grid	grid.py	/^class Grid:$/;"	c
+InnerTriangle	monte.py	/^class InnerTriangle(SubDomain):$/;"	c
+MonteCarlo	montecarlo_mockup.py	/^def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens,$/;"	f
+Node	kdtree.py	/^class Node:pass$/;"	c
+OuterTriangle	monte.py	/^class OuterTriangle(SubDomain):$/;"	c
+Particle	montecarlo_mockup.py	/^class Particle():$/;"	c
+ParticleMesh	montecarlo_mockup.py	/^class ParticleMesh(Mesh):$/;"	c
+PoissonSolve	monte.py	/^def PoissonSolve(density,bcs):$/;"	f
+PreMesh	premesh.py	/^class PreMesh:$/;"	c
+Problem	monte.py	/^class Problem:$/;"	c
+TestMesh	meshtest.py	/^def TestMesh():$/;"	f
+Trapezoid	triangulate.py	/^class Trapezoid():$/;"	c
+TriTrap	triangulate.py	/^class TriTrap(Trapezoid):$/;"	c
+__init__	grid.py	/^	def __init__(self,mesh,resolution):$/;"	m	class:Grid
+__init__	kdtree.py	/^	def __init__(self,pointList):$/;"	m	class:kdTree
+__init__	montecarlo_mockup.py	/^	def __init__(self,func):$/;"	m	class:AverageFunc
+__init__	montecarlo_mockup.py	/^	def __init__(self,mesh):$/;"	m	class:ParticleMesh
+__init__	montecarlo_mockup.py	/^	def __init__(self,pos,momentum,dx,lifetime,charge,mesh):$/;"	m	class:Particle
+__init__	premesh.py	/^	def __init__(self):$/;"	m	class:PreMesh
+__init__	triangulate.py	/^	def __init__(self):$/;"	m	class:BasicTrap
+__init__	triangulate.py	/^	def __init__(self):$/;"	m	class:TriTrap
+__init__	triangulate.py	/^	def __init__(self,origin,base,height1,height2):$/;"	m	class:Trapezoid
+add_down_triangles	triangulate.py	/^def add_down_triangles(unitx,unity,unity2,y,trap):$/;"	f
+add_face	premesh.py	/^	def add_face(self,face):$/;"	m	class:PreMesh
+add_up_triangles	triangulate.py	/^def add_up_triangles(unitx,unity,unity2,y,trap):$/;"	f
+add_vertex	premesh.py	/^	def add_vertex(self,vertex):$/;"	m	class:PreMesh
+alter_cell	dolfin_util.py	/^def alter_cell(mesh,function,point,delta):$/;"	f
+alter_cellid	dolfin_util.py	/^def alter_cellid(mesh,function,id,delta):$/;"	f
+ault	mcoptions.py	/^	parser.add_option("--endV",type="float",dest="endV",default=0)$/;"	f	function:get_options
+ault	mcoptions.py	/^	parser.add_option("--numsteps",type="int",dest="steps",default=1)$/;"	f	function:get_options
+ault	mcoptions.py	/^	parser.add_option("-V",type="float",dest="V",default=0)$/;"	f	function:get_options
+ault	mcoptions.py	/^	parser.add_option("-c",type="int",dest="num",default=200)$/;"	f	function:get_options
+ault	mcoptions.py	/^	parser.add_option("-d",type="string",dest="datadir",default="data")$/;"	f	function:get_options
+bottomleft	grid.py	/^def bottomleft(points):$/;"	f
+boundary_dict	dolfin_util.py	/^def boundary_dict(mesh):$/;"	f
+cell_index	dolfin_util.py	/^def cell_index(mesh,apoint):$/;"	f
+centroid	triangle.py	/^def centroid(triangle):$/;"	f
+check	meshtest.py	/^	def check(p):$/;"	f	function:point_in_triangle_checker
+closest_exit	dolfin_util.py	/^def closest_exit(boundary_coordinates,point):$/;"	f
+compile	premesh.py	/^	def compile(self):$/;"	m	class:PreMesh
+cross	geometric_manip.py	/^def cross(v1,v2):$/;"	f
+cross	triangle.py	/^def cross(v1,v2):$/;"	f
+cull_triangles	triangulate.py	/^def cull_triangles(triangles,cull):$/;"	f
+current_exit	montecarlo_mockup.py	/^def current_exit(particle,mesh):$/;"	f
+custom_func	demo.py	/^def custom_func():$/;"	f
+custom_func	monte.py	/^def custom_func(mesh,V):$/;"	f
+delete	dolfin_util.py	/^def delete(swig):$/;"	f
+dot	triangle.py	/^def dot(v1,v2):$/;"	f
+drift	montecarlo_mockup.py	/^def drift(mesh,func,particle):$/;"	f
+extremum	grid.py	/^def extremum(points,comp):$/;"	f
+extrude	geometric_manip.py	/^def extrude(triangle,height):$/;"	f
+feval	dolfin_util.py	/^def feval(function,points):$/;"	f
+feval_p	dolfin_util.py	/^def feval_p(function,point):$/;"	f
+find_point	kdtree.py	/^	def find_point(self,point):$/;"	m	class:kdTree
+find_point_r	kdtree.py	/^	def find_point_r(self,point,node,best):$/;"	m	class:kdTree
+flat	stitch.py	/^def flat(alist):$/;"	f
+flat	triangulate.py	/^def flat(list,max_depth=10,depth=0):$/;"	f
+get_cell	dolfin_util.py	/^def get_cell(mesh,function,point):$/;"	f
+get_options	mcoptions.py	/^def get_options():$/;"	f
+get_row	triangulate.py	/^def get_row(base,unitx,start,end):$/;"	f
+get_vec	dolfin_util.py	/^def get_vec(mesh,function,point):$/;"	f
+handle_region	montecarlo_mockup.py	/^def handle_region(mesh,density,point,add_list,reaper,sign,id):$/;"	f
+inc	montecarlo_mockup.py	/^	def inc(self,func):$/;"	m	class:AverageFunc
+init_dolfin_files	monte.py	/^def init_dolfin_files():$/;"	f
+init_electrons	montecarlo_mockup.py	/^def init_electrons(num,points,charge=-1,mesh=None):$/;"	f
+init_problem	monte.py	/^def init_problem(mesh):$/;"	f
+innerouter	trianglemesh.py	/^def innerouter(divisions,inner):$/;"	f
+innertriangle	trianglemesh.py	/^def innertriangle(refinements,scale,triangle):$/;"	f
+inside	demo.py	/^    def inside(self, x, on_boundary):$/;"	m	class:DirichletBoundary
+inside	minpoisson.py	/^    def inside(self, x, on_boundary):$/;"	m	class:DirichletBoundary
+inside	monte.py	/^    def inside(self, x, on_boundary):$/;"	m	class:InnerTriangle
+inside	monte.py	/^    def inside(self, x, on_boundary):$/;"	m	class:OuterTriangle
+inside	nonlinear.py	/^    def inside(self, x, on_boundary):$/;"	m	class:DirichletBoundary
+intersect	geometric_manip.py	/^def intersect(line,plane):$/;"	f
+kdTree	kdtree.py	/^class kdTree:$/;"	c
+kdtree	kdtree.py	/^	def kdtree(self,pointList, depth=0):$/;"	m	class:kdTree
+mainloop	monte.py	/^def mainloop(mesh,problem,df,rf):$/;"	f
+mesh_creator	mesh_creator.py	/^def mesh_creator(triangles):$/;"	f
+n_region_func	montecarlo_mockup.py	/^		def n_region_func(x):$/;"	f	function:ParticleMesh.populate_regions
+negGradient	montecarlo_mockup.py	/^def negGradient(mesh,field):$/;"	f
+new_results_file	monte.py	/^def new_results_file():$/;"	f
+normal	geometric_manip.py	/^def normal(triangle):$/;"	f
+out_of_bounds	dolfin_util.py	/^def out_of_bounds(mesh,pos):$/;"	f
+photo_generate	montecarlo_mockup.py	/^def photo_generate(mesh,density,holes,electrons):$/;"	f
+point_in_triangle	triangle.py	/^def point_in_triangle(point,triangle):$/;"	f
+point_in_triangle_checker	meshtest.py	/^def point_in_triangle_checker(tri):$/;"	f
+points_in_triangle	triangle.py	/^def points_in_triangle(triangle,increment,func=None):$/;"	f
+populate_regions	montecarlo_mockup.py	/^	def populate_regions(self,p_region_func,doping_p,doping_n):$/;"	m	class:ParticleMesh
+print_avg	montecarlo_mockup.py	/^def print_avg(name,value,count):$/;"	f
+randomElectronMovement	montecarlo_mockup.py	/^def randomElectronMovement(particle,electric_field,density_func,mesh,reaper):$/;"	f
+random_momentum	montecarlo_mockup.py	/^def random_momentum():$/;"	f
+reap_list	montecarlo_mockup.py	/^def reap_list(full,remove_ids):$/;"	f
+refinemesh	trianglemesh.py	/^def refinemesh(mesh,refinements):$/;"	f
+replenish	montecarlo_mockup.py	/^def replenish(mesh,density,boundary,reaper):$/;"	f
+replenish_boundary	montecarlo_mockup.py	/^def replenish_boundary(mesh,density,holes,electrons,reaper):$/;"	f
+scale_triangle	triangle.py	/^def scale_triangle(triangle,scale):$/;"	f
+scatter	montecarlo_mockup.py	/^def scatter(momentum,pos,mesh):$/;"	f
+set_cell	dolfin_util.py	/^def set_cell(mesh,function,point,value):$/;"	f
+set_cellid	dolfin_util.py	/^def set_cellid(mesh,function,id,value):$/;"	f
+stitch	stitch.py	/^def stitch(triangles1,triangles2,small):$/;"	f
+str_grid	triangle.py	/^def str_grid(test,xmax,ymax):$/;"	f
+tmesh	trianglemesh.py	/^def tmesh(refinements=0):$/;"	f
+triangulate	triangulate.py	/^def triangulate(trap,nx,ny):$/;"	f
+upperight	grid.py	/^def upperight(points)$/;"	f
+vec	triangle.py	/^def vec(p1,p2):$/;"	f
+vert_index	dolfin_util.py	/^def vert_index(mesh,point):$/;"	f

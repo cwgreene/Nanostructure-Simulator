@@ -13,7 +13,7 @@ tris = trig.triangulate(tri,20,21)
 tris = trig.cull_triangles(tris,point_in_triangle_checker(tris))
 
 mesh = mc.mesh_creator(tris)
-plot(mesh)
+#plot(mesh)
 print len(tris)
 def TestMesh():
 	return mesh
