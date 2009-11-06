@@ -1,10 +1,12 @@
 from dolfin import *
-from triangulate import flat
+import triangulate as trig
 from itertools import *
 
 def mesh_creator(triangles):
 	#flatten triangle list
-	points = flat(triangles)
+	print "triangles",triangles[0:1]
+	points = trig.flat(triangles)
+	print "points",points[0:3]
 
 	#create mesh and editor	
 	mesh = Mesh()
@@ -16,7 +18,11 @@ def mesh_creator(triangles):
 
 	#put points into hashtable,add them as vertices
 	for point in points:
-		point_ids[tuple(point)] = 0
+		try:
+			point_ids[tuple(point)] = 0
+		except:
+			print point,type(point)
+			raise
 	print len(points),len(point_ids)
 
 	#Init Points, now that we know how many

@@ -10,7 +10,7 @@ class ParticleMesh(Mesh):
 	n_carrier_charge = -10
 	p_carrier_charge = 10
 	carrier_charge = 10
-	def __init__(self,mesh):
+	def __init__(self,mesh,scale):
 		Mesh.__init__(self,mesh)
 		self.bd = du.boundary_dict(mesh)
 		self.point_index = {}
@@ -18,6 +18,7 @@ class ParticleMesh(Mesh):
 		self.p_region = {}
 		self.n_region = {}
 		self.particles = []
+		self.scale = scale
 
 		#init point->index map, point->particle map
 		for x,id in it.izip(mesh.coordinates(),it.count()):
@@ -46,7 +47,7 @@ class AverageFunc():
 class Particle():
 	def __init__(self,pos,momentum,dx,lifetime,charge,mesh):
 		self.pos = array(pos)
-		self.momentum = array(momentum)
+		self.momentum = array(momentum)*mesh.scale
 		self.dx = array(dx)
 		self.lifetime = 2*rd.random()#int(lifetime)
 		self.charge = charge
@@ -79,7 +80,7 @@ self_force= {10:array([0.,0.]),-10:array([0.,0.])}
 #functions
 def random_momentum():
 	theta = rd.random()*2*pi
-	magnitude = rd.random()
+	magnitude = random.exponential()
 	return magnitude*cos(theta),magnitude*sin(theta)
 
 def init_electrons(num,points,charge=-1,mesh=None):
@@ -112,7 +113,15 @@ def reap_list(full,remove_ids):
 def handle_region(mesh,density,point,add_list,reaper,sign,id):
 	charge = mesh.carrier_charge*sign
 	
+	#TODO: This is wrong if density is not an integer.
+	#need to fix this. seperate out holes from particles
+	#add them together and scale appropriately.
+
 	#create to balance
+	#TODO: This is wrong. There are two different
+	#phenomenon going on here. Imbalance due
+	#to leaving particles, and imbalance
+	#due to holes being present.
 	if(density[id]*sign < 0):
 		for i in xrange(int(-density[id]/charge)):
 			add_list.append(array(point))
@@ -189,7 +198,9 @@ def current_exit(particle,mesh):
 		return particle.charge*speed
 
 
-def MonteCarlo(mesh,potential_field,electric_field,density_func,avg_dens,
+def MonteCarlo(mesh,potential_field,electric_field,
+		density_func,
+		avg_dens,
 		current_values):
 	#electrons = init_electrons()
 	global total_force,force_count,sim_total_p,sim_p_count

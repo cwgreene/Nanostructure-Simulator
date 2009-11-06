@@ -25,6 +25,7 @@ import mcoptions,sys,os
 import trianglemesh as tm
 import triangle
 import meshtest
+import re
 
 class Problem:
 	pass
@@ -35,44 +36,36 @@ class ResultsFile:
 	pass
 
 options = mcoptions.get_options()
-#dolfin_set("linear algebra backend","Epetra"
 
 def custom_func(mesh,V):
 	f = Function(V)
-#	for p in particles:
-#		du.alter_cellid(mesh,f,p.id,p.charge)
 	return f
 
 # Create mesh and define function space
+def create_mesh():
+	#thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
+	thetriangle = np.array([[0.,0.],[1.,0.],[.5,.8660254]])
 
-#thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
-thetriangle = np.array([[0.,0.],[1.,0.],[.5,.8660254]])
+	mesh = meshtest.TestMesh()
+	mesh.refine()
+	mesh = mc.ParticleMesh(mesh,options.scale)
+	#mesh = mc.ParticleMesh(tm.innertriangle(5,.2,thetriangle))
 
-mesh = meshtest.TestMesh()
-mesh.refine()
-mesh = mc.ParticleMesh(mesh)
-#mesh = mc.ParticleMesh(tm.innertriangle(5,.2,thetriangle))
+	inner = triangle.scale_triangle(thetriangle,.52)
+	mesh.populate_regions(lambda x: triangle.point_in_triangle(x,inner), 
+					0,0)
 
-inner = triangle.scale_triangle(thetriangle,.52)
-mesh.populate_regions(lambda x: triangle.point_in_triangle(x,inner), 0,0)
-#plot(mesh)
-
-boundarymesh = BoundaryMesh(mesh)
-print len(boundarymesh.coordinates())
-#plot(mesh)
-
-#these seem to need to be global
-V = FunctionSpace(mesh, "CG", 2)
-
+	boundarymesh = BoundaryMesh(mesh)
+	print len(boundarymesh.coordinates())
+	return mesh
 
 # Define Dirichlet boundary (x = 0 or x = 1)
-repeated = {}
 class InnerTriangle(SubDomain):
     def inside(self, x, on_boundary):
         if on_boundary:
 		#if (x[0],x[1]) in repeated:
 			#print "repeat:",(x[0],x[1])
-		repeated[(x[0],x[1])] = 0
+		#repeated[(x[0],x[1])] = 0
 		if mesh.in_p_region(x):
 			#print "inner:",x[0],x[1]
 			return True
@@ -85,6 +78,7 @@ class OuterTriangle(SubDomain):
 			#print "outer",x[0],x[1]
 			return True
 	return False
+
 def init_problem(mesh,V):
 	print "Initializing Probleming"
 	problem = Problem()
@@ -108,11 +102,10 @@ def init_problem(mesh,V):
 	print "Creating density functions"
 	problem.f = custom_func(mesh,V)
 	problem.g = Function(V)
+	problem.scaled_density = Function(V)
 	problem.g.vector().set(problem.f.vector().array())
 	problem.avg_dens = mc.AverageFunc(problem.f.vector().array())
 	return problem
-
-
 
 def init_dolfin_files():
 	#init Files
@@ -129,8 +122,6 @@ def init_dolfin_files():
 	return df
 
 #other files
-import time
-import re
 def new_file(name):
 	print "Creating results File"
 	files = os.listdir("results")
@@ -141,7 +132,8 @@ def new_file(name):
 	print "Creating:",filename
 	results_file = open(filename,"w")
 	results_file.write(str(options.V)+"\n")
-	results_file.write(str(options.num)+"\n")
+	results_file.write("c:"+str(options.num))
+	results_file.write(" scale:"+str(options.scale)+"\n")
 	return results_file
 		
 
@@ -149,25 +141,22 @@ def PoissonSolve(density,bcs):
 	print "Solving Poisson Equation"
 	u = TrialFunction(V)
 	v = TestFunction(V)
-	print "hi1"
 	a = dot(grad(v), grad(u))*dx
-	L = v*density*dx
-	print "hi2"
+	L = v*(density)*dx
 	# Compute solution
 	problem = VariationalProblem(a, L, bcs)
-	print "hi3"
 	sol = problem.solve()
-	print "hi4"
 	return sol
 
 
-def mainloop(mesh,problem,df,rf):
+def mainloop(mesh,problem,df,rf,scale):
 	print "Beginning Simulation"
 	current_values = []
 	for x in range(options.num):
 		#Solve equation
 		start1 = time.time()
 		problem.g.vector().set(problem.avg_dens.func)
+		problem.g.vector().set(problem.g.vector().array()*scale)
 		sol = PoissonSolve(problem.g,problem.bcs)
 
 		#handle Monte Carlo
@@ -203,12 +192,15 @@ def mainloop(mesh,problem,df,rf):
 
 	print current_values
 
+mesh = create_mesh()
+#these seem to need to be global
+V = FunctionSpace(mesh, "CG", 2)
 problem = init_problem(mesh,V)
 dolfinFiles = init_dolfin_files()
 rf = ResultsFile()
 rf.current = new_file("current")
 rf.density = new_file("density")
-mainloop(mesh,problem,dolfinFiles,rf)
+mainloop(mesh,problem,dolfinFiles,rf,options.scale)
 # Hold plot
 #plot(avgE)
 #interactive()

@@ -1,4 +1,5 @@
 import numpy as np
+import mesh_creator as mcreator
 from numpy.linalg import norm
 
 class Trapezoid():
@@ -16,6 +17,12 @@ class TriTrap(Trapezoid):
 	def __init__(self):
 		Trapezoid.__init__(self,[0.,0.],[1.,0.],
 					[.5,.8660254],[-.5,.8660254])
+
+class Triangle(Trapezoid):
+	def __init__(self,triangle):
+		Trapezoid.__init__(self,triangle[0],triangle[1]-triangle[0],
+					triangle[2]-triangle[0],
+					triangle[2]-triangle[1])
 
 def cull_triangles(triangles,cull):
 	reduced = []
@@ -74,8 +81,10 @@ def add_up_triangles(unitx,unity,unity2,y,trap):
 	#and then take one point from the next row up
 	#which will be this row 
 	triangles = []
-	cur_row = get_row(trap.x,unitx,unity*y,unity2*y)+trap.origin
-	next_row = get_row(trap.x,unitx,unity*(y+1),unity2*(y+1))+trap.origin
+	cur_row = map(lambda x:x+trap.origin,
+			get_row(trap.x,unitx,unity*y,unity2*y))
+	next_row = map(lambda x:x+trap.origin,
+			get_row(trap.x,unitx,unity*(y+1),unity2*(y+1)))
 	bottom_pairs = zip(cur_row[:-1],cur_row[1:])
 	triangles = map(lambda x:flat(x,1),zip(bottom_pairs,next_row))
 	return triangles
@@ -88,8 +97,10 @@ def add_down_triangles(unitx,unity,unity2,y,trap):
 	#and then take one point from the next row up
 	#which will be this row 
 	triangles = []
-	top_row = get_row(trap.x,unitx,unity*(y+1),unity2*(y+1))+trap.origin	
-	bottom_row = get_row(trap.x,unitx,unity*y,unity2*y)+trap.origin
+	top_row = map(lambda x: x+trap.origin,
+			get_row(trap.x,unitx,unity*(y+1),unity2*(y+1)))
+	bottom_row = map(lambda x:x+trap.origin,
+			get_row(trap.x,unitx,unity*y,unity2*y))
 	bottom_row = bottom_row[1:-1]
 	top_pairs = zip(top_row[:-1],top_row[1:])
 	triangles = map(flat,zip(top_pairs,bottom_row))
