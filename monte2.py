@@ -91,10 +91,11 @@ def init_problem(mesh,V,options):
 	#kept globally
 	pBoundary = Constant(mesh, options.V)
 	nBoundary = Constant(mesh, 0.0) 
+	mesh.V = options.V
 	problem.boundaryFuncs = [pBoundary,nBoundary]#prevent bad garbage?
 
-	bc0 = DirichletBC(V, pBoundary, mesh.InnerBoundary())
-	bc1 = DirichletBC(V, nBoundary, mesh.OuterBoundary())
+	bc0 = DirichletBC(V, pBoundary, mesh.InnerBoundary)
+	bc1 = DirichletBC(V, nBoundary, mesh.OuterBoundary)
 	problem.bcs = [bc0,bc1]
 
 	#init particles
@@ -201,7 +202,7 @@ def mainloop(mesh,problem,df,rf,scale):
 
 	print current_values
 
-mesh = meshes.Triangle()
+mesh = meshes.TriangleMesh(options)
 #these seem to need to be global
 V = FunctionSpace(mesh, "CG", 2)
 problem = init_problem(mesh,V,options)
