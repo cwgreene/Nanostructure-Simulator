@@ -35,6 +35,13 @@ def feval(function,points):
 	function.eval(values,points)
 	return values
 
+values2 = np.zeros(2)
+def feval2(function,points):
+	point = np.array(points)
+	function.eval(values2,points)
+	return values2
+
+
 def feval_p(function,point):
 	return feval(function,points)[0]
 
@@ -42,11 +49,7 @@ def cell_index(mesh,apoint):
 	point = Point(*apoint)
 	cells = ArrayUInt()
 	mesh.intersection(point,cells)
-	try:
-		result = cells[0]
-	except:
-		print point[0],point[1]
-		raise
+	result = cells[0]
 	delete(cells)
 	return result
 
@@ -84,6 +87,16 @@ def get_cell(mesh,function,point):
 def get_vec(mesh,function,point):
 	#print id,function.vector().array().size
 	return feval(function,point)
+
+def get_vec2(mesh,function,point):
+	#print id,function.vector().array().size
+	return feval2(function,point)
+
+
+def get_vecs(mesh,function,points):
+	#print id,function.vector().array().size
+	return feval(function,points)
+
 
 def alter_cell(mesh,function,point,delta):
 	value = get_cell(mesh,function,point)

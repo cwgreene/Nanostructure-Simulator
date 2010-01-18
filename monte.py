@@ -26,6 +26,7 @@ import trianglemesh as tm
 import triangle
 import meshtest
 import re
+import photocurrent as pc
 
 class Problem:
 	pass
@@ -47,7 +48,8 @@ def create_mesh():
 	thetriangle = np.array([[0.,0.],[1.,0.],[.5,.8660254]])
 
 	mesh = meshtest.TestMesh()
-	mesh.refine()
+	for x in range(options.size):
+		mesh.refine()
 	mesh = mc.ParticleMesh(mesh,options.scale)
 	#mesh = mc.ParticleMesh(tm.innertriangle(5,.2,thetriangle))
 
@@ -79,7 +81,7 @@ class OuterTriangle(SubDomain):
 			return True
 	return False
 
-def init_problem(mesh,V):
+def init_problem(mesh,V,options):
 	print "Initializing Probleming"
 	problem = Problem()
 	# Define boundary condition
@@ -87,6 +89,7 @@ def init_problem(mesh,V):
 	#kept globally
 	pBoundary = Constant(mesh, options.V)
 	nBoundary = Constant(mesh, 0.0) 
+	mesh.V = options.V
 	problem.boundaryFuncs = [pBoundary,nBoundary]#prevent bad garbage?
 
 	bc0 = DirichletBC(V, pBoundary, InnerTriangle())
@@ -96,8 +99,10 @@ def init_problem(mesh,V):
 	#init particles
 	#electrons, holes
 	print "adding electrons to regions"
-	mc.init_electrons(10,mesh.n_region.keys(),charge=-10,mesh=mesh)
-	mc.init_electrons(10,mesh.p_region.keys(),charge=10,mesh=mesh)
+	mc.init_electrons(options.particles,mesh.n_region.keys(),
+				charge=-10,mesh=mesh)
+	mc.init_electrons(options.particles,mesh.p_region.keys(),
+				charge=10,mesh=mesh)
 
 	print "Creating density functions"
 	problem.f = custom_func(mesh,V)
@@ -133,7 +138,9 @@ def new_file(name):
 	results_file = open(filename,"w")
 	results_file.write(str(options.V)+"\n")
 	results_file.write("c:"+str(options.num))
-	results_file.write(" scale:"+str(options.scale)+"\n")
+	results_file.write(" scale:"+str(options.scale))
+	results_file.write(" particles:"+str(options.particles))
+	results_file.write(" size:"+str(options.size)+"\n")
 	return results_file
 		
 
@@ -161,12 +168,12 @@ def mainloop(mesh,problem,df,rf,scale):
 
 		#handle Monte Carlo
 		print "Starting Step ",x
-		start2 = time.time()
 		electric_field = mc.negGradient(mesh,sol)
 		df.gradfile << electric_field
+		start2 = time.time()
 		mc.MonteCarlo(mesh,sol,electric_field,
 				problem.f,problem.avg_dens,current_values)
-
+		end2 = time.time()
 		#Report
 		#Write Results
 		df.file << sol
@@ -178,8 +185,9 @@ def mainloop(mesh,problem,df,rf,scale):
 		rf.current.write("\n");rf.current.flush()
 
 		end = time.time()
-		print "Monte Took: ",end-start2
+		print "Monte Took: ",end2-start2
 		print "Loop Took:",end-start1
+	#pc.generate_photo_current(mesh,problem.avg_dens)
 	df.file << sol
 	df.dfile << problem.f
 	#dump average
@@ -195,7 +203,7 @@ def mainloop(mesh,problem,df,rf,scale):
 mesh = create_mesh()
 #these seem to need to be global
 V = FunctionSpace(mesh, "CG", 2)
-problem = init_problem(mesh,V)
+problem = init_problem(mesh,V,options)
 dolfinFiles = init_dolfin_files()
 rf = ResultsFile()
 rf.current = new_file("current")

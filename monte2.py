@@ -28,6 +28,7 @@ import meshtest
 import re
 import photocurrent as pc
 
+import materials
 import meshes
 
 class Problem:
@@ -202,7 +203,7 @@ def mainloop(mesh,problem,df,rf,scale):
 
 	print current_values
 
-mesh = meshes.TriangleMesh(options)
+mesh = meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon())
 #these seem to need to be global
 V = FunctionSpace(mesh, "CG", 2)
 problem = init_problem(mesh,V,options)

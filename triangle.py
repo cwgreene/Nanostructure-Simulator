@@ -106,3 +106,7 @@ def scale_triangle(triangle,scale):
 		vector[1] += cen[1]
 	return ntriangle
 
+def area_triangle(tri):
+	tri=np.array(tri)
+	a,b,c=vec(tri[0],tri[1]),vec(tri[1],tri[2]), vec(tri[2],tri[1])
+	cross(a,b)/2
