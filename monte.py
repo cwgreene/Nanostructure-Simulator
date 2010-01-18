@@ -28,6 +28,9 @@ import meshtest
 import re
 import photocurrent as pc
 
+import materials
+import meshes
+
 class Problem:
 	pass
 
@@ -42,44 +45,44 @@ def custom_func(mesh,V):
 	f = Function(V)
 	return f
 
-# Create mesh and define function space
-def create_mesh():
-	#thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
-	thetriangle = np.array([[0.,0.],[1.,0.],[.5,.8660254]])
-
-	mesh = meshtest.TestMesh()
-	for x in range(options.size):
-		mesh.refine()
-	mesh = mc.ParticleMesh(mesh,options.scale)
-	#mesh = mc.ParticleMesh(tm.innertriangle(5,.2,thetriangle))
-
-	inner = triangle.scale_triangle(thetriangle,.52)
-	mesh.populate_regions(lambda x: triangle.point_in_triangle(x,inner), 
-					0,0)
-
-	boundarymesh = BoundaryMesh(mesh)
-	print len(boundarymesh.coordinates())
-	return mesh
-
-# Define Dirichlet boundary (x = 0 or x = 1)
-class InnerTriangle(SubDomain):
-    def inside(self, x, on_boundary):
-        if on_boundary:
-		#if (x[0],x[1]) in repeated:
-			#print "repeat:",(x[0],x[1])
-		#repeated[(x[0],x[1])] = 0
-		if mesh.in_p_region(x):
-			#print "inner:",x[0],x[1]
-			return True
-	return False
-
-class OuterTriangle(SubDomain):
-    def inside(self, x, on_boundary):
-        if on_boundary:
-		if not mesh.in_p_region(x):
-			#print "outer",x[0],x[1]
-			return True
-	return False
+## Create mesh and define function space
+#def create_mesh():
+#	#thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
+#	thetriangle = np.array([[0.,0.],[1.,0.],[.5,.8660254]])
+#
+#	mesh = meshtest.TestMesh()
+#	for x in range(options.size):
+#		mesh.refine()
+#	mesh = mc.ParticleMesh(mesh,options.scale)
+#	#mesh = mc.ParticleMesh(tm.innertriangle(5,.2,thetriangle))
+#
+#	inner = triangle.scale_triangle(thetriangle,.52)
+#	mesh.populate_regions(lambda x: triangle.point_in_triangle(x,inner), 
+#					0,0)
+#
+#	boundarymesh = BoundaryMesh(mesh)
+#	print len(boundarymesh.coordinates())
+#	return mesh
+#
+## Define Dirichlet boundary (x = 0 or x = 1)
+#class InnerTriangle(SubDomain):
+#    def inside(self, x, on_boundary):
+#        if on_boundary:
+#		#if (x[0],x[1]) in repeated:
+#			#print "repeat:",(x[0],x[1])
+#		#repeated[(x[0],x[1])] = 0
+#		if mesh.in_p_region(x):
+#			#print "inner:",x[0],x[1]
+#			return True
+#	return False
+#
+#class OuterTriangle(SubDomain):
+#    def inside(self, x, on_boundary):
+#        if on_boundary:
+#		if not mesh.in_p_region(x):
+#			#print "outer",x[0],x[1]
+#			return True
+#	return False
 
 def init_problem(mesh,V,options):
 	print "Initializing Probleming"
@@ -92,8 +95,8 @@ def init_problem(mesh,V,options):
 	mesh.V = options.V
 	problem.boundaryFuncs = [pBoundary,nBoundary]#prevent bad garbage?
 
-	bc0 = DirichletBC(V, pBoundary, InnerTriangle())
-	bc1 = DirichletBC(V, nBoundary, OuterTriangle())
+	bc0 = DirichletBC(V, pBoundary, mesh.InnerBoundary)
+	bc1 = DirichletBC(V, nBoundary, mesh.OuterBoundary)
 	problem.bcs = [bc0,bc1]
 
 	#init particles
@@ -200,7 +203,7 @@ def mainloop(mesh,problem,df,rf,scale):
 
 	print current_values
 
-mesh = create_mesh()
+mesh = meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon())
 #these seem to need to be global
 V = FunctionSpace(mesh, "CG", 2)
 problem = init_problem(mesh,V,options)
