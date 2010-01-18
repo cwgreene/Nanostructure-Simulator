@@ -4,7 +4,16 @@ from dolfin import *
 from numpy import *
 import itertools as it
 import time
-import triangle
+#import triangle
+import sys
+import driftscatter
+import bandstructure
+
+#more path
+sys.path.append("c_optimized/")
+import kdtree_c
+import materials
+import constants
 
 class ParticleMesh(Mesh):
 	n_carrier_charge = -10
@@ -19,12 +28,16 @@ class ParticleMesh(Mesh):
 		self.n_region = {}
 		self.particles = []
 		self.scale = scale
+		self.kdt = kdtree_c.new_kdtree(mesh.coordinates())
+		self.bandstructure = bandstructure.ParabolicBand(self)
+		self.material = {}
 
 		#init point->index map, point->particle map
 		for x,id in it.izip(mesh.coordinates(),it.count()):
 			self.point_index[tuple(x)] = id
-			self.particles_point[tuple(x)] = []
-	def populate_regions(self,p_region_func,doping_p,doping_n):
+			self.particles_point[id] = []
+	def populate_regions(self,p_region_func,doping_p,doping_n,
+				p_material,n_material):
 		self.in_p_region = p_region_func
 		def n_region_func(x):
 			return not p_region_func
@@ -32,9 +45,11 @@ class ParticleMesh(Mesh):
 		count = 0
 		for x in self.coordinates():
 			if(p_region_func(x)):
+				self.material[tuple(x)] = n_material
 				self.p_region[tuple(x)] = self.p_carrier_charge
 			else:
 				self.n_region[tuple(x)] = self.n_carrier_charge
+				self.material[tuple(x)] = p_material
 
 class AverageFunc():
 	def __init__(self,func):
@@ -52,44 +67,42 @@ class Particle():
 		self.lifetime = 2*rd.random()#int(lifetime)
 		self.charge = charge
 		self.dead = False
+		self.mass = mesh.material[tuple(pos)].electron_mass #mesh.mass[charge]
 
 		#mesh_id data
-		try:
-			self.id = du.vert_index(mesh,self.pos)
-		except:#bad,verybad
-			print self.pos,self.pos[0],self.pos[1]
-			raise
+		#self.id = du.vert_index(mesh,self.pos)
+		self.id = kdtree_c.find_point_id(mesh.kdt,self.pos)
 		self.meshpos = mesh.coordinates()[self.id]
 		#particles_point must be update on move
-		mesh.particles_point[tuple(self.meshpos)].append(self)
+		mesh.particles_point[mesh.point_index[tuple(self.meshpos)]].append(self)
 		self.part_id = len(mesh.particles)
 		mesh.particles.append(self)
 
-#globals
-sim_total_force = {10:array([0.,0.]),-10:array([0.,0.])}
-sim_force_count = {10:0,-10:0}
-total_force = {10:array([0.,0.]),-10:array([0.,0.])}
-force_count = {10:0,-10:0}
-sim_total_p = {10:array([0.,0.]),-10:array([0.,0.])}
-sim_p_count = {10:0,-10:0}
-avg_lifetime = 0.
-lifetime_count = 1
-
-self_force= {10:array([0.,0.]),-10:array([0.,0.])}
-
 #functions
-def random_momentum():
+def random_momentum(mesh,pos):
 	theta = rd.random()*2*pi
-	magnitude = random.exponential()
+#	energy = mesh.bandstructure.random_energy()
+	material = mesh.material[tuple(pos)]
+	bandgap = material.bandgap
+	mass = material.electron_mass
+	energy = (constants.kbT*
+			random.exponential(bandgap/constants.kbT))
+	magnitude = sqrt(energy*2*mass)
+	#magnitude = random.exponential(V)
 	return magnitude*cos(theta),magnitude*sin(theta)
 
 def init_electrons(num,points,charge=-1,mesh=None):
 	electrons = []
 	for point in points:
 		for i in xrange(num):
+			if mesh.in_p_region(point):
+				V = mesh.V
+			else:
+				V = 0
 			dx = array([0.,0.])
 			lifetime = 0
-			electrons.append(Particle(point,random_momentum(),
+			electrons.append(Particle(point,
+					 random_momentum(mesh,point),
 					 dx,lifetime,charge,mesh))
 	return electrons
 
@@ -98,14 +111,14 @@ def negGradient(mesh,field):
 	return project(grad(-field),V)
 
 def reap_list(full,remove_ids):
-	global avg_lifetime,lifetime_count
+	#global avg_lifetime,lifetime_count
 	remove_ids.sort()
 	count = 0
 	for id in remove_ids:
 		p = full.pop(id-count)
 		count += 1
-		avg_lifetime += p.lifetime
-		lifetime_count += 1
+	#	avg_lifetime += p.lifetime
+	#	lifetime_count += 1
 	for id in xrange(len(full)):
 		p = full[id]
 		p.part_id = id
@@ -116,12 +129,14 @@ def handle_region(mesh,density,point,add_list,reaper,sign,id):
 	#TODO: This is wrong if density is not an integer.
 	#need to fix this. seperate out holes from particles
 	#add them together and scale appropriately.
+	#Status: Fixed
 
 	#create to balance
 	#TODO: This is wrong. There are two different
 	#phenomenon going on here. Imbalance due
 	#to leaving particles, and imbalance
 	#due to holes being present.
+	#Status: The above TODO is believed to be wrong.
 	if(density[id]*sign < 0):
 		for i in xrange(int(-density[id]/charge)):
 			add_list.append(array(point))
@@ -129,7 +144,7 @@ def handle_region(mesh,density,point,add_list,reaper,sign,id):
 	exit_current = 0
 	if(density[id]*sign > 0):
 		for i in xrange(int(density[id]/charge)):
-			doom_particle = mesh.particles_point[tuple(point)].pop()
+			doom_particle = mesh.particles_point[id].pop()
 			density[id] -= charge
 			reaper.append(doom_particle.part_id)
 			exit_current += current_exit(doom_particle,mesh)
@@ -191,28 +206,33 @@ def current_exit(particle,mesh):
 	boundary = mesh.bd
 
 	speed = sqrt(dot(particle.pos,particle.pos))
-	exit = du.closest_exit(boundary,particle.pos)
+	#exit = du.closest_exit(boundary,particle.pos)
+	exit = mesh.coordinates()[kdtree_c.find_point_id(mesh.kdt,particle.pos)]
 	if mesh.in_p_region(exit):
 		return particle.charge*-1*speed
 	else:
 		return particle.charge*speed
 
+def recombinate(mesh,reaper):
+	for point_id in mesh.point_index.values():
+		electron = None
+		hole = None
+		for p in mesh.particles_point[point_id]:
+			if p.dead != True:
+				if p.charge < 0:
+					electron = p
+				if p.charge > 0 and p.dead:
+					hole = p
+				if electron != None and hole != None:
+					reaper.append(electron)
+					reaper.append(hole)
+					break
 
 def MonteCarlo(mesh,potential_field,electric_field,
 		density_func,
 		avg_dens,
 		current_values):
-	#electrons = init_electrons()
-	global total_force,force_count,sim_total_p,sim_p_count
-	global avg_lifetime
-	#plot(electric_field)
 	reaper = []
-
-	total_momentum ={10:array([0.,0.]),-10:array([0.,0.])}
-	total_force = {10:array([0.,0.]),-10:array([0.,0.])}
-
-	count = {10:0,-10:0}
-	force_count = {10:0,-10:0}
 
 	current = 0
 
@@ -221,40 +241,63 @@ def MonteCarlo(mesh,potential_field,electric_field,
 	start = time.time()
 	rem_time = 0.
 	mesh_lookup_time = 0.
+	#okay, here's the code we're going to roll up into a c_call
+
+	print len(mesh.particles)
+	#prep particle
+	c_efield= []
+	
+	coord = mesh.coordinates()
+	for index in xrange(len(coord)):
+		pos = coord[index]
+		vec = du.get_vec(mesh,electric_field,pos)
+		c_efield.append(vec)
+	print "Forces Calculated:",time.time()-start
+
+	start=time.time()
 	for index in xrange(len(mesh.particles)):
 		p = mesh.particles[index]
 		
 		#remove from old locations
 		nextDensity[p.id] -= p.charge
-		mesh.particles_point[tuple(p.meshpos)].remove(p)
+		mesh.particles_point[p.id].remove(p)
 
 		#begin movement	
 		start2 = time.time()
-		randomElectronMovement(p,electric_field,
+		driftscatter.randomElectronMovement(p,c_efield,
 					density_func,mesh,reaper)
 		rem_time += time.time()-start2
 		
 		#stats stuff	
-		total_momentum[p.charge] += p.momentum
-		count[p.charge] += 1
-		
-		start2 = time.time()
+		#total_momentum[p.charge] += p.momentum
+		#count[p.charge] += 1
+	print "drift scatter took:",rem_time
+	print "Particle Movement took:",time.time()-start
+
+	start = time.time()
+	for index in xrange(len(mesh.particles)):
+		p = mesh.particles[index]
 		if p.dead == False: #if we didn't kill it.
+			start2 = time.time()
 			if(du.out_of_bounds(mesh,p.pos)): 
+				mesh_lookup_time += time.time()-start2
 				#need to figure out exit
 				reaper.append(index)
 				p.dead = True
 				current += current_exit(p,mesh)
 			else:
+				mesh_lookup_time += time.time()-start2
 				#get new p.id
-				p.id = du.vert_index(mesh,p.pos)
+				#p.id = du.vert_index(mesh,p.pos)	
+				p.id = kdtree_c.find_point_id(mesh.kdt,p.pos)
 				#lock to grid
 				p.meshpos = mesh.coordinates()[p.id]
-				mesh.particles_point[tuple(p.meshpos)].append(p)
+				mesh.particles_point[p.id].append(p)
 				#associate charge with density func
 				nextDensity[p.id] += p.charge
-		mesh_lookup_time += time.time()-start2
-	print "Main loop:",(time.time()-start),len(reaper)
+	recombinate(mesh,reaper)
+
+	print "Lookup time:",time.time()-start
 	#reap
 	start = time.time()
 	reap_list(mesh.particles,reaper)
@@ -269,21 +312,9 @@ def MonteCarlo(mesh,potential_field,electric_field,
 	#reap again
 	start = time.time()
 	reap_list(mesh.particles,reaper)
-	reap_time = time.time()-start
+	reap_time += time.time()-start
 	reaper = []
 		
-	if count != 0:
-		legend = {-10:"electrons",10:"holes"}
-		for t in legend:
-			print legend[t]
-			sim_total_p[t] += total_momentum[t]
-			sim_p_count[t] += count[t]
-			print_avg("momentum",total_momentum[t],count[t])
-			print_avg("force",total_force[t],force_count[t])
-			print_avg("SMMomentum",sim_total_p[t],sim_p_count[t])
-			print_avg("SMForce",sim_total_force[t],sim_force_count[t])
-		if lifetime_count !=0:
-			print_avg("lifetime",avg_lifetime,lifetime_count)
 	current_values.append(current)
 	print "Current:",current
 	
@@ -291,21 +322,24 @@ def MonteCarlo(mesh,potential_field,electric_field,
 	print "Replenish took:",replenish_time
 	print "random electron movement time:",rem_time
 	print "Mesh lookup time:",mesh_lookup_time
+	start = time.time()
 	avg_dens.inc(nextDensity)
 	density_func.vector().set(nextDensity)
+	print "density increment time:",time.time()-start
 
 def randomElectronMovement(particle,electric_field,density_func,mesh,reaper):
-	global avg_lifetime
 	meanpathlength = 1#getMeanPathLength(cell)
 	lifetime = .001#lifetime(cell)
 	mass_particle = 1
+
+	#scale = mesh.length_scale/mesh.time_scale
 	
 	p = particle
 	
 	dt = 1./1000.
 	p.momentum += drift(mesh,electric_field,p)*dt
-	p.pos += p.momentum*dt/mass_particle
-	p.dx += p.momentum*dt/mass_particle
+	p.pos += (p.momentum/p.mass)*dt#*scale
+	p.dx += (p.momentum/p.mass)*dt#*scale
 	#check for out of bounds
 	#	this needs to be changed, we should
 	#	do all momentum changes BEFORE movement
@@ -322,16 +356,9 @@ def randomElectronMovement(particle,electric_field,density_func,mesh,reaper):
 #drift calculates drift force due to forces
 #F = dp/dt
 def drift(mesh,func,particle):
-	global total_force,force_count
-	global sim_total_force,sim_force_count
-	global self_force
 	p = particle
 	force = (du.get_vec(mesh,func,p.meshpos)*
-		100*p.charge-self_force[p.charge])
-	total_force[p.charge] += force
- 	force_count[p.charge] += 1
-	sim_force_count[p.charge] += 1
-	sim_total_force[p.charge] += force
+		p.charge-self_force[p.charge])
 	return force
 
 def scatter(momentum,pos,mesh):
