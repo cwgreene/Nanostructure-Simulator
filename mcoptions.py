@@ -9,5 +9,7 @@ def get_options():
 	parser.add_option("--scale",type="float",dest="scale",default=1)
 	parser.add_option("--size",type="int",dest="size",default=1)
 	parser.add_option("--particles",type="int",dest="particles",default=1)
+	parser.add_option("--length",type="float",dest="length",default=10**-7)
+	parser.add_option("--tag",type="string",dest="tag",default="None")
 	options,args = parser.parse_args(sys.argv)
 	return options

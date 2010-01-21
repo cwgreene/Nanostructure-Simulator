@@ -18,7 +18,7 @@ class TriangleMesh(mc.ParticleMesh):
 			mesh.refine()
 		#mesh = mc.ParticleMesh(mesh,options.scale)
 		mc.ParticleMesh.__init__(self,mesh,
-			options.scale)
+			options.scale,options.length)
 		#mesh = mc.ParticleMesh(tm.innertriangle(5,.2,thetriangle))
 
 		inner = triangle_util.scale_triangle(thetriangle,.52)

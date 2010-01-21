@@ -45,46 +45,7 @@ def custom_func(mesh,V):
 	f = Function(V)
 	return f
 
-## Create mesh and define function space
-#def create_mesh():
-#	#thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
-#	thetriangle = np.array([[0.,0.],[1.,0.],[.5,.8660254]])
-#
-#	mesh = meshtest.TestMesh()
-#	for x in range(options.size):
-#		mesh.refine()
-#	mesh = mc.ParticleMesh(mesh,options.scale)
-#	#mesh = mc.ParticleMesh(tm.innertriangle(5,.2,thetriangle))
-#
-#	inner = triangle.scale_triangle(thetriangle,.52)
-#	mesh.populate_regions(lambda x: triangle.point_in_triangle(x,inner), 
-#					0,0)
-#
-#	boundarymesh = BoundaryMesh(mesh)
-#	print len(boundarymesh.coordinates())
-#	return mesh
-#
-## Define Dirichlet boundary (x = 0 or x = 1)
-#class InnerTriangle(SubDomain):
-#    def inside(self, x, on_boundary):
-#        if on_boundary:
-#		#if (x[0],x[1]) in repeated:
-#			#print "repeat:",(x[0],x[1])
-#		#repeated[(x[0],x[1])] = 0
-#		if mesh.in_p_region(x):
-#			#print "inner:",x[0],x[1]
-#			return True
-#	return False
-#
-#class OuterTriangle(SubDomain):
-#    def inside(self, x, on_boundary):
-#        if on_boundary:
-#		if not mesh.in_p_region(x):
-#			#print "outer",x[0],x[1]
-#			return True
-#	return False
-
-def init_problem(mesh,V,options):
+def init_problem(mesh,V,V2,options):
 	print "Initializing Probleming"
 	problem = Problem()
 	# Define boundary condition
@@ -94,6 +55,7 @@ def init_problem(mesh,V,options):
 	nBoundary = Constant(mesh, 0.0) 
 	mesh.V = options.V
 	problem.boundaryFuncs = [pBoundary,nBoundary]#prevent bad garbage?
+	problem.V2 = V2
 
 	bc0 = DirichletBC(V, pBoundary, mesh.InnerBoundary)
 	bc1 = DirichletBC(V, nBoundary, mesh.OuterBoundary)
@@ -143,7 +105,9 @@ def new_file(name):
 	results_file.write("c:"+str(options.num))
 	results_file.write(" scale:"+str(options.scale))
 	results_file.write(" particles:"+str(options.particles))
-	results_file.write(" size:"+str(options.size)+"\n")
+	results_file.write(" size:"+str(options.size))
+	results_file.write(" tag:"+str(options.tag))
+	results_file.write("\n")
 	return results_file
 		
 
@@ -166,12 +130,13 @@ def mainloop(mesh,problem,df,rf,scale):
 		#Solve equation
 		start1 = time.time()
 		problem.g.vector().set(problem.avg_dens.func)
-		problem.g.vector().set(problem.g.vector().array()*scale)
+		print problem.g.vector().array()
+#		problem.g.vector().set(problem.g.vector().array()*scale)
 		sol = PoissonSolve(problem.g,problem.bcs)
 
 		#handle Monte Carlo
 		print "Starting Step ",x
-		electric_field = mc.negGradient(mesh,sol)
+		electric_field = mc.negGradient(mesh,sol,problem.V2)
 		df.gradfile << electric_field
 		start2 = time.time()
 		mc.MonteCarlo(mesh,sol,electric_field,
@@ -190,6 +155,7 @@ def mainloop(mesh,problem,df,rf,scale):
 		end = time.time()
 		print "Monte Took: ",end2-start2
 		print "Loop Took:",end-start1
+		#del electric_field
 	#pc.generate_photo_current(mesh,problem.avg_dens)
 	df.file << sol
 	df.dfile << problem.f
@@ -198,7 +164,7 @@ def mainloop(mesh,problem,df,rf,scale):
 	for x in problem.avg_dens.func:
 		rf.density.write(str(x)+" ")
 	df.adfile << problem.f
-	avgE=mc.negGradient(mesh,PoissonSolve(problem.f,problem.bcs))
+	avgE=mc.negGradient(mesh,PoissonSolve(problem.f,problem.bcs),problem.V2)
 	df.avggradfile << avgE
 
 	print current_values
@@ -206,7 +172,8 @@ def mainloop(mesh,problem,df,rf,scale):
 mesh = meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon())
 #these seem to need to be global
 V = FunctionSpace(mesh, "CG", 2)
-problem = init_problem(mesh,V,options)
+V2 = VectorFunctionSpace(mesh,"CG",1,2)
+problem = init_problem(mesh,V,V2,options)
 dolfinFiles = init_dolfin_files()
 rf = ResultsFile()
 rf.current = new_file("current")

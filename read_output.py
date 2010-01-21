@@ -1,4 +1,5 @@
-import os
+import os,sys
+import optparse
 
 def read_current_output(afile):
 	V = float(afile.readline().strip())
@@ -15,11 +16,17 @@ def mean(x):
 def filter_dir(dir,afilter):
 	return filter(lambda x: (x.find(afilter) )>0,os.listdir(dir))
 
-def current_values():
-	vals = {}
-	tags = {}
+def filter_tags(tags,options):
+	if options.tag == "None":
+		return tags.keys()
+	return filter(lambda x: x.find("tag:"+options.tag)>0,tags.keys())
+
+def current_values(options):
+	vals = {} #values
+	tags = {} #line tags, needs to be made complicated
+	#go through filter directory and take all current files
 	for name in filter_dir("results","current"):
-		try:
+		try: #assume well formatted
 			afile = open("results/"+name)
 			V,misc,cur_vals = read_current_output(afile)
 			tags[misc]=0
@@ -27,10 +34,12 @@ def current_values():
 				vals[(V,misc)]+=[mean(cur_vals)]
 			else:
 				vals[(V,misc)] = [mean(cur_vals)]
-		except:
-			print "bad input:",name
+		except: #not well formmatted
+			if options.verbose == True:
+				print "bad input:",name
 	all_voltages = sorted(vals.keys())
-	for tag in tags:
+	selected_tags = filter_tags(tags,options)
+	for tag in selected_tags:
 		voltages = filter(lambda x:x[1]==tag,all_voltages)
 		vlist,ilist = [],[]
 		print "\n"+tag
@@ -42,4 +51,9 @@ def current_values():
 		print "c("+",".join(ilist)+")"
 
 if __name__=="__main__":
-	current_values()
+	parser = optparse.OptionParser()
+	parser.add_option("-c",type="int",dest="count",default=-1)
+	parser.add_option("--tag",type="string",dest="tag",default="None")
+	parser.add_option("-v",dest="verbose",action="store_true")
+	options,args = parser.parse_args(sys.argv)
+	current_values(options)

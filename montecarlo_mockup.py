@@ -8,6 +8,7 @@ import time
 import sys
 import driftscatter
 import bandstructure
+import stats
 
 #more path
 sys.path.append("c_optimized/")
@@ -19,7 +20,7 @@ class ParticleMesh(Mesh):
 	n_carrier_charge = -10
 	p_carrier_charge = 10
 	carrier_charge = 10
-	def __init__(self,mesh,scale):
+	def __init__(self,mesh,scale,length):
 		Mesh.__init__(self,mesh)
 		self.bd = du.boundary_dict(mesh)
 		self.point_index = {}
@@ -31,6 +32,8 @@ class ParticleMesh(Mesh):
 		self.kdt = kdtree_c.new_kdtree(mesh.coordinates())
 		self.bandstructure = bandstructure.ParabolicBand(self)
 		self.material = {}
+		self.length_scale = length
+		self.dt = 10.**-13
 
 		#init point->index map, point->particle map
 		for x,id in it.izip(mesh.coordinates(),it.count()):
@@ -106,8 +109,7 @@ def init_electrons(num,points,charge=-1,mesh=None):
 					 dx,lifetime,charge,mesh))
 	return electrons
 
-def negGradient(mesh,field):
-	V = VectorFunctionSpace(mesh,"CG",1,2)
+def negGradient(mesh,field,V):
 	return project(grad(-field),V)
 
 def reap_list(full,remove_ids):
@@ -122,7 +124,6 @@ def reap_list(full,remove_ids):
 	for id in xrange(len(full)):
 		p = full[id]
 		p.part_id = id
-
 def handle_region(mesh,density,point,add_list,reaper,sign,id):
 	charge = mesh.carrier_charge*sign
 	
@@ -228,32 +229,19 @@ def recombinate(mesh,reaper):
 					reaper.append(hole)
 					break
 
-def MonteCarlo(mesh,potential_field,electric_field,
-		density_func,
-		avg_dens,
-		current_values):
-	reaper = []
-
-	current = 0
-
-	#next_step density function array
-	nextDensity = density_func.vector().array()
+def pre_compute_field(mesh,field):
 	start = time.time()
-	rem_time = 0.
-	mesh_lookup_time = 0.
-	#okay, here's the code we're going to roll up into a c_call
-
-	print len(mesh.particles)
-	#prep particle
 	c_efield= []
-	
 	coord = mesh.coordinates()
 	for index in xrange(len(coord)):
 		pos = coord[index]
-		vec = du.get_vec(mesh,electric_field,pos)
+		vec = du.get_vec(mesh,field,pos)
 		c_efield.append(vec)
 	print "Forces Calculated:",time.time()-start
+	return c_efield
 
+def move_particles(mesh,c_efield,nextDensity,density_func,reaper):
+	rem_time = 0.
 	start=time.time()
 	for index in xrange(len(mesh.particles)):
 		p = mesh.particles[index]
@@ -267,13 +255,28 @@ def MonteCarlo(mesh,potential_field,electric_field,
 		driftscatter.randomElectronMovement(p,c_efield,
 					density_func,mesh,reaper)
 		rem_time += time.time()-start2
-		
-		#stats stuff	
-		#total_momentum[p.charge] += p.momentum
-		#count[p.charge] += 1
 	print "drift scatter took:",rem_time
 	print "Particle Movement took:",time.time()-start
 
+
+def MonteCarlo(mesh,potential_field,electric_field,
+		density_func,
+		avg_dens,
+		current_values):
+	reaper = []
+
+	current = 0
+
+	#next_step density function array
+	nextDensity = density_func.vector().array()
+	
+	mesh_lookup_time = 0.
+
+	#precompute electric field at all points
+	c_efield = pre_compute_field(mesh,electric_field)
+	
+	move_particles(mesh,c_efield,nextDensity,density_func,reaper)
+	
 	start = time.time()
 	for index in xrange(len(mesh.particles)):
 		p = mesh.particles[index]
@@ -315,51 +318,26 @@ def MonteCarlo(mesh,potential_field,electric_field,
 	reap_time += time.time()-start
 	reaper = []
 		
-	current_values.append(current)
+	current_values.append(current*constants.eC/mesh.dt)
 	print "Current:",current
 	
 	print "Reaper:",reap_time
 	print "Replenish took:",replenish_time
-	print "random electron movement time:",rem_time
 	print "Mesh lookup time:",mesh_lookup_time
+	print "Average Momentum:",stats.avg_momentum
+	print "Average Force:",stats.avg_force
+	print "Average dx:",stats.avg_dx
 	start = time.time()
-	avg_dens.inc(nextDensity)
+	scaled_density = array(mesh.coordinates())
+	for id,point in zip(it.count(),mesh.coordinates()):
+		material = mesh.material[tuple(point)]
+		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
+		scaled_density = (nextDensity[id]*
+				  constants.eC*
+				  material.doping*mesh.length_scale**2*10**-6/
+					mesh.numCells())
+	avg_dens.inc(scaled_density)
 	density_func.vector().set(nextDensity)
+	for x in density_func.vector().array():
+		print x
 	print "density increment time:",time.time()-start
-
-def randomElectronMovement(particle,electric_field,density_func,mesh,reaper):
-	meanpathlength = 1#getMeanPathLength(cell)
-	lifetime = .001#lifetime(cell)
-	mass_particle = 1
-
-	#scale = mesh.length_scale/mesh.time_scale
-	
-	p = particle
-	
-	dt = 1./1000.
-	p.momentum += drift(mesh,electric_field,p)*dt
-	p.pos += (p.momentum/p.mass)*dt#*scale
-	p.dx += (p.momentum/p.mass)*dt#*scale
-	#check for out of bounds
-	#	this needs to be changed, we should
-	#	do all momentum changes BEFORE movement
-	#	this guarantees that we are on the mesh.
-	#if(dot(e.dx,e.dx) > meanpathlength**2):
-	#	e.dx = array([0.,0.])
-	#	e.momentum += array([0,0])#scatter(e.momentum,e.pos,mesh)
-	if(p.lifetime < 0):
-		p.dead = True
-		reaper.append(p.part_id)
-	#print e.momentum
-	p.lifetime -= dt
-
-#drift calculates drift force due to forces
-#F = dp/dt
-def drift(mesh,func,particle):
-	p = particle
-	force = (du.get_vec(mesh,func,p.meshpos)*
-		p.charge-self_force[p.charge])
-	return force
-
-def scatter(momentum,pos,mesh):
-	force = momentum*random_vec()
