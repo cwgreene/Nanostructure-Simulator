@@ -1,10 +1,13 @@
-import os,time
+import os,time,sys
+import run_options
 
-start = -1.0
-end   = 1.
-max   = 10
+options = run_options.create_options(sys.argv)
+start = -1
+end   = 4.
+max   = 15
 total_time = time.time()
-tag = "CellsAccounted"
+tag = "Test2"
+
 for x in range(0,max):
 	start_time = time.time()
 	if(max >1):
@@ -13,7 +16,7 @@ for x in range(0,max):
 		voltage = start
 	print "running",voltage,"/",x+1,"out of",max
 	os.system("python monte.py "
-		+"-c 199"       + " "
+		+"-c 200"       + " "
 		+"--size=1"     + " "
 		+"--scale=1.0"  + " "
 		+"--particles=1"+ " "

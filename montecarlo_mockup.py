@@ -20,7 +20,7 @@ class ParticleMesh(Mesh):
 	n_carrier_charge = -10
 	p_carrier_charge = 10
 	carrier_charge = 10
-	def __init__(self,mesh,scale,length):
+	def __init__(self,mesh,scale,length,time):
 		Mesh.__init__(self,mesh)
 		self.bd = du.boundary_dict(mesh)
 		self.point_index = {}
@@ -33,7 +33,8 @@ class ParticleMesh(Mesh):
 		self.bandstructure = bandstructure.ParabolicBand(self)
 		self.material = {}
 		self.length_scale = length
-		self.dt = 10.**-13
+		self.dt = time
+		self.charge_particle = constants.eC
 
 		#init point->index map, point->particle map
 		for x,id in it.izip(mesh.coordinates(),it.count()):
@@ -214,20 +215,28 @@ def current_exit(particle,mesh):
 	else:
 		return particle.charge*speed
 
-def recombinate(mesh,reaper):
-	for point_id in mesh.point_index.values():
-		electron = None
-		hole = None
-		for p in mesh.particles_point[point_id]:
-			if p.dead != True:
-				if p.charge < 0:
-					electron = p
-				if p.charge > 0 and p.dead:
-					hole = p
-				if electron != None and hole != None:
-					reaper.append(electron)
-					reaper.append(hole)
-					break
+def recombinate(mesh,reaper,avg_dens,avg_electrons,avg_holes):
+	#for point_id in mesh.point_index.values():
+		#electron = None
+		#hole = None
+		#for p in mesh.particles_point[point_id]:
+		#	if p.dead != True:
+		#		if p.charge < 0:
+		#			electron = p
+		#		if p.charge > 0:
+		#			hole = p
+		#		if electron != None and hole != None:
+		#			reaper.append(electron)
+		#			reaper.append(hole)
+		#			break
+	avg = avg_dens.func
+	for p in mesh.particles:
+		#if we're in a  hole region,
+		#recombinate
+		if avg[p.id]*p.charge < 0: 
+			p.dead = True
+			reaper.append(p.part_id) 
+				
 
 def pre_compute_field(mesh,field):
 	start = time.time()
@@ -258,49 +267,47 @@ def move_particles(mesh,c_efield,nextDensity,density_func,reaper):
 	print "drift scatter took:",rem_time
 	print "Particle Movement took:",time.time()-start
 
-
-def MonteCarlo(mesh,potential_field,electric_field,
-		density_func,
-		avg_dens,
-		current_values):
-	reaper = []
-
-	current = 0
-
-	#next_step density function array
-	nextDensity = density_func.vector().array()
-	
-	mesh_lookup_time = 0.
-
-	#precompute electric field at all points
-	c_efield = pre_compute_field(mesh,electric_field)
-	
-	move_particles(mesh,c_efield,nextDensity,density_func,reaper)
-	
+def update_density(mesh,reaper,nextDensity,current):
 	start = time.time()
 	for index in xrange(len(mesh.particles)):
 		p = mesh.particles[index]
 		if p.dead == False: #if we didn't kill it.
 			start2 = time.time()
 			if(du.out_of_bounds(mesh,p.pos)): 
-				mesh_lookup_time += time.time()-start2
 				#need to figure out exit
 				reaper.append(index)
 				p.dead = True
 				current += current_exit(p,mesh)
 			else:
-				mesh_lookup_time += time.time()-start2
 				#get new p.id
-				#p.id = du.vert_index(mesh,p.pos)	
 				p.id = kdtree_c.find_point_id(mesh.kdt,p.pos)
 				#lock to grid
 				p.meshpos = mesh.coordinates()[p.id]
 				mesh.particles_point[p.id].append(p)
 				#associate charge with density func
 				nextDensity[p.id] += p.charge
-	recombinate(mesh,reaper)
-
 	print "Lookup time:",time.time()-start
+	return current
+
+def MonteCarlo(mesh,potential_field,electric_field,
+		density_func,
+		avg_dens,
+		avg_electrons,
+		avg_holes,
+		current_values):
+	reaper = []
+	current = 0
+
+	#next_step density function array
+	nextDensity = density_func.vector().array()
+	mesh_lookup_time = 0.
+
+	#precompute electric field at all points
+	c_efield = pre_compute_field(mesh,electric_field)
+	move_particles(mesh,c_efield,nextDensity,density_func,reaper)
+	current =update_density(mesh,reaper,nextDensity,current)
+	recombinate(mesh,reaper,avg_dens,avg_electrons,avg_holes)
+
 	#reap
 	start = time.time()
 	reap_list(mesh.particles,reaper)
@@ -327,17 +334,19 @@ def MonteCarlo(mesh,potential_field,electric_field,
 	print "Average Momentum:",stats.avg_momentum
 	print "Average Force:",stats.avg_force
 	print "Average dx:",stats.avg_dx
+	print "Average charge:",stats.avg_charge
 	start = time.time()
-	scaled_density = array(mesh.coordinates())
-	for id,point in zip(it.count(),mesh.coordinates()):
+	scaled_density = array(nextDensity)
+	for point in mesh.coordinates():
 		material = mesh.material[tuple(point)]
 		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
-		scaled_density = (nextDensity[id]*
+		id = mesh.point_index[tuple(point)]
+		scaled_density[id] = (nextDensity[id]*
 				  constants.eC*
-				  material.doping*mesh.length_scale**2*10**-6/
-					mesh.numCells())
+				  (material.doping3d*
+					((mesh.length_scale)**2)
+				  /material.epsilon))
+		stats.avg_charge += abs(scaled_density[id])
 	avg_dens.inc(scaled_density)
 	density_func.vector().set(nextDensity)
-	for x in density_func.vector().array():
-		print x
 	print "density increment time:",time.time()-start

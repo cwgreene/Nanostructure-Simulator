@@ -53,13 +53,12 @@ def init_problem(mesh,V,V2,options):
 	#kept globally
 	pBoundary = Constant(mesh, options.V)
 	nBoundary = Constant(mesh, 0.0) 
-	mesh.V = options.V
-	problem.boundaryFuncs = [pBoundary,nBoundary]#prevent bad garbage?
-	problem.V2 = V2
-
 	bc0 = DirichletBC(V, pBoundary, mesh.InnerBoundary)
 	bc1 = DirichletBC(V, nBoundary, mesh.OuterBoundary)
-	problem.bcs = [bc0,bc1]
+
+	mesh.V = options.V
+	problem.boundaryFuncs = [bc0,bc1]#prevent bad garbage?
+	problem.V2 = V2
 
 	#init particles
 	#electrons, holes
@@ -75,6 +74,8 @@ def init_problem(mesh,V,V2,options):
 	problem.scaled_density = Function(V)
 	problem.g.vector().set(problem.f.vector().array())
 	problem.avg_dens = mc.AverageFunc(problem.f.vector().array())
+	problem.avg_hole = mc.AverageFunc(problem.f.vector().array())
+	problem.avg_electron = mc.AverageFunc(problem.f.vector().array())
 	return problem
 
 def init_dolfin_files():
@@ -132,7 +133,7 @@ def mainloop(mesh,problem,df,rf,scale):
 		problem.g.vector().set(problem.avg_dens.func)
 		print problem.g.vector().array()
 #		problem.g.vector().set(problem.g.vector().array()*scale)
-		sol = PoissonSolve(problem.g,problem.bcs)
+		sol = PoissonSolve(problem.g,problem.boundaryFuncs)
 
 		#handle Monte Carlo
 		print "Starting Step ",x
@@ -140,7 +141,9 @@ def mainloop(mesh,problem,df,rf,scale):
 		df.gradfile << electric_field
 		start2 = time.time()
 		mc.MonteCarlo(mesh,sol,electric_field,
-				problem.f,problem.avg_dens,current_values)
+				problem.f,problem.avg_dens,
+				avg_electrons,avg_holes,
+				current_values)
 		end2 = time.time()
 		#Report
 		#Write Results
@@ -182,3 +185,4 @@ mainloop(mesh,problem,dolfinFiles,rf,options.scale)
 # Hold plot
 #plot(avgE)
 #interactive()
+
