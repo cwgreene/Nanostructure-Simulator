@@ -7,7 +7,7 @@ import time
 #import triangle
 import sys
 import driftscatter
-import bandstructure
+#import bandstructure
 import stats
 
 #more path
@@ -30,7 +30,7 @@ class ParticleMesh(Mesh):
 		self.particles = []
 		self.scale = scale
 		self.kdt = kdtree_c.new_kdtree(mesh.coordinates())
-		self.bandstructure = bandstructure.ParabolicBand(self)
+		#self.bandstructure = bandstructure.ParabolicBand(self) #should be part of the material
 		self.material = {}
 		self.length_scale = length
 		self.dt = time
@@ -115,16 +115,22 @@ def negGradient(mesh,field,V):
 
 def reap_list(full,remove_ids):
 	#global avg_lifetime,lifetime_count
+	print remove_ids
+	start = time.time()
 	remove_ids.sort()
 	count = 0
 	for id in remove_ids:
 		p = full.pop(id-count)
+		print p.part_id-count,id
 		count += 1
 	#	avg_lifetime += p.lifetime
 	#	lifetime_count += 1
 	for id in xrange(len(full)):
 		p = full[id]
 		p.part_id = id
+	print remove_ids
+	remove_ids[:] = []
+	stats.reap_time += time.time()-start
 def handle_region(mesh,density,point,add_list,reaper,sign,id):
 	charge = mesh.carrier_charge*sign
 	
@@ -142,10 +148,12 @@ def handle_region(mesh,density,point,add_list,reaper,sign,id):
 	if(density[id]*sign < 0):
 		for i in xrange(int(-density[id]/charge)):
 			add_list.append(array(point))
+			print "adding charge",id,i
 	#remove excess
 	exit_current = 0
 	if(density[id]*sign > 0):
 		for i in xrange(int(density[id]/charge)):
+			print "removing excess",id,i
 			doom_particle = mesh.particles_point[id].pop()
 			density[id] -= charge
 			reaper.append(doom_particle.part_id)
@@ -209,34 +217,20 @@ def current_exit(particle,mesh):
 
 	speed = sqrt(dot(particle.pos,particle.pos))
 	#exit = du.closest_exit(boundary,particle.pos)
+	#nearest point
 	exit = mesh.coordinates()[kdtree_c.find_point_id(mesh.kdt,particle.pos)]
-	if mesh.in_p_region(exit):
-		return particle.charge*-1*speed
-	else:
-		return particle.charge*speed
+	return particle.charge*speed
 
-def recombinate(mesh,reaper,avg_dens,avg_electrons,avg_holes):
-	#for point_id in mesh.point_index.values():
-		#electron = None
-		#hole = None
-		#for p in mesh.particles_point[point_id]:
-		#	if p.dead != True:
-		#		if p.charge < 0:
-		#			electron = p
-		#		if p.charge > 0:
-		#			hole = p
-		#		if electron != None and hole != None:
-		#			reaper.append(electron)
-		#			reaper.append(hole)
-		#			break
+def recombinate(mesh,reaper,nextDensity,avg_dens,avg_electrons,avg_holes):
 	avg = avg_dens.func
 	for p in mesh.particles:
 		#if we're in a  hole region,
 		#recombinate
 		if avg[p.id]*p.charge < 0: 
 			p.dead = True
+			print "recombinate!"
 			reaper.append(p.part_id) 
-				
+			nextDensity[p.id] +=p.charge #so when we reap, we stay: WRONG!
 
 def pre_compute_field(mesh,field):
 	start = time.time()
@@ -254,7 +248,8 @@ def move_particles(mesh,c_efield,nextDensity,density_func,reaper):
 	start=time.time()
 	for index in xrange(len(mesh.particles)):
 		p = mesh.particles[index]
-		
+		if p.dead == True:
+			print "Danger Will Robinson! Danger!"
 		#remove from old locations
 		nextDensity[p.id] -= p.charge
 		mesh.particles_point[p.id].remove(p)
@@ -289,52 +284,7 @@ def update_density(mesh,reaper,nextDensity,current):
 	print "Lookup time:",time.time()-start
 	return current
 
-def MonteCarlo(mesh,potential_field,electric_field,
-		density_func,
-		avg_dens,
-		avg_electrons,
-		avg_holes,
-		current_values):
-	reaper = []
-	current = 0
-
-	#next_step density function array
-	nextDensity = density_func.vector().array()
-	mesh_lookup_time = 0.
-
-	#precompute electric field at all points
-	c_efield = pre_compute_field(mesh,electric_field)
-	move_particles(mesh,c_efield,nextDensity,density_func,reaper)
-	current =update_density(mesh,reaper,nextDensity,current)
-	recombinate(mesh,reaper,avg_dens,avg_electrons,avg_holes)
-
-	#reap
-	start = time.time()
-	reap_list(mesh.particles,reaper)
-	reap_time = time.time()-start
-	reaper = []
-
-	#replenish, with reaper		
-	start = time.time()
-	current += replenish(mesh,nextDensity,mesh.bd,reaper)
-	replenish_time = time.time()-start
-
-	#reap again
-	start = time.time()
-	reap_list(mesh.particles,reaper)
-	reap_time += time.time()-start
-	reaper = []
-		
-	current_values.append(current*constants.eC/mesh.dt)
-	print "Current:",current
-	
-	print "Reaper:",reap_time
-	print "Replenish took:",replenish_time
-	print "Mesh lookup time:",mesh_lookup_time
-	print "Average Momentum:",stats.avg_momentum
-	print "Average Force:",stats.avg_force
-	print "Average dx:",stats.avg_dx
-	print "Average charge:",stats.avg_charge
+def calculate_scaled_density(mesh,nextDensity):
 	start = time.time()
 	scaled_density = array(nextDensity)
 	for point in mesh.coordinates():
@@ -347,6 +297,41 @@ def MonteCarlo(mesh,potential_field,electric_field,
 					((mesh.length_scale)**2)
 				  /material.epsilon))
 		stats.avg_charge += abs(scaled_density[id])
+	return scaled_density
+
+def MonteCarlo(mesh,potential_field,electric_field,
+		density_funcs,
+		avg_dens,
+		avg_electrons,
+		avg_holes,
+		current_values):
+	reaper = []
+	current = 0
+
+	#next_step density function array
+	nextDensity = density_funcs.combined_density.vector().array()
+	#holeDensity = density_funcs.holes.vector().array()
+	#electronDensity = density_funcs.electrons.vector().array()
+
+	#compute field, move_particles, calc current, recombinate, reap
+	c_efield = pre_compute_field(mesh,electric_field)	#Evaluates field at each mesh point
+	move_particles(mesh,c_efield,nextDensity,density_funcs.combined_density,reaper) #moves all particles
+	current = update_density(mesh,reaper,nextDensity,current)
+	reap_list(mesh.particles,reaper)
+	recombinate(mesh,reaper,nextDensity,avg_dens,avg_electrons,avg_holes)
+	reap_list(mesh.particles,reaper)
+
+	#replenish,reap
+	current += replenish(mesh,nextDensity,mesh.bd,reaper)
+	reap_list(mesh.particles,reaper)
+
+	#update current values
+	current_values.append(current*constants.eC/mesh.dt)
+
+	#update avg_dens
+	scaled_density = calculate_scaled_density(mesh,nextDensity)
 	avg_dens.inc(scaled_density)
-	density_func.vector().set(nextDensity)
-	print "density increment time:",time.time()-start
+	density_funcs.combined_density.vector().set(nextDensity)
+
+	#print stats
+	stats.print_stats(current)

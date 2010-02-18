@@ -1,4 +1,5 @@
 import ctypes
+import time #test only
 #init
 kdtree = ctypes.cdll.LoadLibrary("c_optimized/kdtree.so")
 kdtree.call_this()
@@ -28,19 +29,23 @@ def new_kdtree(points):
 	kd_p = kdtree.new_kdtree(vec_points,len(points),0)
 	#print type(kd_p)
 	return kd_p
-
+acc = 0.
 def find_point(kd,point):
+	global acc
 	best = vector2(100000,1000000)
 	x = vector2(*point)
 	bdist = ctypes.pointer(ctypes.c_double(1000000))
 	
 	#res =  kdtree.kdtree_find_point(kd,x)
 	#res = kdtree.find_point_r(x,kd,best,bdist)
+#	start = time.time()
 	res = kdtree.kdtree_find_point(kd,x)
+#	acc += time.time()-start
 	#print type(res)
 	return res
 
 def find_point_id(kd,point):
+	global acc
 	best = vector2(100000,1000000)
 	x = vector2(*point)
 	bdist = ctypes.pointer(ctypes.c_double(1000000))
@@ -54,7 +59,8 @@ def find_point_id(kd,point):
 def test():
 	import time
 	import random
-	points = [[random.random()*10,random.random()*10] for x in range(100000)]
+	global acc
+	points = [[random.random()*10,random.random()*10] for x in range(10000)]
 	start = time.time()
 	kd = new_kdtree(points)
 	print "construct:",time.time()-start
@@ -90,7 +96,19 @@ def test():
 		if id != index:
 			print "Unhappiness 3"
 	print "index:",time.time()-start
-	
+	z=[(random.random(),random.random()) for x in range(100000)]
+	start = time.time()
+	acc = 0
+	for point in z:
+		id = find_point_id(kd,point)
+	print "random_lookup:",time.time()-start,acc
+	start = time.time()
+	acc = 0
+	for point in z:
+		kdtree.do_nothing(3)
+		kdtree.do_nothing(3)
+	print "do_nothing:",time.time()-start,acc
+
 	print "all done"
 
 if __name__ == "__main__":

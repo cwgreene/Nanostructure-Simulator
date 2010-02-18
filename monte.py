@@ -22,12 +22,13 @@ import numpy as np
 import dolfin_util as du
 import time
 import mcoptions,sys,os
-import trianglemesh as tm
-import triangle
-import meshtest
+#import trianglemesh as tm
+#import triangle
+#import meshtest
 import re
 import photocurrent as pc
 
+import density_funcs
 import materials
 import meshes
 
@@ -53,11 +54,13 @@ def init_problem(mesh,V,V2,options):
 	#kept globally
 	pBoundary = Constant(mesh, options.V)
 	nBoundary = Constant(mesh, 0.0) 
+	print mesh.InnerBoundary
 	bc0 = DirichletBC(V, pBoundary, mesh.InnerBoundary)
 	bc1 = DirichletBC(V, nBoundary, mesh.OuterBoundary)
 
 	mesh.V = options.V
-	problem.boundaryFuncs = [bc0,bc1]#prevent bad garbage?
+	problem.bcs = [bc0,bc1]#prevent bad garbage?
+	problem.boundaryFuncs = [pBoundary,nBoundary]
 	problem.V2 = V2
 
 	#init particles
@@ -69,13 +72,18 @@ def init_problem(mesh,V,V2,options):
 				charge=10,mesh=mesh)
 
 	print "Creating density functions"
-	problem.f = custom_func(mesh,V)
-	problem.g = Function(V)
-	problem.scaled_density = Function(V)
-	problem.g.vector().set(problem.f.vector().array())
-	problem.avg_dens = mc.AverageFunc(problem.f.vector().array())
-	problem.avg_hole = mc.AverageFunc(problem.f.vector().array())
-	problem.avg_electron = mc.AverageFunc(problem.f.vector().array())
+	problem.density_funcs = density_funcs.DensityFuncs()
+	problem.density_funcs.holes = Function(V)
+	problem.density_funcs.electrons = Function(V)
+	problem.density_funcs.combined_density = Function(V)
+	problem.density_funcs.poisson_density = Function(V)
+	problem.density_funcs.scaled_density = Function(V)
+	problem.density_funcs.poisson_density.vector().set(problem.density_funcs.combined_density.vector().array())
+
+	print "Creating Average Densities"
+	problem.avg_dens = mc.AverageFunc(problem.density_funcs.combined_density.vector().array())
+	problem.avg_holes = mc.AverageFunc(problem.density_funcs.combined_density.vector().array())
+	problem.avg_electrons = mc.AverageFunc(problem.density_funcs.combined_density.vector().array())
 	return problem
 
 def init_dolfin_files():
@@ -130,10 +138,10 @@ def mainloop(mesh,problem,df,rf,scale):
 	for x in range(options.num):
 		#Solve equation
 		start1 = time.time()
-		problem.g.vector().set(problem.avg_dens.func)
-		print problem.g.vector().array()
-#		problem.g.vector().set(problem.g.vector().array()*scale)
-		sol = PoissonSolve(problem.g,problem.boundaryFuncs)
+		problem.density_funcs.poisson_density.vector().set(problem.avg_dens.func)
+		print problem.density_funcs.poisson_density.vector().array()
+#		problem.poisson_density.vector().set(problem.poisson_density.vector().array()*scale)
+		sol = PoissonSolve(problem.density_funcs.poisson_density,problem.bcs)
 
 		#handle Monte Carlo
 		print "Starting Step ",x
@@ -141,15 +149,15 @@ def mainloop(mesh,problem,df,rf,scale):
 		df.gradfile << electric_field
 		start2 = time.time()
 		mc.MonteCarlo(mesh,sol,electric_field,
-				problem.f,problem.avg_dens,
-				avg_electrons,avg_holes,
+				problem.density_funcs,problem.avg_dens,
+				problem.avg_electrons,problem.avg_holes,
 				current_values)
 		end2 = time.time()
 		#Report
 		#Write Results
 		df.file << sol
-		df.dfile << problem.f
-		df.adfile << problem.g
+		df.dfile << problem.density_funcs.combined_density
+		df.adfile << problem.density_funcs.poisson_density
 
 		#write current
 		rf.current.write(str(current_values[-1]));
@@ -161,13 +169,13 @@ def mainloop(mesh,problem,df,rf,scale):
 		#del electric_field
 	#pc.generate_photo_current(mesh,problem.avg_dens)
 	df.file << sol
-	df.dfile << problem.f
+	df.dfile << problem.density_funcs.combined_density
 	#dump average
-	problem.f.vector().set(problem.avg_dens.func)
+	problem.density_funcs.combined_density.vector().set(problem.avg_dens.func)
 	for x in problem.avg_dens.func:
 		rf.density.write(str(x)+" ")
-	df.adfile << problem.f
-	avgE=mc.negGradient(mesh,PoissonSolve(problem.f,problem.bcs),problem.V2)
+	df.adfile << problem.density_funcs.combined_density
+	avgE=mc.negGradient(mesh,PoissonSolve(problem.density_funcs.combined_density,problem.bcs),problem.V2)
 	df.avggradfile << avgE
 
 	print current_values
