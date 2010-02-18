@@ -115,20 +115,17 @@ def negGradient(mesh,field,V):
 
 def reap_list(full,remove_ids):
 	#global avg_lifetime,lifetime_count
-	print remove_ids
 	start = time.time()
 	remove_ids.sort()
 	count = 0
 	for id in remove_ids:
 		p = full.pop(id-count)
-		print p.part_id-count,id
 		count += 1
 	#	avg_lifetime += p.lifetime
 	#	lifetime_count += 1
 	for id in xrange(len(full)):
 		p = full[id]
 		p.part_id = id
-	print remove_ids
 	remove_ids[:] = []
 	stats.reap_time += time.time()-start
 def handle_region(mesh,density,point,add_list,reaper,sign,id):
@@ -148,12 +145,12 @@ def handle_region(mesh,density,point,add_list,reaper,sign,id):
 	if(density[id]*sign < 0):
 		for i in xrange(int(-density[id]/charge)):
 			add_list.append(array(point))
-			print "adding charge",id,i
+#			print "adding charge",id,i
 	#remove excess
 	exit_current = 0
 	if(density[id]*sign > 0):
 		for i in xrange(int(density[id]/charge)):
-			print "removing excess",id,i
+#			print "removing excess",id,i
 			doom_particle = mesh.particles_point[id].pop()
 			density[id] -= charge
 			reaper.append(doom_particle.part_id)
