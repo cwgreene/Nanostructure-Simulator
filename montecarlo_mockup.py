@@ -26,6 +26,7 @@ class ParticleMesh(Mesh):
 		print "Hello!"
 		Mesh.__init__(self,mesh)
 		self.bd = du.boundary_dict(mesh)
+		self.ibd = du.boundary_id_dict(mesh,self.bd)
 		self.point_index = {}
 #		self.particles_point = {}
 		self.p_region = {}
@@ -68,6 +69,7 @@ class AverageFunc():
 		self.count += 1
 		self.func = (self.func*(self.count-1)+func)/(self.count*1.)
 
+particle_pos = []
 class Particle():
 	def __init__(self,pos,momentum,dx,lifetime,charge,mesh):
 		self.uid = p_count.next()
@@ -75,8 +77,8 @@ class Particle():
 		#mesh.trajectories[self.uid] = [tuple(self.pos)]
 		#print mesh.trajectories[0]
 		self.momentum = array(momentum)*mesh.scale
-		self.dx = array(dx)
-		self.lifetime = 2*rd.random()#int(lifetime)
+#		self.dx = array(dx)
+#		self.lifetime = 2*rd.random()#int(lifetime)
 		self.charge = charge
 		self.dead = False
 		self.mass = mesh.material[tuple(pos)].electron_mass #mesh.mass[charge]
@@ -84,7 +86,7 @@ class Particle():
 		#mesh_id data
 		#self.id = du.vert_index(mesh,self.pos)
 		self.id = kdtree_c.find_point_id(mesh.kdt,self.pos)
-		self.meshpos = mesh.coordinates()[self.id]
+		#self.meshpos = mesh.coordinates()[self.id]
 		#particles_point must be update on move
 #		mesh.particles_point[mesh.point_index[tuple(self.meshpos)]].append(self)
 		self.part_id = len(mesh.particles)
@@ -257,21 +259,17 @@ def update_density(mesh,reaper,nextDensity,current):
 	start = time.time()
 	for index in xrange(len(mesh.particles)):
 		p = mesh.particles[index]
-		if p.dead == False: #if we didn't kill it.
-			start2 = time.time()
-			if(du.out_of_bounds(mesh,p.pos)): 
-				#need to figure out exit
-				reaper.append(index)
-				p.dead = True
-				current += current_exit(p,mesh)
-			else:
-				#get new p.id
-				p.id = kdtree_c.find_point_id(mesh.kdt,p.pos)
-				#lock to grid
-				p.meshpos = mesh.coordinates()[p.id]
-#				mesh.particles_point[p.id].append(p)
-				#associate charge with density func
-				nextDensity[p.id] += p.charge
+		start2 = time.time()
+		#if du.out_of_bounds(mesh,p.pos)): 
+		if kdtree_c.find_point_id(mesh.kdt,p.pos) in mesh.ibd:
+			#need to figure out exit
+			reaper.append(index)
+			p.dead = True
+			current += current_exit(p,mesh)
+		else:
+			#get new p.id
+			p.id = kdtree_c.find_point_id(mesh.kdt,p.pos)
+			nextDensity[p.id] += p.charge
 	print "Lookup time:",time.time()-start
 	return current
 
@@ -308,6 +306,7 @@ def MonteCarlo(mesh,potential_field,electric_field,
 	start = time.time()
 	c_efield = pre_compute_field(mesh,electric_field)	#Evaluates field at each mesh point
 	move_particles(mesh,c_efield,nextDensity,density_funcs.combined_density,reaper) #moves all particles
+	
 	current = update_density(mesh,reaper,nextDensity,current)
 	reap_list(mesh.particles,reaper)
 	recombinate(mesh,reaper,nextDensity,avg_dens,avg_electrons,avg_holes)

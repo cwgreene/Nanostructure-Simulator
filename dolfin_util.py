@@ -11,7 +11,19 @@ def boundary_dict(mesh):
 	for x in bmesh.coordinates():
 		boundary_coordinates.append(np.array(x))
 	return boundary_coordinates
-		
+
+def boundary_id_dict(mesh,boundary):
+	cells = ArrayUInt()
+	bmesh = BoundaryMesh(mesh)
+	boundary_coordinates = {}
+	bcprime = {}
+	for x in boundary:
+		bcprime[tuple(x)] = True
+	for x,i in it.izip(mesh.coordinates(),it.count()):
+		if tuple(x) in bcprime:
+			boundary_coordinates[i] = True
+	return boundary_coordinates
+	
 
 def closest_exit(boundary_coordinates,point):
 	disp = np.array(boundary_coordinates[0]) -point
