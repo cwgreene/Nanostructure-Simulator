@@ -10,16 +10,13 @@ global mesh
 class TriangleMesh(mc.ParticleMesh):
 	def __init__(self,options):
 		global mesh
-		#thetriangle = np.array([[-.5,-.288675],[.5,-.288675],[0.,.57735]])
 		thetriangle = np.array([[0.,0.],[1.,0.],[.5,.8660254]])
 
 		mesh = meshtest.TestMesh()
 		for x in range(options.size):
 			mesh.refine()
-		#mesh = mc.ParticleMesh(mesh,options.scale)
 		mc.ParticleMesh.__init__(self,mesh,options.scale,options.length,
-		options.dt)
-		#mesh = mc.ParticleMesh(tm.innertriangle(5,.2,thetriangle))
+		options.dt,options.gen_num)
 
 		inner = triangle_util.scale_triangle(thetriangle,.52)
 		self.populate_regions(lambda x: 

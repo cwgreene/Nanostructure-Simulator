@@ -16,18 +16,22 @@ import kdtree_c
 import materials
 import constants
 
+p_count = it.count()
+
 class ParticleMesh(Mesh):
 	n_carrier_charge = -10
 	p_carrier_charge = 10
 	carrier_charge = 10
-	def __init__(self,mesh,scale,length,time):
+	def __init__(self,mesh,scale,length,time,gen_num):
+		print "Hello!"
 		Mesh.__init__(self,mesh)
 		self.bd = du.boundary_dict(mesh)
 		self.point_index = {}
-		self.particles_point = {}
+#		self.particles_point = {}
 		self.p_region = {}
 		self.n_region = {}
 		self.particles = []
+		self.trajectories = {}
 		self.scale = scale
 		self.kdt = kdtree_c.new_kdtree(mesh.coordinates())
 		#self.bandstructure = bandstructure.ParabolicBand(self) #should be part of the material
@@ -35,11 +39,12 @@ class ParticleMesh(Mesh):
 		self.length_scale = length
 		self.dt = time
 		self.charge_particle = constants.eC
+		self.gen_num= gen_num
 
 		#init point->index map, point->particle map
 		for x,id in it.izip(mesh.coordinates(),it.count()):
 			self.point_index[tuple(x)] = id
-			self.particles_point[id] = []
+#			self.particles_point[id] = []
 	def populate_regions(self,p_region_func,doping_p,doping_n,
 				p_material,n_material):
 		self.in_p_region = p_region_func
@@ -65,7 +70,10 @@ class AverageFunc():
 
 class Particle():
 	def __init__(self,pos,momentum,dx,lifetime,charge,mesh):
+		self.uid = p_count.next()
 		self.pos = array(pos)
+		#mesh.trajectories[self.uid] = [tuple(self.pos)]
+		#print mesh.trajectories[0]
 		self.momentum = array(momentum)*mesh.scale
 		self.dx = array(dx)
 		self.lifetime = 2*rd.random()#int(lifetime)
@@ -78,14 +86,13 @@ class Particle():
 		self.id = kdtree_c.find_point_id(mesh.kdt,self.pos)
 		self.meshpos = mesh.coordinates()[self.id]
 		#particles_point must be update on move
-		mesh.particles_point[mesh.point_index[tuple(self.meshpos)]].append(self)
+#		mesh.particles_point[mesh.point_index[tuple(self.meshpos)]].append(self)
 		self.part_id = len(mesh.particles)
 		mesh.particles.append(self)
 
 #functions
 def random_momentum(mesh,pos):
 	theta = rd.random()*2*pi
-#	energy = mesh.bandstructure.random_energy()
 	material = mesh.material[tuple(pos)]
 	bandgap = material.bandgap
 	mass = material.electron_mass
@@ -121,8 +128,6 @@ def reap_list(full,remove_ids):
 	for id in remove_ids:
 		p = full.pop(id-count)
 		count += 1
-	#	avg_lifetime += p.lifetime
-	#	lifetime_count += 1
 	for id in xrange(len(full)):
 		p = full[id]
 		p.part_id = id
@@ -142,19 +147,13 @@ def handle_region(mesh,density,point,add_list,reaper,sign,id):
 	#to leaving particles, and imbalance
 	#due to holes being present.
 	#Status: The above TODO is believed to be wrong.
-	if(density[id]*sign < 0):
+	if(density[id]*sign < 0):#too little
 		for i in xrange(int(-density[id]/charge)):
 			add_list.append(array(point))
-#			print "adding charge",id,i
 	#remove excess
 	exit_current = 0
-	if(density[id]*sign > 0):
-		for i in xrange(int(density[id]/charge)):
-#			print "removing excess",id,i
-			doom_particle = mesh.particles_point[id].pop()
-			density[id] -= charge
-			reaper.append(doom_particle.part_id)
-			exit_current += current_exit(doom_particle,mesh)
+	if(density[id]*sign > 0):#too much
+		print "too much!"
 	return exit_current
 
 def replenish_boundary(mesh,density,holes,electrons,reaper):
@@ -225,9 +224,7 @@ def recombinate(mesh,reaper,nextDensity,avg_dens,avg_electrons,avg_holes):
 		#recombinate
 		if avg[p.id]*p.charge < 0: 
 			p.dead = True
-			print "recombinate!"
 			reaper.append(p.part_id) 
-			nextDensity[p.id] +=p.charge #so when we reap, we stay: WRONG!
 
 def pre_compute_field(mesh,field):
 	start = time.time()
@@ -243,18 +240,15 @@ def pre_compute_field(mesh,field):
 def move_particles(mesh,c_efield,nextDensity,density_func,reaper):
 	rem_time = 0.
 	start=time.time()
-	for index in xrange(len(mesh.particles)):
-		p = mesh.particles[index]
-		if p.dead == True:
-			print "Danger Will Robinson! Danger!"
+	for p in mesh.particles:
 		#remove from old locations
 		nextDensity[p.id] -= p.charge
-		mesh.particles_point[p.id].remove(p)
 
 		#begin movement	
 		start2 = time.time()
 		driftscatter.randomElectronMovement(p,c_efield,
 					density_func,mesh,reaper)
+		#mesh.trajectories[p.uid].append(tuple(p.pos))
 		rem_time += time.time()-start2
 	print "drift scatter took:",rem_time
 	print "Particle Movement took:",time.time()-start
@@ -275,7 +269,7 @@ def update_density(mesh,reaper,nextDensity,current):
 				p.id = kdtree_c.find_point_id(mesh.kdt,p.pos)
 				#lock to grid
 				p.meshpos = mesh.coordinates()[p.id]
-				mesh.particles_point[p.id].append(p)
+#				mesh.particles_point[p.id].append(p)
 				#associate charge with density func
 				nextDensity[p.id] += p.charge
 	print "Lookup time:",time.time()-start
@@ -289,9 +283,9 @@ def calculate_scaled_density(mesh,nextDensity):
 		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
 		id = mesh.point_index[tuple(point)]
 		scaled_density[id] = (nextDensity[id]*
-				  constants.eC*
+				  constants.eC/mesh.gen_num*
 				  (material.doping3d*
-					((mesh.length_scale)**2)
+					((mesh.length_scale)**3)
 				  /material.epsilon))
 		stats.avg_charge += abs(scaled_density[id])
 	return scaled_density
@@ -311,24 +305,29 @@ def MonteCarlo(mesh,potential_field,electric_field,
 	#electronDensity = density_funcs.electrons.vector().array()
 
 	#compute field, move_particles, calc current, recombinate, reap
+	start = time.time()
 	c_efield = pre_compute_field(mesh,electric_field)	#Evaluates field at each mesh point
 	move_particles(mesh,c_efield,nextDensity,density_funcs.combined_density,reaper) #moves all particles
 	current = update_density(mesh,reaper,nextDensity,current)
 	reap_list(mesh.particles,reaper)
 	recombinate(mesh,reaper,nextDensity,avg_dens,avg_electrons,avg_holes)
 	reap_list(mesh.particles,reaper)
+	print "Compute,move,calc,recombinate,reap",time.time()-start
 
 	#replenish,reap
+	start = time.time()
 	current += replenish(mesh,nextDensity,mesh.bd,reaper)
+	print "replenish",time.time()-start
 	reap_list(mesh.particles,reaper)
 
 	#update current values
-	current_values.append(current*constants.eC/mesh.dt)
+	current_values.append(current*constants.eC/(mesh.dt*mesh.gen_num**2))
 
 	#update avg_dens
 	scaled_density = calculate_scaled_density(mesh,nextDensity)
 	avg_dens.inc(scaled_density)
 	density_funcs.combined_density.vector().set(nextDensity)
+	print "doom",density_funcs.combined_density.vector().array()
 
 	#print stats
 	stats.print_stats(current)

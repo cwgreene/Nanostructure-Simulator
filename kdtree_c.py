@@ -96,7 +96,7 @@ def test():
 		if id != index:
 			print "Unhappiness 3"
 	print "index:",time.time()-start
-	z=[(random.random(),random.random()) for x in range(100000)]
+	z=[(random.random(),random.random()) for x in range(200000)]
 	start = time.time()
 	acc = 0
 	for point in z:

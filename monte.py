@@ -66,9 +66,9 @@ def init_problem(mesh,V,V2,options):
 	#init particles
 	#electrons, holes
 	print "adding electrons to regions"
-	mc.init_electrons(options.particles,mesh.n_region.keys(),
+	mc.init_electrons(options.gen_num,mesh.n_region.keys(),
 				charge=-10,mesh=mesh)
-	mc.init_electrons(options.particles,mesh.p_region.keys(),
+	mc.init_electrons(options.gen_num,mesh.p_region.keys(),
 				charge=10,mesh=mesh)
 
 	print "Creating density functions"
@@ -113,7 +113,7 @@ def new_file(name):
 	results_file.write(str(options.V)+"\n")
 	results_file.write("c:"+str(options.num))
 	results_file.write(" scale:"+str(options.scale))
-	results_file.write(" particles:"+str(options.particles))
+	results_file.write(" particles:"+str(options.gen_num))
 	results_file.write(" size:"+str(options.size))
 	results_file.write(" tag:"+str(options.tag))
 	results_file.write("\n")
@@ -136,11 +136,11 @@ def mainloop(mesh,problem,df,rf,scale):
 	print "Beginning Simulation"
 	current_values = []
 	for x in range(options.num):
-		#Solve equation
 		start1 = time.time()
+
+		#Solve equation using avg_dens
 		problem.density_funcs.poisson_density.vector().set(problem.avg_dens.func)
 		print problem.density_funcs.poisson_density.vector().array()
-#		problem.poisson_density.vector().set(problem.poisson_density.vector().array()*scale)
 		sol = PoissonSolve(problem.density_funcs.poisson_density,problem.bcs)
 
 		#handle Monte Carlo
@@ -175,12 +175,22 @@ def mainloop(mesh,problem,df,rf,scale):
 	for x in problem.avg_dens.func:
 		rf.density.write(str(x)+" ")
 	df.adfile << problem.density_funcs.combined_density
-	avgE=mc.negGradient(mesh,PoissonSolve(problem.density_funcs.combined_density,problem.bcs),problem.V2)
+	avgE=mc.negGradient(mesh,PoissonSolve(
+					problem.density_funcs.combined_density,
+					problem.bcs),
+				problem.V2)
 	df.avggradfile << avgE
-
+	avg_length = 0
+	for particle in mesh.trajectories:
+		avg_length += len(mesh.trajectories[particle])
+		#rf.trajectory.write(str(mesh.trajectories[particle]))
+		#rf.trajectory.write("\n")
 	print current_values
+	avg_length /= 1.*len(mesh.trajectories)
+	print "Average trajectory length:",avg_length
 
-mesh = meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon())
+#mesh = meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon())
+mesh = meshes.PlanarMesh(options,materials.Silicon(),materials.Silicon())
 #these seem to need to be global
 V = FunctionSpace(mesh, "CG", 2)
 V2 = VectorFunctionSpace(mesh,"CG",1,2)
@@ -189,6 +199,7 @@ dolfinFiles = init_dolfin_files()
 rf = ResultsFile()
 rf.current = new_file("current")
 rf.density = new_file("density")
+rf.trajectory = new_file("trajectory")
 mainloop(mesh,problem,dolfinFiles,rf,options.scale)
 # Hold plot
 #plot(avgE)
