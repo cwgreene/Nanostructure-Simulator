@@ -1,0 +1,444 @@
+In file included from /usr/include/machine/_types.h:34,
+                 from /usr/include/sys/_types.h:33,
+                 from /usr/include/_types.h:27,
+                 from /usr/include/stdlib.h:63,
+                 from test_kdtree.c:2:
+/usr/include/i386/_types.h: In function ‘kdtree_find_point’:
+/usr/include/i386/_types.h:37: error: storage class specified for parameter ‘__int8_t’
+/usr/include/i386/_types.h:41: error: storage class specified for parameter ‘__uint8_t’
+/usr/include/i386/_types.h:42: error: storage class specified for parameter ‘__int16_t’
+/usr/include/i386/_types.h:43: error: storage class specified for parameter ‘__uint16_t’
+/usr/include/i386/_types.h:44: error: storage class specified for parameter ‘__int32_t’
+/usr/include/i386/_types.h:45: error: storage class specified for parameter ‘__uint32_t’
+/usr/include/i386/_types.h:46: error: storage class specified for parameter ‘__int64_t’
+/usr/include/i386/_types.h:47: error: storage class specified for parameter ‘__uint64_t’
+/usr/include/i386/_types.h:49: error: storage class specified for parameter ‘__darwin_intptr_t’
+/usr/include/i386/_types.h:50: error: storage class specified for parameter ‘__darwin_natural_t’
+/usr/include/i386/_types.h:70: error: storage class specified for parameter ‘__darwin_ct_rune_t’
+/usr/include/i386/_types.h:79: error: storage class specified for parameter ‘__mbstate_t’
+/usr/include/i386/_types.h:81: error: storage class specified for parameter ‘__mbstate_t’
+/usr/include/i386/_types.h:81: error: conflicting types for ‘__mbstate_t’
+/usr/include/i386/_types.h:79: error: previous definition of ‘__mbstate_t’ was here
+/usr/include/i386/_types.h:81: error: syntax error before ‘__darwin_mbstate_t’
+/usr/include/i386/_types.h:84: error: storage class specified for parameter ‘__darwin_ptrdiff_t’
+/usr/include/i386/_types.h:90: error: storage class specified for parameter ‘__darwin_size_t’
+/usr/include/i386/_types.h:96: error: storage class specified for parameter ‘__darwin_va_list’
+/usr/include/i386/_types.h:102: error: storage class specified for parameter ‘__darwin_wchar_t’
+/usr/include/i386/_types.h:107: error: storage class specified for parameter ‘__darwin_wchar_t’
+/usr/include/i386/_types.h:107: error: redefinition of parameter ‘__darwin_wchar_t’
+/usr/include/i386/_types.h:102: error: previous definition of ‘__darwin_wchar_t’ was here
+/usr/include/i386/_types.h:107: error: syntax error before ‘__darwin_rune_t’
+/usr/include/i386/_types.h:110: error: storage class specified for parameter ‘__darwin_wint_t’
+/usr/include/i386/_types.h:115: error: storage class specified for parameter ‘__darwin_clock_t’
+/usr/include/i386/_types.h:116: error: storage class specified for parameter ‘__uint32_t’
+/usr/include/i386/_types.h:116: error: conflicting types for ‘__uint32_t’
+/usr/include/i386/_types.h:45: error: previous definition of ‘__uint32_t’ was here
+/usr/include/i386/_types.h:116: error: syntax error before ‘__darwin_socklen_t’
+/usr/include/i386/_types.h:117: error: storage class specified for parameter ‘__darwin_ssize_t’
+/usr/include/i386/_types.h:118: error: storage class specified for parameter ‘__darwin_time_t’
+In file included from /usr/include/_types.h:27,
+                 from /usr/include/stdlib.h:63,
+                 from test_kdtree.c:2:
+/usr/include/sys/_types.h:94: error: storage class specified for parameter ‘__int64_t’
+/usr/include/sys/_types.h:94: error: conflicting types for ‘__int64_t’
+/usr/include/i386/_types.h:46: error: previous definition of ‘__int64_t’ was here
+/usr/include/sys/_types.h:94: error: syntax error before ‘__darwin_blkcnt_t’
+/usr/include/sys/_types.h:95: error: storage class specified for parameter ‘__int32_t’
+/usr/include/sys/_types.h:95: error: redefinition of parameter ‘__int32_t’
+/usr/include/i386/_types.h:44: error: previous definition of ‘__int32_t’ was here
+/usr/include/sys/_types.h:95: error: syntax error before ‘__darwin_blksize_t’
+/usr/include/sys/_types.h:96: error: storage class specified for parameter ‘__int32_t’
+/usr/include/sys/_types.h:96: error: redefinition of parameter ‘__int32_t’
+/usr/include/sys/_types.h:95: error: previous definition of ‘__int32_t’ was here
+/usr/include/sys/_types.h:96: error: syntax error before ‘__darwin_dev_t’
+/usr/include/sys/_types.h:97: error: storage class specified for parameter ‘__darwin_fsblkcnt_t’
+/usr/include/sys/_types.h:98: error: storage class specified for parameter ‘__darwin_fsfilcnt_t’
+/usr/include/sys/_types.h:99: error: storage class specified for parameter ‘__uint32_t’
+/usr/include/sys/_types.h:99: error: redefinition of parameter ‘__uint32_t’
+/usr/include/i386/_types.h:116: error: previous definition of ‘__uint32_t’ was here
+/usr/include/sys/_types.h:99: error: syntax error before ‘__darwin_gid_t’
+/usr/include/sys/_types.h:100: error: storage class specified for parameter ‘__uint32_t’
+/usr/include/sys/_types.h:100: error: redefinition of parameter ‘__uint32_t’
+/usr/include/sys/_types.h:99: error: previous definition of ‘__uint32_t’ was here
+/usr/include/sys/_types.h:100: error: syntax error before ‘__darwin_id_t’
+/usr/include/sys/_types.h:101: error: storage class specified for parameter ‘__uint64_t’
+/usr/include/sys/_types.h:101: error: conflicting types for ‘__uint64_t’
+/usr/include/i386/_types.h:47: error: previous definition of ‘__uint64_t’ was here
+/usr/include/sys/_types.h:101: error: syntax error before ‘__darwin_ino64_t’
+/usr/include/sys/_types.h:105: error: storage class specified for parameter ‘__uint32_t’
+/usr/include/sys/_types.h:105: error: redefinition of parameter ‘__uint32_t’
+/usr/include/sys/_types.h:100: error: previous definition of ‘__uint32_t’ was here
+/usr/include/sys/_types.h:105: error: syntax error before ‘__darwin_ino_t’
+/usr/include/sys/_types.h:107: error: storage class specified for parameter ‘__darwin_natural_t’
+/usr/include/sys/_types.h:107: error: conflicting types for ‘__darwin_natural_t’
+/usr/include/i386/_types.h:50: error: previous definition of ‘__darwin_natural_t’ was here
+/usr/include/sys/_types.h:107: error: syntax error before ‘__darwin_mach_port_name_t’
+/usr/include/sys/_types.h:108: error: storage class specified for parameter ‘__darwin_mach_port_name_t’
+/usr/include/sys/_types.h:108: error: syntax error before ‘__darwin_mach_port_t’
+/usr/include/sys/_types.h:109: error: storage class specified for parameter ‘__uint16_t’
+/usr/include/sys/_types.h:109: error: conflicting types for ‘__uint16_t’
+/usr/include/i386/_types.h:43: error: previous definition of ‘__uint16_t’ was here
+/usr/include/sys/_types.h:109: error: syntax error before ‘__darwin_mode_t’
+/usr/include/sys/_types.h:110: error: storage class specified for parameter ‘__int64_t’
+/usr/include/sys/_types.h:110: error: redefinition of parameter ‘__int64_t’
+/usr/include/sys/_types.h:94: error: previous definition of ‘__int64_t’ was here
+/usr/include/sys/_types.h:110: error: syntax error before ‘__darwin_off_t’
+/usr/include/sys/_types.h:111: error: storage class specified for parameter ‘__int32_t’
+/usr/include/sys/_types.h:111: error: redefinition of parameter ‘__int32_t’
+/usr/include/sys/_types.h:96: error: previous definition of ‘__int32_t’ was here
+/usr/include/sys/_types.h:111: error: syntax error before ‘__darwin_pid_t’
+/usr/include/sys/_types.h:113: error: storage class specified for parameter ‘__darwin_pthread_attr_t’
+/usr/include/sys/_types.h:115: error: storage class specified for parameter ‘__darwin_pthread_cond_t’
+/usr/include/sys/_types.h:117: error: storage class specified for parameter ‘__darwin_pthread_condattr_t’
+/usr/include/sys/_types.h:118: error: storage class specified for parameter ‘__darwin_pthread_key_t’
+/usr/include/sys/_types.h:120: error: storage class specified for parameter ‘__darwin_pthread_mutex_t’
+/usr/include/sys/_types.h:122: error: storage class specified for parameter ‘__darwin_pthread_mutexattr_t’
+/usr/include/sys/_types.h:124: error: storage class specified for parameter ‘__darwin_pthread_once_t’
+/usr/include/sys/_types.h:126: error: storage class specified for parameter ‘__darwin_pthread_rwlock_t’
+/usr/include/sys/_types.h:128: error: storage class specified for parameter ‘__darwin_pthread_rwlockattr_t’
+/usr/include/sys/_types.h:130: error: storage class specified for parameter ‘__darwin_pthread_t’
+/usr/include/sys/_types.h:131: error: storage class specified for parameter ‘__uint32_t’
+/usr/include/sys/_types.h:131: error: redefinition of parameter ‘__uint32_t’
+/usr/include/sys/_types.h:105: error: previous definition of ‘__uint32_t’ was here
+/usr/include/sys/_types.h:131: error: syntax error before ‘__darwin_sigset_t’
+/usr/include/sys/_types.h:132: error: storage class specified for parameter ‘__int32_t’
+/usr/include/sys/_types.h:132: error: redefinition of parameter ‘__int32_t’
+/usr/include/sys/_types.h:111: error: previous definition of ‘__int32_t’ was here
+/usr/include/sys/_types.h:132: error: syntax error before ‘__darwin_suseconds_t’
+/usr/include/sys/_types.h:133: error: storage class specified for parameter ‘__uint32_t’
+/usr/include/sys/_types.h:133: error: redefinition of parameter ‘__uint32_t’
+/usr/include/sys/_types.h:131: error: previous definition of ‘__uint32_t’ was here
+/usr/include/sys/_types.h:133: error: syntax error before ‘__darwin_uid_t’
+/usr/include/sys/_types.h:134: error: storage class specified for parameter ‘__uint32_t’
+/usr/include/sys/_types.h:134: error: redefinition of parameter ‘__uint32_t’
+/usr/include/sys/_types.h:133: error: previous definition of ‘__uint32_t’ was here
+/usr/include/sys/_types.h:134: error: syntax error before ‘__darwin_useconds_t’
+/usr/include/sys/_types.h:135: error: storage class specified for parameter ‘__darwin_uuid_t’
+In file included from /usr/include/stdlib.h:63,
+                 from test_kdtree.c:2:
+/usr/include/_types.h:29: error: storage class specified for parameter ‘__darwin_nl_item’
+/usr/include/_types.h:30: error: storage class specified for parameter ‘__darwin_wctrans_t’
+/usr/include/_types.h:34: error: storage class specified for parameter ‘__darwin_wctype_t’
+In file included from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/sys/wait.h:83: error: storage class specified for parameter ‘idtype_t’
+/usr/include/sys/wait.h:90: error: storage class specified for parameter ‘__darwin_pid_t’
+/usr/include/sys/wait.h:90: error: syntax error before ‘pid_t’
+/usr/include/sys/wait.h:95: error: storage class specified for parameter ‘__darwin_id_t’
+/usr/include/sys/wait.h:95: error: syntax error before ‘id_t’
+In file included from /usr/include/machine/signal.h:34,
+                 from /usr/include/sys/signal.h:81,
+                 from /usr/include/sys/wait.h:116,
+                 from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/i386/signal.h:39: error: storage class specified for parameter ‘sig_atomic_t’
+In file included from /usr/include/i386/_structs.h:38,
+                 from /usr/include/machine/_structs.h:31,
+                 from /usr/include/sys/_structs.h:57,
+                 from /usr/include/sys/signal.h:154,
+                 from /usr/include/sys/wait.h:116,
+                 from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/mach/i386/_structs.h:114: error: storage class specified for parameter ‘__darwin_fp_control_t’
+/usr/include/mach/i386/_structs.h:164: error: storage class specified for parameter ‘__darwin_fp_status_t’
+/usr/include/mach/i386/_structs.h:237: error: syntax error before ‘__uint8_t’
+/usr/include/mach/i386/_structs.h:266: error: syntax error before ‘}’ token
+/usr/include/mach/i386/_structs.h:360: error: syntax error before ‘__uint64_t’
+/usr/include/mach/i386/_structs.h:418: error: syntax error before ‘__uint8_t’
+/usr/include/mach/i386/_structs.h:435: error: redefinition of parameter ‘__fpu_stmm0’
+/usr/include/mach/i386/_structs.h:248: error: previous definition of ‘__fpu_stmm0’ was here
+/usr/include/mach/i386/_structs.h:436: error: redefinition of parameter ‘__fpu_stmm1’
+/usr/include/mach/i386/_structs.h:249: error: previous definition of ‘__fpu_stmm1’ was here
+/usr/include/mach/i386/_structs.h:437: error: redefinition of parameter ‘__fpu_stmm2’
+/usr/include/mach/i386/_structs.h:250: error: previous definition of ‘__fpu_stmm2’ was here
+/usr/include/mach/i386/_structs.h:438: error: redefinition of parameter ‘__fpu_stmm3’
+/usr/include/mach/i386/_structs.h:251: error: previous definition of ‘__fpu_stmm3’ was here
+/usr/include/mach/i386/_structs.h:439: error: redefinition of parameter ‘__fpu_stmm4’
+/usr/include/mach/i386/_structs.h:252: error: previous definition of ‘__fpu_stmm4’ was here
+/usr/include/mach/i386/_structs.h:440: error: redefinition of parameter ‘__fpu_stmm5’
+/usr/include/mach/i386/_structs.h:253: error: previous definition of ‘__fpu_stmm5’ was here
+/usr/include/mach/i386/_structs.h:441: error: redefinition of parameter ‘__fpu_stmm6’
+/usr/include/mach/i386/_structs.h:254: error: previous definition of ‘__fpu_stmm6’ was here
+/usr/include/mach/i386/_structs.h:442: error: redefinition of parameter ‘__fpu_stmm7’
+/usr/include/mach/i386/_structs.h:255: error: previous definition of ‘__fpu_stmm7’ was here
+/usr/include/mach/i386/_structs.h:443: error: redefinition of parameter ‘__fpu_xmm0’
+/usr/include/mach/i386/_structs.h:256: error: previous definition of ‘__fpu_xmm0’ was here
+/usr/include/mach/i386/_structs.h:444: error: redefinition of parameter ‘__fpu_xmm1’
+/usr/include/mach/i386/_structs.h:257: error: previous definition of ‘__fpu_xmm1’ was here
+/usr/include/mach/i386/_structs.h:445: error: redefinition of parameter ‘__fpu_xmm2’
+/usr/include/mach/i386/_structs.h:258: error: previous definition of ‘__fpu_xmm2’ was here
+/usr/include/mach/i386/_structs.h:446: error: redefinition of parameter ‘__fpu_xmm3’
+/usr/include/mach/i386/_structs.h:259: error: previous definition of ‘__fpu_xmm3’ was here
+/usr/include/mach/i386/_structs.h:447: error: redefinition of parameter ‘__fpu_xmm4’
+/usr/include/mach/i386/_structs.h:260: error: previous definition of ‘__fpu_xmm4’ was here
+/usr/include/mach/i386/_structs.h:448: error: redefinition of parameter ‘__fpu_xmm5’
+/usr/include/mach/i386/_structs.h:261: error: previous definition of ‘__fpu_xmm5’ was here
+/usr/include/mach/i386/_structs.h:449: error: redefinition of parameter ‘__fpu_xmm6’
+/usr/include/mach/i386/_structs.h:262: error: previous definition of ‘__fpu_xmm6’ was here
+/usr/include/mach/i386/_structs.h:450: error: redefinition of parameter ‘__fpu_xmm7’
+/usr/include/mach/i386/_structs.h:263: error: previous definition of ‘__fpu_xmm7’ was here
+/usr/include/mach/i386/_structs.h:459: error: redefinition of parameter ‘__fpu_rsrv4’
+/usr/include/mach/i386/_structs.h:264: error: previous definition of ‘__fpu_rsrv4’ was here
+/usr/include/mach/i386/_structs.h:460: error: redefinition of parameter ‘__fpu_reserved1’
+/usr/include/mach/i386/_structs.h:265: error: previous definition of ‘__fpu_reserved1’ was here
+/usr/include/mach/i386/_structs.h:461: error: syntax error before ‘}’ token
+/usr/include/mach/i386/_structs.h:521: error: syntax error before ‘__uint64_t’
+/usr/include/mach/i386/_structs.h:537: error: syntax error before ‘__uint64_t’
+In file included from /usr/include/machine/_structs.h:31,
+                 from /usr/include/sys/_structs.h:57,
+                 from /usr/include/sys/signal.h:154,
+                 from /usr/include/sys/wait.h:116,
+                 from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/i386/_structs.h:52: error: field ‘__fs’ has incomplete type
+/usr/include/i386/_structs.h:70: error: field ‘__es’ has incomplete type
+/usr/include/i386/_structs.h:71: error: field ‘__ss’ has incomplete type
+/usr/include/i386/_structs.h:72: error: field ‘__fs’ has incomplete type
+/usr/include/i386/_structs.h:94: error: storage class specified for parameter ‘mcontext_t’
+In file included from /usr/include/sys/signal.h:154,
+                 from /usr/include/sys/wait.h:116,
+                 from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/sys/_structs.h:78: error: syntax error before ‘__darwin_size_t’
+/usr/include/sys/_structs.h:80: error: syntax error before ‘}’ token
+/usr/include/sys/_structs.h:131: error: syntax error before ‘__darwin_sigset_t’
+/usr/include/sys/_structs.h:134: error: syntax error before ‘__darwin_size_t’
+/usr/include/sys/_structs.h:139: error: syntax error before ‘}’ token
+/usr/include/sys/_structs.h:218: error: storage class specified for parameter ‘stack_t’
+/usr/include/sys/_structs.h:227: error: storage class specified for parameter ‘ucontext_t’
+In file included from /usr/include/sys/wait.h:116,
+                 from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/sys/signal.h:163: error: storage class specified for parameter ‘__darwin_pthread_attr_t’
+/usr/include/sys/signal.h:163: error: conflicting types for ‘__darwin_pthread_attr_t’
+/usr/include/sys/_types.h:113: error: previous definition of ‘__darwin_pthread_attr_t’ was here
+/usr/include/sys/signal.h:163: error: syntax error before ‘pthread_attr_t’
+/usr/include/sys/signal.h:168: error: storage class specified for parameter ‘__darwin_sigset_t’
+/usr/include/sys/signal.h:168: error: syntax error before ‘sigset_t’
+/usr/include/sys/signal.h:173: error: storage class specified for parameter ‘__darwin_size_t’
+/usr/include/sys/signal.h:173: error: conflicting types for ‘__darwin_size_t’
+/usr/include/i386/_types.h:90: error: previous definition of ‘__darwin_size_t’ was here
+/usr/include/sys/signal.h:173: error: syntax error before ‘size_t’
+/usr/include/sys/signal.h:178: error: storage class specified for parameter ‘__darwin_uid_t’
+/usr/include/sys/signal.h:178: error: syntax error before ‘uid_t’
+/usr/include/sys/signal.h:196: error: syntax error before ‘pthread_attr_t’
+/usr/include/sys/signal.h:204: error: syntax error before ‘pid_t’
+/usr/include/sys/signal.h:211: error: syntax error before ‘}’ token
+/usr/include/sys/signal.h:301: error: syntax error before ‘siginfo_t’
+/usr/include/sys/signal.h:304: error: syntax error before ‘}’ token
+/usr/include/sys/signal.h:311: error: syntax error before ‘sigset_t’
+/usr/include/sys/signal.h:312: error: redefinition of parameter ‘sa_flags’
+/usr/include/sys/signal.h:303: error: previous definition of ‘sa_flags’ was here
+/usr/include/sys/signal.h:313: error: syntax error before ‘}’ token
+/usr/include/sys/signal.h:354: error: storage class specified for parameter ‘sig_t’
+In file included from /usr/include/sys/resource.h:76,
+                 from /usr/include/sys/wait.h:117,
+                 from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/sys/_structs.h:102: error: syntax error before ‘__darwin_time_t’
+In file included from /usr/include/sys/wait.h:117,
+                 from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/sys/resource.h:88: error: storage class specified for parameter ‘__uint64_t’
+/usr/include/sys/resource.h:88: error: redefinition of parameter ‘__uint64_t’
+/usr/include/sys/_types.h:101: error: previous definition of ‘__uint64_t’ was here
+/usr/include/sys/resource.h:88: error: syntax error before ‘rlim_t’
+/usr/include/sys/resource.h:143: error: field ‘ru_utime’ has incomplete type
+/usr/include/sys/resource.h:144: error: field ‘ru_stime’ has incomplete type
+/usr/include/sys/resource.h:214: error: syntax error before ‘rlim_t’
+/usr/include/sys/resource.h:236: error: syntax error before ‘id_t’
+/usr/include/sys/resource.h:242: error: syntax error before ‘id_t’
+In file included from /usr/include/libkern/_OSByteOrder.h:66,
+                 from /usr/include/sys/_endian.h:124,
+                 from /usr/include/i386/endian.h:99,
+                 from /usr/include/machine/endian.h:37,
+                 from /usr/include/sys/wait.h:193,
+                 from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/libkern/i386/_OSByteOrder.h:46: error: storage class specified for parameter ‘__uint16_t’
+/usr/include/libkern/i386/_OSByteOrder.h:46: error: redefinition of parameter ‘__uint16_t’
+/usr/include/sys/_types.h:109: error: previous definition of ‘__uint16_t’ was here
+/usr/include/libkern/i386/_OSByteOrder.h:46: error: syntax error before ‘_OSSwapInt16’
+In file included from /usr/include/stdlib.h:65,
+                 from test_kdtree.c:2:
+/usr/include/sys/wait.h:237: error: syntax error before ‘}’ token
+/usr/include/sys/wait.h:258: error: syntax error before ‘*’ token
+/usr/include/sys/wait.h:261: error: syntax error before ‘pid_t’
+In file included from test_kdtree.c:2:
+/usr/include/stdlib.h:81: error: storage class specified for parameter ‘__darwin_ct_rune_t’
+/usr/include/stdlib.h:81: error: redefinition of parameter ‘__darwin_ct_rune_t’
+/usr/include/i386/_types.h:70: error: previous definition of ‘__darwin_ct_rune_t’ was here
+/usr/include/stdlib.h:81: error: syntax error before ‘ct_rune_t’
+/usr/include/stdlib.h:86: error: storage class specified for parameter ‘__darwin_rune_t’
+/usr/include/stdlib.h:86: error: syntax error before ‘rune_t’
+/usr/include/stdlib.h:93: error: storage class specified for parameter ‘__darwin_wchar_t’
+/usr/include/stdlib.h:93: error: redefinition of parameter ‘__darwin_wchar_t’
+/usr/include/i386/_types.h:107: error: previous definition of ‘__darwin_wchar_t’ was here
+/usr/include/stdlib.h:93: error: syntax error before ‘wchar_t’
+/usr/include/stdlib.h:100: error: storage class specified for parameter ‘div_t’
+/usr/include/stdlib.h:105: error: storage class specified for parameter ‘ldiv_t’
+/usr/include/stdlib.h:111: error: storage class specified for parameter ‘lldiv_t’
+/usr/include/stdlib.h:134: error: storage class specified for parameter ‘__mb_cur_max’
+/usr/include/stdlib.h:155: error: syntax error before ‘size_t’
+/usr/include/stdlib.h:156: error: ‘bsearch’ declared as function returning a function
+/usr/include/stdlib.h:156: error: syntax error before ‘)’ token
+/usr/include/stdlib.h:158: error: syntax error before ‘div_t’
+/usr/include/stdlib.h:163: error: syntax error before ‘ldiv_t’
+/usr/include/stdlib.h:167: error: syntax error before ‘lldiv_t’
+/usr/include/stdlib.h:170: error: syntax error before ‘size_t’
+/usr/include/stdlib.h:172: error: syntax error before ‘*’ token
+/usr/include/stdlib.h:173: error: syntax error before ‘size_t’
+/usr/include/stdlib.h:174: error: ‘qsort’ declared as function returning a function
+/usr/include/stdlib.h:174: error: syntax error before ‘)’ token
+/usr/include/stdlib.h:176: error: syntax error before ‘size_t’
+/usr/include/stdlib.h:194: error: syntax error before ‘size_t’
+/usr/include/stdlib.h:195: error: syntax error before ‘wchar_t’
+/usr/include/stdlib.h:208: error: syntax error before ‘size_t’
+In file included from /usr/include/machine/types.h:37,
+                 from /usr/include/stdlib.h:254,
+                 from test_kdtree.c:2:
+/usr/include/i386/types.h:78: error: storage class specified for parameter ‘int8_t’
+/usr/include/i386/types.h:80: error: storage class specified for parameter ‘u_int8_t’
+/usr/include/i386/types.h:83: error: storage class specified for parameter ‘int16_t’
+/usr/include/i386/types.h:85: error: storage class specified for parameter ‘u_int16_t’
+/usr/include/i386/types.h:88: error: storage class specified for parameter ‘int32_t’
+/usr/include/i386/types.h:90: error: storage class specified for parameter ‘u_int32_t’
+/usr/include/i386/types.h:93: error: storage class specified for parameter ‘int64_t’
+/usr/include/i386/types.h:95: error: storage class specified for parameter ‘u_int64_t’
+/usr/include/i386/types.h:100: error: storage class specified for parameter ‘int32_t’
+/usr/include/i386/types.h:100: error: redefinition of parameter ‘int32_t’
+/usr/include/i386/types.h:88: error: previous definition of ‘int32_t’ was here
+/usr/include/i386/types.h:100: error: syntax error before ‘register_t’
+/usr/include/i386/types.h:105: error: storage class specified for parameter ‘__darwin_intptr_t’
+/usr/include/i386/types.h:105: error: conflicting types for ‘__darwin_intptr_t’
+/usr/include/i386/_types.h:49: error: previous definition of ‘__darwin_intptr_t’ was here
+/usr/include/i386/types.h:105: error: syntax error before ‘intptr_t’
+/usr/include/i386/types.h:109: error: storage class specified for parameter ‘uintptr_t’
+/usr/include/i386/types.h:114: error: storage class specified for parameter ‘u_int64_t’
+/usr/include/i386/types.h:114: error: conflicting types for ‘u_int64_t’
+/usr/include/i386/types.h:95: error: previous definition of ‘u_int64_t’ was here
+/usr/include/i386/types.h:114: error: syntax error before ‘user_addr_t’
+/usr/include/i386/types.h:115: error: storage class specified for parameter ‘u_int64_t’
+/usr/include/i386/types.h:115: error: redefinition of parameter ‘u_int64_t’
+/usr/include/i386/types.h:114: error: previous definition of ‘u_int64_t’ was here
+/usr/include/i386/types.h:115: error: syntax error before ‘user_size_t’
+/usr/include/i386/types.h:116: error: storage class specified for parameter ‘int64_t’
+/usr/include/i386/types.h:116: error: conflicting types for ‘int64_t’
+/usr/include/i386/types.h:93: error: previous definition of ‘int64_t’ was here
+/usr/include/i386/types.h:116: error: syntax error before ‘user_ssize_t’
+/usr/include/i386/types.h:117: error: storage class specified for parameter ‘int64_t’
+/usr/include/i386/types.h:117: error: redefinition of parameter ‘int64_t’
+/usr/include/i386/types.h:116: error: previous definition of ‘int64_t’ was here
+/usr/include/i386/types.h:117: error: syntax error before ‘user_long_t’
+/usr/include/i386/types.h:118: error: storage class specified for parameter ‘u_int64_t’
+/usr/include/i386/types.h:118: error: redefinition of parameter ‘u_int64_t’
+/usr/include/i386/types.h:115: error: previous definition of ‘u_int64_t’ was here
+/usr/include/i386/types.h:118: error: syntax error before ‘user_ulong_t’
+/usr/include/i386/types.h:119: error: storage class specified for parameter ‘int64_t’
+/usr/include/i386/types.h:119: error: redefinition of parameter ‘int64_t’
+/usr/include/i386/types.h:117: error: previous definition of ‘int64_t’ was here
+/usr/include/i386/types.h:119: error: syntax error before ‘user_time_t’
+/usr/include/i386/types.h:125: error: storage class specified for parameter ‘u_int64_t’
+/usr/include/i386/types.h:125: error: redefinition of parameter ‘u_int64_t’
+/usr/include/i386/types.h:118: error: previous definition of ‘u_int64_t’ was here
+/usr/include/i386/types.h:125: error: syntax error before ‘syscall_arg_t’
+In file included from test_kdtree.c:2:
+/usr/include/stdlib.h:257: error: storage class specified for parameter ‘__darwin_dev_t’
+/usr/include/stdlib.h:257: error: syntax error before ‘dev_t’
+/usr/include/stdlib.h:262: error: storage class specified for parameter ‘__darwin_mode_t’
+/usr/include/stdlib.h:262: error: syntax error before ‘mode_t’
+/usr/include/stdlib.h:285: error: syntax error before ‘char’
+/usr/include/stdlib.h:291: error: syntax error before ‘size_t’
+/usr/include/stdlib.h:292: error: ‘heapsort’ declared as function returning a function
+/usr/include/stdlib.h:292: error: syntax error before ‘)’ token
+/usr/include/stdlib.h:293: error: syntax error before ‘size_t’
+/usr/include/stdlib.h:294: error: ‘mergesort’ declared as function returning a function
+/usr/include/stdlib.h:294: error: syntax error before ‘)’ token
+/usr/include/stdlib.h:295: error: syntax error before ‘size_t’
+/usr/include/stdlib.h:296: error: ‘qsort_r’ declared as function returning a function
+/usr/include/stdlib.h:296: error: syntax error before ‘)’ token
+/usr/include/stdlib.h:304: error: syntax error before ‘size_t’
+/usr/include/stdlib.h:311: error: storage class specified for parameter ‘suboptarg’
+In file included from test_kdtree.c:3:
+/usr/include/stdio.h:70: error: storage class specified for parameter ‘__darwin_va_list’
+/usr/include/stdio.h:70: error: conflicting types for ‘__darwin_va_list’
+/usr/include/i386/_types.h:96: error: previous definition of ‘__darwin_va_list’ was here
+/usr/include/stdio.h:70: error: syntax error before ‘va_list’
+/usr/include/stdio.h:75: error: storage class specified for parameter ‘__darwin_off_t’
+/usr/include/stdio.h:75: error: syntax error before ‘off_t’
+/usr/include/stdio.h:87: error: storage class specified for parameter ‘__darwin_off_t’
+/usr/include/stdio.h:87: error: redefinition of parameter ‘__darwin_off_t’
+/usr/include/stdio.h:75: error: previous definition of ‘__darwin_off_t’ was here
+/usr/include/stdio.h:87: error: syntax error before ‘fpos_t’
+/usr/include/stdio.h:145: error: syntax error before ‘fpos_t’
+/usr/include/stdio.h:162: error: syntax error before ‘fpos_t’
+/usr/include/stdio.h:167: error: storage class specified for parameter ‘FILE’
+/usr/include/stdio.h:167: error: syntax error before ‘*’ token
+/usr/include/stdio.h:168: error: storage class specified for parameter ‘FILE’
+/usr/include/stdio.h:168: error: redefinition of parameter ‘FILE’
+/usr/include/stdio.h:167: error: previous definition of ‘FILE’ was here
+/usr/include/stdio.h:168: error: syntax error before ‘*’ token
+/usr/include/stdio.h:169: error: storage class specified for parameter ‘FILE’
+/usr/include/stdio.h:169: error: redefinition of parameter ‘FILE’
+/usr/include/stdio.h:168: error: previous definition of ‘FILE’ was here
+/usr/include/stdio.h:169: error: syntax error before ‘*’ token
+/usr/include/stdio.h:249: error: syntax error before ‘*’ token
+/usr/include/stdio.h:250: error: syntax error before ‘*’ token
+/usr/include/stdio.h:251: error: syntax error before ‘*’ token
+/usr/include/stdio.h:252: error: syntax error before ‘*’ token
+/usr/include/stdio.h:253: error: syntax error before ‘*’ token
+/usr/include/stdio.h:254: error: syntax error before ‘*’ token
+/usr/include/stdio.h:255: error: syntax error before ‘*’ token
+/usr/include/stdio.h:256: error: syntax error before ‘FILE’
+/usr/include/stdio.h:258: error: syntax error before ‘*’ token
+/usr/include/stdio.h:259: error: syntax error before ‘FILE’
+/usr/include/stdio.h:260: error: syntax error before ‘FILE’
+/usr/include/stdio.h:261: error: syntax error before ‘size_t’
+/usr/include/stdio.h:264: error: syntax error before ‘*’ token
+/usr/include/stdio.h:265: error: syntax error before ‘*’ token
+/usr/include/stdio.h:266: error: syntax error before ‘*’ token
+/usr/include/stdio.h:267: error: syntax error before ‘*’ token
+/usr/include/stdio.h:269: error: syntax error before ‘*’ token
+/usr/include/stdio.h:273: error: storage class specified for parameter ‘sys_nerr’
+/usr/include/stdio.h:274: error: storage class specified for parameter ‘sys_errlist’
+/usr/include/stdio.h:278: error: syntax error before ‘FILE’
+/usr/include/stdio.h:283: error: syntax error before ‘*’ token
+/usr/include/stdio.h:285: error: syntax error before ‘*’ token
+/usr/include/stdio.h:286: error: syntax error before ‘*’ token
+/usr/include/stdio.h:289: error: syntax error before ‘FILE’
+/usr/include/stdio.h:291: error: syntax error before ‘FILE’
+/usr/include/stdio.h:292: error: syntax error before ‘*’ token
+/usr/include/stdio.h:293: error: syntax error before ‘va_list’
+/usr/include/stdio.h:294: error: syntax error before ‘va_list’
+/usr/include/stdio.h:297: error: syntax error before ‘va_list’
+/usr/include/stdio.h:312: error: syntax error before ‘FILE’
+/usr/include/stdio.h:314: error: syntax error before ‘*’ token
+/usr/include/stdio.h:316: error: syntax error before ‘*’ token
+/usr/include/stdio.h:317: error: syntax error before ‘*’ token
+/usr/include/stdio.h:321: error: syntax error before ‘*’ token
+/usr/include/stdio.h:323: error: syntax error before ‘*’ token
+/usr/include/stdio.h:325: error: syntax error before ‘*’ token
+/usr/include/stdio.h:326: error: syntax error before ‘*’ token
+/usr/include/stdio.h:327: error: syntax error before ‘*’ token
+/usr/include/stdio.h:330: error: syntax error before ‘*’ token
+/usr/include/stdio.h:332: error: syntax error before ‘*’ token
+/usr/include/stdio.h:334: error: syntax error before ‘FILE’
+/usr/include/stdio.h:337: error: syntax error before ‘FILE’
+/usr/include/stdio.h:338: error: syntax error before ‘*’ token
+/usr/include/stdio.h:339: error: syntax error before ‘*’ token
+/usr/include/stdio.h:341: error: syntax error before ‘size_t’
+/usr/include/stdio.h:343: error: syntax error before ‘*’ token
+/usr/include/stdio.h:344: error: syntax error before ‘va_list’
+/usr/include/stdio.h:345: error: syntax error before ‘size_t’
+/usr/include/stdio.h:346: error: syntax error before ‘va_list’
+/usr/include/stdio.h:372: error: syntax error before ‘*’ token
+/usr/include/stdio.h:373: error: syntax error before ‘*’ token
+/usr/include/stdio.h:374: error: syntax error before ‘FILE’
+/usr/include/stdio.h:383: error: syntax error before ‘FILE’
+/usr/include/stdio.h:383: error: storage class specified for parameter ‘__sputc’
+test_kdtree.c:16: error: parameter ‘joe’ is initialized
+test_kdtree.c:16: error: ‘bob’ undeclared (first use in this function)
+test_kdtree.c:16: error: (Each undeclared identifier is reported only once
+test_kdtree.c:16: error: for each function it appears in.)
+test_kdtree.c:17: error: syntax error before ‘print_kdtree’
+make: *** [all] Error 1
