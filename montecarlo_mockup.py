@@ -15,6 +15,7 @@ sys.path.append("c_optimized/")
 import kdtree_c
 import materials
 import constants
+import move_particles_c
 
 p_count = it.count()
 
@@ -305,7 +306,28 @@ def MonteCarlo(mesh,potential_field,electric_field,
 	#compute field, move_particles, calc current, recombinate, reap
 	start = time.time()
 	c_efield = pre_compute_field(mesh,electric_field)	#Evaluates field at each mesh point
-	move_particles(mesh,c_efield,nextDensity,density_funcs.combined_density,reaper) #moves all particles
+	#temporary code to test move_particles
+	nparticles = len(mesh.particles)
+	particles_pos = zeros((nparticles,4))
+	p_id = zeros((nparticles,1),'int')
+	p_charge = zeros((nparticles,1),'int')
+	p_mass = zeros((nparticles,1))
+	for i in xrange(nparticles):
+		pos = mesh.particles[i].pos
+		pk = mesh.particles[i].momentum
+		particles_pos[i] = array([pos[0],pos[1],pk[0],pk[1]])
+		p_id[i] = mesh.particles[i].id
+		p_charge[i] = mesh.particles[i].charge
+		p_mass[i] = mesh.particles[i].mass
+	start =time.time()
+	move_particles_c.move_particles(particles_pos,p_mass,p_charge,
+					 p_id,
+					 nparticles,
+					 array(c_efield),nextDensity,
+					 mesh.dt,mesh.length_scale)
+	print "time:",time.time()-start
+	raw_input()
+	#move_particles(mesh,c_efield,nextDensity,density_funcs.combined_density,reaper) #moves all particles
 	
 	current = update_density(mesh,reaper,nextDensity,current)
 	reap_list(mesh.particles,reaper)
