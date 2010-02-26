@@ -1,7 +1,7 @@
 all: kdtree.so move_particles.so
 
-move_particles.so: move_particles.c
-	gcc -fPIC -O2 -c -Wall move_particles.c
+move_particles.so: move_particles.cpp
+	g++ -fPIC -O2 -c -Wall move_particles.cpp
 	ld -bundle -flat_namespace -undefined suppress \
 			-o move_particles.so move_particles.o
 

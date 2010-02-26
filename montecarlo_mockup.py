@@ -217,7 +217,7 @@ def current_exit(particle,mesh):
 	speed = sqrt(dot(particle.pos,particle.pos))
 	#exit = du.closest_exit(boundary,particle.pos)
 	#nearest point
-	exit = mesh.coordinates()[kdtree_c.find_point_id(mesh.kdt,particle.pos)]
+#	exit = mesh.coordinates()[kdtree_c.find_point_id(mesh.kdt,particle.pos)]
 	return particle.charge*speed
 
 def recombinate(mesh,reaper,nextDensity,avg_dens,avg_electrons,avg_holes):

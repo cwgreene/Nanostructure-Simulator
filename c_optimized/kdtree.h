@@ -14,4 +14,5 @@ typedef struct kdtree
 kdtree *new_kdtree(vector2 *array,int length,int depth);
 void print_kdtree(kdtree *tree);
 vector2 *kdtree_find_point(kdtree *tree,vector2 *point,vector2 *best);
+int kdtree_find_point_id(kdtree *tree,vector2 *point);
 #endif
