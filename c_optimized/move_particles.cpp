@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <math.h>
 #include <list>
+#include <iostream>
+#include "particles.hpp"
 
+extern "C" {
 #include "kdtree.h"
-
+}
 //Macros
 #define POSITIONX(i)  4*i
 #define POSITIONY(i)  4*i+1
@@ -18,7 +21,18 @@
 //#define pmass(i)  particles[MASS(i)]
 using namespace std;
 
-extern "C" list<int> *init_particle_list()
+extern "C" list<int> *init_particle_list(int n)
+{
+	list<int> *particle_list = new list<int>;
+	for(int i = 0; i < n;i++)
+	{
+		particle_list->push_back(i);
+	}
+	cout <<"Location " <<particle_list << endl;
+	return particle_list;
+}
+
+extern "C" list<int> *init_dead_list()
 {
 	return new list<int>;
 }
@@ -48,7 +62,6 @@ extern "C" void move_particles(double *particles,
 			int *p_charge,
 			int *p_id,
 			list<int> *p_live,
-			int nparticles,
 			double *efield,
 			double *nextDensity,
 			double dt,
@@ -56,7 +69,7 @@ extern "C" void move_particles(double *particles,
 {
 	int i;
 	printf("moving particles now\n");
-	printf("particles: %d\n",nparticles);
+	cout <<p_live->size() << endl;
 	for(list<int>::iterator it = p_live->begin();it!=p_live->end();++it)
 	{
 		i = *it;
@@ -66,6 +79,7 @@ extern "C" void move_particles(double *particles,
 		randomElectronMovement(particles,p_mass,p_charge,p_id,i,
 					efield,dt,length_scale);
 	}
+	printf("Particles Moved\n");
 }
 
 void call_me()
@@ -73,13 +87,16 @@ void call_me()
 	printf("I got called!\n");
 }
 
-double current_exit(double *particles)
+double current_exit(double *particles,int i)
 {
-	return 0;
+	double _pkx = pkx(i);
+	double _pky = pky(i);
+	return sqrt(_pkx*_pkx+_pky*_pky);
 }
 
 typedef list<double *> Polygon;
 
+//copies original points into new polygon array
 extern "C" Polygon *new_polygon(double *points,int n)
 {
 	double *points_copy = new double[2*n];
@@ -123,18 +140,17 @@ bool point_in_polygon(Polygon *boundary, vector2 *pos)
 	return true;
 }
 
-int current_exit()
-{
-	return 0;
-}
-
-extern "C" void update_density(double *particles,int *charge,Polygon *boundary,
-			int *p_id,int *nextDensity, int *p_charge,
+extern "C" double update_density(Particles *ap,
+			int *p_id, int *p_charge, int *nextDensity,
 			list<int> *p_live,list<int> *p_dead,
+			Polygon *boundary,
 			kdtree *kdt)
 {
-	int current;
-	for(list<int>::iterator it = p_live->begin();it != p_live->end();++it)
+	double *particles = ap->pos;
+	double current = 0;
+	cout << "Updating Density" << endl;
+	for(list<int>::iterator it = ap->p_live->begin();
+				it != ap->p_live->end();++it)
 	{
 		int i = *it;
 		vector2 pos;
@@ -142,15 +158,63 @@ extern "C" void update_density(double *particles,int *charge,Polygon *boundary,
 		pos[1] = py(i);
 		if(point_in_polygon(boundary,&pos))
 		{
-			current += current_exit();
-			it = p_live->erase(it);
-			p_dead->push_back(i);
+			current += current_exit(particles,i);
+			it = ap->p_live->erase(it);
+			ap->p_dead->push_back(i);
 			--it;
 		}
 		else
 		{
 			p_id[i] = kdtree_find_point_id(kdt,&pos);
-			nextDensity[p_id[i]] += p_charge[i];
+			nextDensity[p_id[i]] += ap->p_charge[i];
 		}
 	}
+	cout << "Density Updated" << endl;
+	return current;
+}
+
+double random_energy(double Temperature)
+{
+	
+}
+
+double handle_region(int mpos_id, Mesh *mesh, Particles *p_data, 
+			int *density, int sign)
+{
+	double current;
+	//If we have too few carriers, inject them
+	while (denisty[id]*sign < 0) //not charge netural, need more 
+	{	
+		int i;
+		energy = random_energy(300.);
+		i = new_particle(mpos_id,p_data,density,sign);
+		current += current_exit(p_data->p_pos,i);
+	}
+	return current;
+}
+
+double replenish_boundary(list<Point *> *boundary,Particles p_data,
+			  double *nextDensity, Mesh *mesh)
+{
+	list<Point *>::iterator it = boundary->begin();
+	list<Point *>::iterator it = boundary->end();
+	double current = 0;
+	for(;it != end;++it)
+	{
+		if(point->type == P_TYPE)
+		{
+			sign = +1;//Holes get injected
+			current += handle_region(point->mpos_id,point->mpos);
+		}else
+		{
+			sign = -1;//Electrons get injected
+			current += handle_region(point->mpos_id,point->mpos);
+		}
+	}
+	return current;
+}
+
+extern "C" replenish(list<int> *p_live, list<int> *p_dead)
+{
+	replenish_current(
 }
