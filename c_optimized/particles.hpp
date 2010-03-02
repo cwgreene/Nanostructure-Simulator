@@ -1,7 +1,23 @@
 #ifndef PARTICLES_HPP
 #define PARTICLES_HPP
 #include <list>
+#include "mesh.hpp"
+#include "materials.hpp"
+
+#define POSITIONX(i)  4*i
+#define POSITIONY(i)  4*i+1
+#define MOMENTUMX(i)  4*i+2
+#define MOMENTUMY(i)  4*i+3
+#define MASS(i)  4*i+4
+
+#define px(i)  particles[POSITIONX(i)]
+#define py(i)  particles[POSITIONY(i)]
+#define pkx(i)  particles[MOMENTUMX(i)]
+#define pky(i)  particles[MOMENTUMY(i)]
+//#define pmass(i)  particles[MASS(i)]
+
 using namespace std;
+
 class Particles
 {
 public:
@@ -22,6 +38,5 @@ public:
 };
 
 int create_particle(int mpos_id, Particles *p_data,int *density,
-		        double *mesh_pos,
-			double energy,int charge, Material *material);
+		        double *mesh_pos, int charge, Mesh *mesh);
 #endif

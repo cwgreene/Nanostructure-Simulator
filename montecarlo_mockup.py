@@ -6,15 +6,16 @@ import itertools as it
 import time
 #import triangle
 import sys
+
 import driftscatter
-#import bandstructure
 import stats
+import convexhull
+import materials
+import constants
 
 #more path
 sys.path.append("c_optimized/")
 import kdtree_c
-import materials
-import constants
 import move_particles_c
 
 p_count = it.count()
@@ -312,6 +313,12 @@ def MonteCarlo(mesh,potential_field,electric_field,
 	p_id = zeros((nparticles,1),'int')
 	p_charge = zeros((nparticles,1),'int')
 	p_mass = zeros((nparticles,1))
+	p_live = move_particles_c.init_particle_list(len(mesh.particles))
+	p_dead = move_particles_c.init_dead_list()
+	convex_hull = list(convexhull.convexHull(map(tuple,list(mesh.bd))))
+	convex_hull.reverse()
+	print convex_hull
+	polygon = move_particles_c.new_polygon(array(convex_hull))
 	for i in xrange(nparticles):
 		pos = mesh.particles[i].pos
 		pk = mesh.particles[i].momentum
@@ -321,16 +328,18 @@ def MonteCarlo(mesh,potential_field,electric_field,
 		p_mass[i] = mesh.particles[i].mass
 	start =time.time()
 	move_particles_c.move_particles(particles_pos,p_mass,p_charge,
-					 p_id,
-					 nparticles,
+					 p_id, p_live,
 					 array(c_efield),nextDensity,
 					 mesh.dt,mesh.length_scale)
-	print "time:",time.time()-start
-	raw_input()
 	#move_particles(mesh,c_efield,nextDensity,density_funcs.combined_density,reaper) #moves all particles
 	
-	current = update_density(mesh,reaper,nextDensity,current)
-	reap_list(mesh.particles,reaper)
+	current = move_particles_c.update_density(particles_pos,p_id,p_charge,
+						  nextDensity,p_live,p_dead,
+						  polygon,mesh.kdt)
+	print current
+	print "time:",time.time()-start
+	raw_input()
+	#reap_list(mesh.particles,reaper)
 	recombinate(mesh,reaper,nextDensity,avg_dens,avg_electrons,avg_holes)
 	reap_list(mesh.particles,reaper)
 	print "Compute,move,calc,recombinate,reap",time.time()-start

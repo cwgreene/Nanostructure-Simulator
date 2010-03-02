@@ -7,27 +7,57 @@ Point::Point(int _mpos_id, double *_mpos, int _type)
 	type = _type;
 }
 
-Mesh::Mesh(double *ntype, int n_ntype, double *ptype, int p_ptype)
+Mesh::Mesh(double *points, int n_points,
+	   Material **materials,
+	   int *boundary, int nboundary,
+		int *ntype, int n_ntype,
+		int *ptype, int n_ptype)
 {
-	double *points = new double[2*(n_ntype+p_ptype)];
-	mesh_points = new list<Point *>();
-	for(int i = 0; i < 2*n_type;i+=2)
+	this->mpos = new double[2*n_points];
+	this->boundary = new int[n_points];
+	this->is_n_type = new int[n_points];
+	this->is_p_type = new int[n_points];
+	this->materials = new int[n_points];
+
+	for(int i = 0; i < 2*n_points;i+=2)
 	{
-		points[i] = ntype[i];
-		points[i+1] = ntype[i+1];
-		mesh_points.push_back(new Point(i,(points+i),N_TYPE));
+		this->mpos[i] = points[i];
+		this->mpos[i+1] = points[i+1];
 	}
-	for(int i = 2*n_ntype; i < 2*n_ntype;i+=2)
+	for(int i = 0; i < nboundary;i++)
 	{
-		int j = (i/2-n_ntype);
-		points[i] = ptype[j];
-		points[i+1] = ptype[j+1];
-		mesh_points.push_back(new Point(i,(points+i),N_TYPE));
+		this->is_boundary[boundary[i]] = 1;
+		this->boundary.push_back(boundary[i]);
+	}
+	for(int i = 0; i < n_ntype;i++)
+	{
+		this->is_p_type[ptype[i]] = 1;
+		this->p_type.push_back(ptype[i]);
+	}
+	for(int i = 0; i < p_ntype;i++)
+	{
+		this->is_p_type[ptype[i]] = 1;
+		this->p_type.push_back(ptype[i]);
+	}
+	for(int i = 0; i < n_points;i++)
+	{
+		if(is_p_type[i])
+			this->materials[i] = materials[0];
+		if(is_n_type[i])
+			this->materials[i] = materials[1];
 
 	}
 }
 
-extern "C" Mesh *create_mesh(double *ntype, int n_ntype double *ptype, int n_ptype)
+extern "C" Mesh *create_mesh(double *points, int n_points,
+			     Material **materials,
+			     int *boundary, int nboundary,
+			     int *ntype, int n_ntype, 
+			     int *ptype, int n_ptype)
 {
-	Mesh *new_mesh = new Mesh(ntype,n_ntype,ptype,n_ptype);
+	Mesh *new_mesh = new Mesh(double *points, int n_points,
+				  Material **materials,
+				  int *boundary, int nboundary,
+				  int *ntype, int n_ntype,
+				  int *ptype, int n_ptype);
 }

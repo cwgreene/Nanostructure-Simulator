@@ -3,22 +3,12 @@
 #include <list>
 #include <iostream>
 #include "particles.hpp"
+#include "mesh.hpp"
 
 extern "C" {
 #include "kdtree.h"
 }
 //Macros
-#define POSITIONX(i)  4*i
-#define POSITIONY(i)  4*i+1
-#define MOMENTUMX(i)  4*i+2
-#define MOMENTUMY(i)  4*i+3
-#define MASS(i)  4*i+4
-
-#define px(i)  particles[POSITIONX(i)]
-#define py(i)  particles[POSITIONY(i)]
-#define pkx(i)  particles[MOMENTUMX(i)]
-#define pky(i)  particles[MOMENTUMY(i)]
-//#define pmass(i)  particles[MASS(i)]
 using namespace std;
 
 extern "C" list<int> *init_particle_list(int n)
@@ -173,48 +163,47 @@ extern "C" double update_density(Particles *ap,
 	return current;
 }
 
-double random_energy(double Temperature)
-{
-	
-}
-
 double handle_region(int mpos_id, Mesh *mesh, Particles *p_data, 
 			int *density, int sign)
 {
-	double current;
+	double current = 0;
 	//If we have too few carriers, inject them
-	while (denisty[id]*sign < 0) //not charge netural, need more 
+	while (density[mpos_id]*sign < 0) //not charge netural, need more 
 	{	
 		int i;
-		energy = random_energy(300.);
-		i = new_particle(mpos_id,p_data,density,sign);
-		current += current_exit(p_data->p_pos,i);
+		i = create_particle(mpos_id,p_data,density,mesh->mpos,sign,
+				    mesh); 
+		current += current_exit(p_data->pos,i);
 	}
 	return current;
 }
 
-double replenish_boundary(list<Point *> *boundary,Particles p_data,
-			  double *nextDensity, Mesh *mesh)
+double replenish_boundary(Particles *p_data,
+			  int *nextDensity, Mesh *mesh)
 {
-	list<Point *>::iterator it = boundary->begin();
-	list<Point *>::iterator it = boundary->end();
+	list<int>::iterator it = mesh->boundary.begin();
+	list<int>::iterator end = mesh->boundary.end();
 	double current = 0;
+	int sign = 0;
 	for(;it != end;++it)
 	{
-		if(point->type == P_TYPE)
+		int id = *it;
+		if(mesh->is_p_type[id])
 		{
-			sign = +1;//Holes get injected
-			current += handle_region(point->mpos_id,point->mpos);
+			sign = 1;//Holes get injected
+			current += handle_region(id,mesh,p_data,
+						 nextDensity,sign);
 		}else
 		{
 			sign = -1;//Electrons get injected
-			current += handle_region(point->mpos_id,point->mpos);
+			current += handle_region(id,mesh,p_data,
+						nextDensity,sign);
 		}
 	}
 	return current;
 }
 
-extern "C" replenish(list<int> *p_live, list<int> *p_dead)
+extern "C" void replenish(Particles *p_data, int *nextDensity, Mesh *mesh)
 {
-	replenish_current(
+	replenish_boundary(p_data,nextDensity,mesh);
 }
