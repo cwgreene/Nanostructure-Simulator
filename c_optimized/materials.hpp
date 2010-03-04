@@ -7,11 +7,9 @@ public:
 
 	//Bandstructure information.
 	int max_n;
-	double *random_momentum_x;
-	double *random_momentum_y;
+	double *random_momentum;
 
-	Material(double _electron_mass, int _max_n,
-		 double *_random_momentum_x,double *_random_momentum_y);
+	Material(double _electron_mass, double *_random_momentum,int max_n);
 };
 void material_random_momentum(Material *material,double *momentum);
 #endif

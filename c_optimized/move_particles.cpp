@@ -18,13 +18,19 @@ extern "C" list<int> *init_particle_list(int n)
 	{
 		particle_list->push_back(i);
 	}
-	cout <<"Location " <<particle_list << endl;
+	//cout <<"p_live Location " <<particle_list << endl;
 	return particle_list;
 }
 
-extern "C" list<int> *init_dead_list()
+extern "C" list<int> *init_dead_list(int start,int n)
 {
-	return new list<int>;
+	list<int> *particle_list = new list<int>;
+	for(int i = start; i < n;i++)
+	{
+		particle_list->push_back(i);
+	}
+//	cout <<"pdead Location " <<particle_list << endl;
+	return particle_list;
 }
 
 void randomElectronMovement(double *particles,
@@ -38,7 +44,8 @@ void randomElectronMovement(double *particles,
 {
 	//Move
 	double dx = pkx(i)*dt/length_scale/p_mass[i];
-	double dy = pky(i)*dt/length_scale;
+	double dy = pky(i)*dt/length_scale/p_mass[i];
+	//cout << "dx: "<< dx << " dy: " << dy;
 	px(i) += dx;
 	py(i) += dy;
 	//Drift
@@ -47,26 +54,26 @@ void randomElectronMovement(double *particles,
 	//Scatter
 }
 
-extern "C" void move_particles(double *particles,
-			double *p_mass,
-			int *p_charge,
-			int *p_id,
-			list<int> *p_live,
+extern "C" void move_particles(Particles *pdata,
 			double *efield,
 			double *nextDensity,
 			double dt,
 			double length_scale)
 {
 	int i;
+	list<int>::iterator end = pdata->p_live->end();
 	printf("moving particles now\n");
-	cout <<p_live->size() << endl;
-	for(list<int>::iterator it = p_live->begin();it!=p_live->end();++it)
+	
+	for(list<int>::iterator it = pdata->p_live->begin();
+				it!= end;++it)
 	{
+		//cout << "doom!" << endl;
 		i = *it;
-		int id = p_id[i];
-		int charge = p_charge[i];
+		int id = pdata->p_id[i];
+		int charge = pdata->p_charge[i];
 		nextDensity[id] -= charge;
-		randomElectronMovement(particles,p_mass,p_charge,p_id,i,
+		randomElectronMovement(pdata->pos,pdata->p_mass,
+					pdata->p_charge,pdata->p_id,i,
 					efield,dt,length_scale);
 	}
 	printf("Particles Moved\n");
@@ -131,13 +138,13 @@ bool point_in_polygon(Polygon *boundary, vector2 *pos)
 }
 
 extern "C" double update_density(Particles *ap,
-			int *p_id, int *p_charge, int *nextDensity,
-			list<int> *p_live,list<int> *p_dead,
+			int *nextDensity,
 			Polygon *boundary,
 			kdtree *kdt)
 {
 	double *particles = ap->pos;
 	double current = 0;
+	int *p_id = ap->p_id;
 	cout << "Updating Density" << endl;
 	for(list<int>::iterator it = ap->p_live->begin();
 				it != ap->p_live->end();++it)
@@ -171,8 +178,11 @@ double handle_region(int mpos_id, Mesh *mesh, Particles *p_data,
 	while (density[mpos_id]*sign < 0) //not charge netural, need more 
 	{	
 		int i;
-		i = create_particle(mpos_id,p_data,density,mesh->mpos,sign,
+		cout << density[mpos_id];
+		i = create_particle(mpos_id,p_data,density,sign,
+				    mesh->materials[mpos_id]->electron_mass,
 				    mesh); 
+		cout << density[mpos_id];
 		current += current_exit(p_data->pos,i);
 	}
 	return current;
@@ -188,6 +198,7 @@ double replenish_boundary(Particles *p_data,
 	for(;it != end;++it)
 	{
 		int id = *it;
+		cout << id << endl;
 		if(mesh->is_p_type[id])
 		{
 			sign = 1;//Holes get injected
@@ -204,6 +215,8 @@ double replenish_boundary(Particles *p_data,
 }
 
 extern "C" void replenish(Particles *p_data, int *nextDensity, Mesh *mesh)
-{
+{	
+	cout << "Beginning replenish" << endl;
 	replenish_boundary(p_data,nextDensity,mesh);
+	cout << "replenish complete" << endl;
 }

@@ -18,6 +18,7 @@ __license__  = "GNU LGPL Version 2.1"
 
 from dolfin import *
 import montecarlo_mockup as mc
+import move_particles_c as c_interface
 import numpy as np
 import dolfin_util as du
 import time
@@ -66,10 +67,10 @@ def init_problem(mesh,V,V2,options):
 	#init particles
 	#electrons, holes
 	print "adding electrons to regions"
-	mc.init_electrons(options.gen_num,mesh.n_region.keys(),
-				charge=-10,mesh=mesh)
-	mc.init_electrons(options.gen_num,mesh.p_region.keys(),
-				charge=10,mesh=mesh)
+#	mc.init_electrons(options.gen_num,mesh.n_region.keys(),
+#				charge=-10,mesh=mesh)
+#	mc.init_electrons(options.gen_num,mesh.p_region.keys(),
+#				charge=10,mesh=mesh)
 
 	print "Creating density functions"
 	problem.density_funcs = density_funcs.DensityFuncs()
@@ -132,7 +133,7 @@ def PoissonSolve(density,bcs):
 	return sol
 
 
-def mainloop(mesh,problem,df,rf,scale):
+def mainloop(mesh,system,problem,df,rf,scale):
 	print "Beginning Simulation"
 	current_values = []
 	for x in range(options.num):
@@ -148,7 +149,7 @@ def mainloop(mesh,problem,df,rf,scale):
 		electric_field = mc.negGradient(mesh,sol,problem.V2)
 		df.gradfile << electric_field
 		start2 = time.time()
-		mc.MonteCarlo(mesh,sol,electric_field,
+		mc.MonteCarlo(mesh,system,sol,electric_field,
 				problem.density_funcs,problem.avg_dens,
 				problem.avg_electrons,problem.avg_holes,
 				current_values)
@@ -195,13 +196,16 @@ mesh = meshes.PlanarMesh(options,materials.Silicon(),materials.Silicon())
 V = FunctionSpace(mesh, "CG", 2)
 V2 = VectorFunctionSpace(mesh,"CG",1,2)
 problem = init_problem(mesh,V,V2,options)
+system = c_interface.init_system(mesh,
+			problem.density_funcs.poisson_density.vector().array(),
+			options.gen_num)
+
 dolfinFiles = init_dolfin_files()
 rf = ResultsFile()
 rf.current = new_file("current")
 rf.density = new_file("density")
 rf.trajectory = new_file("trajectory")
-mainloop(mesh,problem,dolfinFiles,rf,options.scale)
+mainloop(mesh,system,problem,dolfinFiles,rf,options.scale)
 # Hold plot
 #plot(avgE)
 #interactive()
-

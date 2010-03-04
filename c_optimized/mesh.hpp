@@ -1,5 +1,6 @@
 #ifndef MESH_HPP
 #define MESH_HPP
+#include <list>
 #include "materials.hpp"
 using namespace std;
 enum {P_TYPE,N_TYPE};
@@ -29,13 +30,17 @@ public:
 	Material **materials;//There should be only be two materials,
 			     //each point will be associated with one
 
-	double *mpos;
+	double *mpos;//coordinates of points
 	int npoints;
-	Mesh(double *ntype, int n_ntype, double *ptype, int p_ptype);
+	Mesh(double *points, int n_points,
+		Material **materials,
+		int *boundary, int nboundary,
+		int *ntype, int n_ntype,
+		int *ptype, int n_ptype);
 };
 
-extern "C" Mesh *create_mesh(double *points, int n_points,
+/*extern "C" Mesh *create_mesh(double *points, int n_points,
 			     int *boundary, int nboundary,
 			     int *ntype, int n_ntype, 
-			     int *ptype, int n_ptype);
+			     int *ptype, int n_ptype);*/
 #endif

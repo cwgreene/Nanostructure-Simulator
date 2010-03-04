@@ -1,7 +1,8 @@
 import numpy as np
-import distribution
+import distribution as dist
 import constants
 import itertools as it
+import math
 
 class Silicon:
 	eV = 1.60217646*10**-19
@@ -17,20 +18,23 @@ class Silicon:
 	doping2d = 10.**22
 
 	def random_momentum(self,type):
+		print "Generating",type,"momentum table"
+		kbT = constants.kbT
 		if type == "ptype":
-			m = hole_mass
+			m = self.hole_mass
 		else:
-			m = electron_mass
-		energy = distribution(lambda x:(kbT)*math.exp(-x/(kbT)),
-					0,kbT*10)
-		velocity = map(lambda x: math.sqrt(x)/(2*m),)
-		angles = np.arrange(0,2*np.pi,.001)
-		retarray = np.ndarray(len(velocity)*len(angles))
+			m = self.electron_mass
+		energy = dist.distribution(lambda x:(1/kbT)*math.exp(-x/(kbT)),
+					0,kbT*10,boxes=1000.,ddt=10**6.)
+		velocity = map(lambda x: math.sqrt(x*2*m),energy)
+		angles = np.arange(0,2*np.pi,.001)
+		retarray = np.ndarray((len(velocity)*len(angles),2))
 		index = it.count()
 		for v in velocity:
 			for theta in angles:
 				i = index.next()
-				retarray[i][0] = v*cos[theta]
-				retarray[i][1] = v*sin[theta]
+				retarray[i][0] = v*math.cos(theta)
+				retarray[i][1] = v*math.sin(theta)
+		print "generated"
 		return retarray
 	

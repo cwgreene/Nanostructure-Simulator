@@ -290,7 +290,7 @@ def calculate_scaled_density(mesh,nextDensity):
 		stats.avg_charge += abs(scaled_density[id])
 	return scaled_density
 
-def MonteCarlo(mesh,potential_field,electric_field,
+def MonteCarlo(mesh,system,potential_field,electric_field,
 		density_funcs,
 		avg_dens,
 		avg_electrons,
@@ -306,47 +306,21 @@ def MonteCarlo(mesh,potential_field,electric_field,
 
 	#compute field, move_particles, calc current, recombinate, reap
 	start = time.time()
+	print "computing field"
 	c_efield = pre_compute_field(mesh,electric_field)	#Evaluates field at each mesh point
-	#temporary code to test move_particles
-	nparticles = len(mesh.particles)
-	particles_pos = zeros((nparticles,4))
-	p_id = zeros((nparticles,1),'int')
-	p_charge = zeros((nparticles,1),'int')
-	p_mass = zeros((nparticles,1))
-	p_live = move_particles_c.init_particle_list(len(mesh.particles))
-	p_dead = move_particles_c.init_dead_list()
-	convex_hull = list(convexhull.convexHull(map(tuple,list(mesh.bd))))
-	convex_hull.reverse()
-	print convex_hull
-	polygon = move_particles_c.new_polygon(array(convex_hull))
-	for i in xrange(nparticles):
-		pos = mesh.particles[i].pos
-		pk = mesh.particles[i].momentum
-		particles_pos[i] = array([pos[0],pos[1],pk[0],pk[1]])
-		p_id[i] = mesh.particles[i].id
-		p_charge[i] = mesh.particles[i].charge
-		p_mass[i] = mesh.particles[i].mass
 	start =time.time()
-	move_particles_c.move_particles(particles_pos,p_mass,p_charge,
-					 p_id, p_live,
+	print "About to move particles"
+	move_particles_c.move_particles(system.particles.ptr,
 					 array(c_efield),nextDensity,
 					 mesh.dt,mesh.length_scale)
-	#move_particles(mesh,c_efield,nextDensity,density_funcs.combined_density,reaper) #moves all particles
-	
-	current = move_particles_c.update_density(particles_pos,p_id,p_charge,
-						  nextDensity,p_live,p_dead,
-						  polygon,mesh.kdt)
+	print "About to update"
+	current = move_particles_c.update_density(system,
+						  nextDensity,
+						  mesh.kdt)
 	print current
 	print "time:",time.time()-start
-	raw_input()
-	#reap_list(mesh.particles,reaper)
-	recombinate(mesh,reaper,nextDensity,avg_dens,avg_electrons,avg_holes)
-	reap_list(mesh.particles,reaper)
-	print "Compute,move,calc,recombinate,reap",time.time()-start
-
-	#replenish,reap
 	start = time.time()
-	current += replenish(mesh,nextDensity,mesh.bd,reaper)
+	current += move_particles_c.replenish(system,nextDensity)
 	print "replenish",time.time()-start
 	reap_list(mesh.particles,reaper)
 
