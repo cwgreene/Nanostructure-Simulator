@@ -25,9 +25,9 @@ class Silicon:
 		else:
 			m = self.electron_mass
 		energy = dist.distribution(lambda x:(1/kbT)*math.exp(-x/(kbT)),
-					0,kbT*10,boxes=1000.,ddt=10**6.)
+					0,kbT*10,boxes=100.,ddt=10**6.)
 		velocity = map(lambda x: math.sqrt(x*2*m),energy)
-		angles = np.arange(0,2*np.pi,.001)
+		angles = np.arange(0,2*np.pi,.01)
 		retarray = np.ndarray((len(velocity)*len(angles),2))
 		index = it.count()
 		for v in velocity:

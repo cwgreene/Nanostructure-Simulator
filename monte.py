@@ -140,9 +140,9 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		start1 = time.time()
 
 		#Solve equation using avg_dens
-		problem.density_funcs.poisson_density.vector().set(problem.avg_dens.func)
-		print problem.density_funcs.poisson_density.vector().array()
-		sol = PoissonSolve(problem.density_funcs.poisson_density,problem.bcs)
+		#problem.density_funcs.poisson_density.vector().set(problem.density_funcs.scaled_density)
+		#print problem.density_funcs.poisson_density.vector().array()
+		sol = PoissonSolve(problem.density_funcs.scaled_density,problem.bcs)
 
 		#handle Monte Carlo
 		print "Starting Step ",x
@@ -187,13 +187,13 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		#rf.trajectory.write(str(mesh.trajectories[particle]))
 		#rf.trajectory.write("\n")
 	print current_values
-	avg_length /= 1.*len(mesh.trajectories)
+#	avg_length /= 1.*len(mesh.trajectories)
 	print "Average trajectory length:",avg_length
 
 #mesh = meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon())
 mesh = meshes.PlanarMesh(options,materials.Silicon(),materials.Silicon())
 #these seem to need to be global
-V = FunctionSpace(mesh, "CG", 2)
+V = FunctionSpace(mesh, "CG", 1)
 V2 = VectorFunctionSpace(mesh,"CG",1,2)
 problem = init_problem(mesh,V,V2,options)
 system = c_interface.init_system(mesh,

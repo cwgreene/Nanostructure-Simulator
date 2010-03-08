@@ -6,16 +6,23 @@ import numpy as np
 import convexhull
 lib = ctypes.cdll.LoadLibrary("c_optimized/move_particles.so")
 
+lib.new_polygon.argtype = [ctypes.POINTER(ctypes.c_double),ctypes.c_int]
 lib.new_polygon.restype = ctypes.POINTER(ctypes.c_int)
+lib.init_particle_list.argtype = [ctypes.c_int]
 lib.init_particle_list.restype = ctypes.POINTER(ctypes.c_int)
+lib.init_dead_list.argtype = [ctypes.c_int]
 lib.init_dead_list.restype = ctypes.POINTER(ctypes.c_int)
+lib.update_density.argtype = [ctypes.POINTER(ctypes.c_int),
+			      ctypes.POINTER(ctypes.c_int),
+			      ctypes.POINTER(ctypes.c_int),
+			      ctypes.POINTER(ctypes.c_int)]
 lib.update_density.restype = ctypes.c_double
 lib.replenish.restype = ctypes.c_double
 
 def print_list(string,list):
 	print string,list,len(list)
 
-def move_particles(particles_ptr,#particles_pos,p_mass,p_charge,p_id,p_live,
+def move_particles(particles_ptr,
 			 c_efield,nextDensity,
 			 dt,length_scale):
 	lib.move_particles(particles_ptr,
@@ -62,6 +69,7 @@ def replenish(system,nextDensity):
 			system.c_mesh)
 
 def init_system(mesh,nextDensity,particles_point):
+	print "Creating system"
 	system = System()
 	ntypepy = materials.Silicon()
 	ptypepy = materials.Silicon()
@@ -86,6 +94,7 @@ def init_system(mesh,nextDensity,particles_point):
 	ptype_ids = []
 	
 	mesh_coord = mesh.coordinates()
+	print "hiuh",len(mesh.coordinates()),len(nextDensity)
 	for x in mesh_coord:
 		i = index.next()
 		if tuple(x) in mesh.p_region:
@@ -98,24 +107,31 @@ def init_system(mesh,nextDensity,particles_point):
 	ntype_ids = np.array(ntype_ids)
 	boundary_ids = np.array(boundary_ids)
 	print boundary_ids
+	for x in boundary_ids:
+		print x,mesh_coord[x/2],
+	print ""
+	print ntype_ids
+	print ptype_ids
 	system.c_mesh = lib.create_mesh(mesh_coord.ctypes.data,
 				    len(mesh_coord),
 				    system.materials,
 				    boundary_ids.ctypes.data,
 				    len(boundary_ids),
 				    ptype_ids.ctypes.data,
-				    len(boundary_ids),
+				    len(ptype_ids),
 				    ntype_ids.ctypes.data,
 				    len(ntype_ids))
 	print "c_mesh",hex(system.c_mesh)
 				    
 	#create bounding polygon
 	convex_hull = list(convexhull.convexHull(map(tuple,list(mesh.bd))))
-	convex_hull.reverse()
-	polygon = lib.new_polygon(np.array(convex_hull).ctypes.data,
-					len(convex_hull))
+	convex_hull.reverse() 
+	print np.array(convex_hull),np.array(convex_hull).dtype
+	convex_hull = np.array(convex_hull)
+	polygon = lib.new_polygon(convex_hull.ctypes.data,
+					ctypes.c_int(len(convex_hull)))
 	system.bounding_polygon = polygon
-	print "I'm on a boat!"
+	print "Creating a ton of particles..."
 	#create particles
 	system.particles = CParticles(10**6)
 	#initialize particles
@@ -135,4 +151,5 @@ def init_system(mesh,nextDensity,particles_point):
 					system.c_mesh)
 	for i in xrange(len(nextDensity)):
 		nextDensity[i] = 0
+	print "Created system"
 	return system

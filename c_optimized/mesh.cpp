@@ -25,11 +25,13 @@ Mesh::Mesh(double *points, int n_points,
 	this->materials = new Material_Ptr[n_points];
 	
 	//cout << this->mpos << endl;
-	//cout << "c_mesh" << this << endl;
+	cout << "c_mesh" << this << endl;
 	for(int i = 0; i < 2*n_points;i+=2)
 	{
 		this->mpos[i] = points[i];
 		this->mpos[i+1] = points[i+1];
+		is_n_type[i/2] = 0;
+		is_p_type[i/2] = 0;
 	}
 	for(int i = 0; i < nboundary;i++)
 	{
@@ -37,7 +39,7 @@ Mesh::Mesh(double *points, int n_points,
 		this->boundary.push_back(boundary[i]);
 	}
 	printf("hi3\n");
-	for(int i = 0; i < n_ptype;i++)
+	for(int i = 0; i < n_ntype;i++)
 	{	
 		this->is_n_type[ntype[i]] = 1;
 		this->n_type.push_back(ntype[i]);
@@ -52,12 +54,16 @@ Mesh::Mesh(double *points, int n_points,
 	for(int i = 0; i < n_points;i++)
 	{
 		if(is_p_type[i])
+		{
 			this->materials[i] = materials[0];
-		if(is_n_type[i])
+		}
+		else if(is_n_type[i])
+		{
 			this->materials[i] = materials[1];
+		}
 		else
 		{
-//			cout << "HUH?!"<<endl;
+			cout << "HUH?!"<<endl;
 			this->materials[i] = materials[0];
 		}
 	}

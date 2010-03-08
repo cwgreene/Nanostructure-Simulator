@@ -277,7 +277,7 @@ def update_density(mesh,reaper,nextDensity,current):
 
 def calculate_scaled_density(mesh,nextDensity):
 	start = time.time()
-	scaled_density = array(nextDensity)
+	scaled_density = array(nextDensity.astype('double'))
 	for point in mesh.coordinates():
 		material = mesh.material[tuple(point)]
 		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
@@ -300,7 +300,12 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	current = 0
 
 	#next_step density function array
-	nextDensity = density_funcs.combined_density.vector().array()
+
+	nextDensity = density_funcs.combined_density.vector().array().astype('int')
+	print len(filter(lambda x: x!=0,nextDensity)),len(nextDensity),len(mesh.coordinates())
+	#for x in nextDensity:
+	#	print x,
+
 	#holeDensity = density_funcs.holes.vector().array()
 	#electronDensity = density_funcs.electrons.vector().array()
 
@@ -310,8 +315,12 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	c_efield = pre_compute_field(mesh,electric_field)	#Evaluates field at each mesh point
 	start =time.time()
 	print "About to move particles"
+	c_efield = array(c_efield)
+	print max(map(lambda x:max(abs(x[0]),abs(x[1])),c_efield)),\
+		min(map(lambda x:min(abs(x[0]),abs(x[1])),c_efield))
+	#raw_input()
 	move_particles_c.move_particles(system.particles.ptr,
-					 array(c_efield),nextDensity,
+					c_efield,nextDensity,
 					 mesh.dt,mesh.length_scale)
 	print "About to update"
 	current = move_particles_c.update_density(system,
@@ -330,8 +339,16 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	#update avg_dens
 	scaled_density = calculate_scaled_density(mesh,nextDensity)
 	avg_dens.inc(scaled_density)
-	density_funcs.combined_density.vector().set(nextDensity)
-	print "doom",density_funcs.combined_density.vector().array()
+	#for pos,x in zip(range(len(mesh.coordinates())),nextDensity):
+		#print x,
+		#`if pos in mesh.ibd:
+		#	print ""
+	density_funcs.combined_density.vector().set(
+			nextDensity.astype('double'))
+	density_funcs.scaled_density.vector().set(scaled_density)
+	#print "doom",density_funcs.combined_density.vector().array()
+#	for x in density_funcs.combined_density.vector().array():
+#		print x,
 
 	#print stats
 	stats.print_stats(current)

@@ -29,8 +29,11 @@ extern "C" int create_particle(int mpos_id, Particles *p_data,int *density,
 				 p_data->pos+MOMENTUMX(i));
 	p_data->p_charge[i] = charge;
 	p_data->p_mass[i] = mass;	
+	p_data->p_id[i] = mpos_id;
 	density[mpos_id] += charge;
-	//cout << "created: "<< px(i) << "/" << py(i) << " " << pkx(i) <<"/"
-	//	<< pky(i) << endl;
+/*	cout << "created: "<< px(i) << "/" << py(i) << " " 
+		<< pkx(i) /p_data->p_mass[i]<<"/" 
+		<< pky(i) /p_data->p_mass[i]<< endl;*/
+	
 	return i;
 }
