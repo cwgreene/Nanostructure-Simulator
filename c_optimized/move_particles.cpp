@@ -59,10 +59,10 @@ void randomElectronMovement(double *particles,
 			*EC;
 	pky(i) += (efield[2*p_id[i]+1]*p_charge[i]*dt/length_scale)
 			*EC;
-	//if(old_pkx != 0 && old_pky != 0 && i%1000 == 0)
-	//	cout << p_id[i]<<" field:"<< efield[2*p_id[i]] <<" " <<efield[2*p_id[i]+1]<< " delta_p: "<< 
-	//	(pkx(i)*dt/p_mass[i])<<"/"<<(old_pkx *dt/p_mass[i]) <<" "<<
-	//	(pky(i)*dt/p_mass[i])<<"/"<<(old_pky *dt/p_mass[i])<< endl;
+	if(old_pkx != 0 && old_pky != 0 && i%1000 == 0)
+		cout << p_id[i]<<" field:"<< efield[2*p_id[i]] <<" " <<efield[2*p_id[i]+1]<< " delta_p: "<< 
+		(pkx(i)*dt/p_mass[i])<<"/"<<(old_pkx *dt/p_mass[i]) <<" "<<
+		(pky(i)*dt/p_mass[i])<<"/"<<(old_pky *dt/p_mass[i])<< endl;
 
 			/*	if(i %1000 == 0)
 		cout << "after:" <<endl << 
@@ -107,11 +107,11 @@ void call_me()
 	printf("I got called!\n");
 }
 
-double current_exit(double *particles,int i)
+double current_exit(double *particles,int i,double mass)
 {
 	double _pkx = pkx(i);
 	double _pky = pky(i);
-	double current = sqrt(_pkx*_pkx+_pky*_pky);
+	double current = sqrt(_pkx*_pkx+_pky*_pky)/mass;
 	return current;
 }
 
@@ -188,6 +188,7 @@ bool point_in_polygon(Polygon *boundary, vector2 *pos)
 }
 
 extern "C" double update_density(Particles *ap,
+			Mesh *mesh,
 			int *nextDensity,
 			Polygon *boundary,
 			kdtree *kdt)
@@ -207,7 +208,11 @@ extern "C" double update_density(Particles *ap,
 		{	
 			/*cout <<i << " died " << endl
 			  <<"x: "   <<pos[0] << " y: " <<pos[1] <<endl;*/
-			current += current_exit(particles,i);
+			int nearest_exit = kdtree_find_point_id(kdt,&pos);
+			if(mesh->is_n_type[nearest_exit])
+				current -= current_exit(particles,i,ap->p_mass[i])*ap->p_charge[i];
+			else
+				current += current_exit(particles,i,ap->p_mass[i])*ap->p_charge[i];
 			it = ap->p_live->erase(it);
 			ap->p_dead->push_back(i);
 			--it;
@@ -241,7 +246,10 @@ double handle_region(int mpos_id, Mesh *mesh, Particles *p_data,
 				    mesh->materials[mpos_id]->electron_mass,
 				    mesh); 
 	//	cout << "mpos_id after: "<<density[mpos_id];
-		current -= current_exit(p_data->pos,i);
+		if(mesh->is_n_type[i])
+			current += current_exit(p_data->pos,i,p_data->p_mass[i])*sign;
+		if(mesh->is_p_type[i])
+			current -= current_exit(p_data->pos,i,p_data->p_mass[i])*sign;
 	}
 	//cout << "handle_region density:" << density[mpos_id]<< endl;
 	//cout << "handle_region current:" << current << endl;
@@ -269,7 +277,7 @@ double replenish_boundary(Particles *p_data,
 		else if(mesh->is_n_type[id])
 		{
 			sign = -1;//Electrons get injected
-			current += handle_region(id,mesh,p_data,
+			current -= handle_region(id,mesh,p_data,
 						nextDensity,sign);
 		}else
 		{

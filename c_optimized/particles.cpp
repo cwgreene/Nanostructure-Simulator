@@ -37,3 +37,8 @@ extern "C" int create_particle(int mpos_id, Particles *p_data,int *density,
 	
 	return i;
 }
+
+int destroy_particle(int part_id, Particles *p_data,int *density,
+		        int charge, double mass,Mesh *mesh)
+{
+}

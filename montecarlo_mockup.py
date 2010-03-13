@@ -282,10 +282,10 @@ def calculate_scaled_density(mesh,nextDensity):
 		material = mesh.material[tuple(point)]
 		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
 		id = mesh.point_index[tuple(point)]
-		scaled_density[id] = (nextDensity[id]*
+		scaled_density[id] = (nextDensity[id]*1000*
 				  constants.eC/mesh.gen_num*
-				  (material.doping3d*
-					((mesh.length_scale)**3)
+				  (material.doping3d\
+					*((mesh.length_scale)**3)
 				  /material.epsilon))
 		stats.avg_charge += abs(scaled_density[id])
 	return scaled_density
@@ -303,8 +303,8 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 
 	nextDensity = density_funcs.combined_density.vector().array().astype('int')
 	print len(filter(lambda x: x!=0,nextDensity)),len(nextDensity),len(mesh.coordinates())
-	#for x in nextDensity:
-	#	print x,
+	for x in nextDensity:
+		print x,
 
 	#holeDensity = density_funcs.holes.vector().array()
 	#electronDensity = density_funcs.electrons.vector().array()

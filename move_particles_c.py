@@ -33,6 +33,7 @@ def move_particles(particles_ptr,
 
 def update_density(system,nextDensity,kdt):
 	return lib.update_density(system.particles.ptr,
+			   system.c_mesh,
 			   nextDensity.ctypes.data,
 			   system.bounding_polygon,
 			   kdt)
