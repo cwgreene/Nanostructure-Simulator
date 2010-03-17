@@ -277,7 +277,7 @@ double replenish_boundary(Particles *p_data,
 		else if(mesh->is_n_type[id])
 		{
 			sign = -1;//Electrons get injected
-			current -= handle_region(id,mesh,p_data,
+			current += handle_region(id,mesh,p_data,
 						nextDensity,sign);
 		}else
 		{
