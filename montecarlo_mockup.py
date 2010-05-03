@@ -212,24 +212,6 @@ def replenish(mesh,density,boundary,reaper):
 def print_avg(name,value,count):
 	print "Avg",name+":",value/count,count
 
-def current_exit(particle,mesh):
-	boundary = mesh.bd
-
-	speed = sqrt(dot(particle.pos,particle.pos))
-	#exit = du.closest_exit(boundary,particle.pos)
-	#nearest point
-#	exit = mesh.coordinates()[kdtree_c.find_point_id(mesh.kdt,particle.pos)]
-	return particle.charge*speed
-
-def recombinate(mesh,reaper,nextDensity,avg_dens,avg_electrons,avg_holes):
-	avg = avg_dens.func
-	for p in mesh.particles:
-		#if we're in a  hole region,
-		#recombinate
-		if avg[p.id]*p.charge < 0: 
-			p.dead = True
-			reaper.append(p.part_id) 
-
 def pre_compute_field(mesh,field):
 	start = time.time()
 	c_efield= []
@@ -240,40 +222,6 @@ def pre_compute_field(mesh,field):
 		c_efield.append(vec)
 	print "Forces Calculated:",time.time()-start
 	return c_efield
-
-def move_particles(mesh,c_efield,nextDensity,density_func,reaper):
-	rem_time = 0.
-	start=time.time()
-	for p in mesh.particles:
-		#remove from old locations
-		nextDensity[p.id] -= p.charge
-
-		#begin movement	
-		start2 = time.time()
-		driftscatter.randomElectronMovement(p,c_efield,
-					density_func,mesh,reaper)
-		#mesh.trajectories[p.uid].append(tuple(p.pos))
-		rem_time += time.time()-start2
-	print "drift scatter took:",rem_time
-	print "Particle Movement took:",time.time()-start
-
-def update_density(mesh,reaper,nextDensity,current):
-	start = time.time()
-	for index in xrange(len(mesh.particles)):
-		p = mesh.particles[index]
-		start2 = time.time()
-		#if du.out_of_bounds(mesh,p.pos)): 
-		if kdtree_c.find_point_id(mesh.kdt,p.pos) in mesh.ibd:
-			#need to figure out exit
-			reaper.append(index)
-			p.dead = True
-			current += current_exit(p,mesh)
-		else:
-			#get new p.id
-			p.id = kdtree_c.find_point_id(mesh.kdt,p.pos)
-			nextDensity[p.id] += p.charge
-	print "Lookup time:",time.time()-start
-	return current
 
 def calculate_scaled_density(mesh,nextDensity):
 	start = time.time()
@@ -348,8 +296,6 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 			nextDensity.astype('double'))
 	density_funcs.scaled_density.vector().set(scaled_density)
 	#print "doom",density_funcs.combined_density.vector().array()
-#	for x in density_funcs.combined_density.vector().array():
-#		print x,
 
 	#print stats
 	stats.print_stats(current)
