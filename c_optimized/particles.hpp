@@ -21,14 +21,15 @@ using namespace std;
 class Particles
 {
 public:
-	double *pos;
-	int *p_charge;
-	int *p_id;
-	double *p_mass;
-	list<int> *p_live;
-	list<int> *p_dead;
+	double *pos; //Array of particle's positions, and momentums, TODO: RENAME
+	int *p_charge; //array of particle's charges
+	int *p_id; //array of particle's mesh Position ids
+	list<int>::iterator *local_id; //array of local_ids, which point into the mesh local list
+	double *p_mass; //array Particle masses, scaled to real units
+	list<int> *p_live; //list of living particles, particle id's
+	list<int> *p_dead; //List of available dead particles, particle ids
 	Particles(double *_pos, int *_p_id, int *_p_charge,double *_p_mass,
-			list<int> *_p_live, list<int> *_p_dead)
+			list<int> *_p_live, list<int> *_p_dead,Mesh *mesh)
 	{
 		pos = _pos;
 		p_charge = _p_charge;
@@ -36,10 +37,16 @@ public:
 		p_live = _p_live;
 		p_dead = _p_dead;
 		p_mass = _p_mass;
-		//cout << "p_live location " << p_live << endl;
+		int num = p_dead->size();
+		this->local_id = new list<int>::iterator[num];
+		std::cout << "Imminent doom!" << p_dead->size() <<std::endl;
 	}
 };
 
 extern "C" int create_particle(int mpos_id, Particles *p_data,int *density,
 		        int charge, double mass,Mesh *mesh);
+void pick_up_particle(int part_id, Particles *p_data, int *density, Mesh *mesh);
+void put_down_particle(int part_id, Particles *p_data, int *density,Mesh *mesh);
+list<int>::iterator destroy_particle(Particles *p_data, int part_id, list<int>::iterator pos);
+
 #endif

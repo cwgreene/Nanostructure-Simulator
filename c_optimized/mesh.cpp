@@ -16,13 +16,16 @@ Mesh::Mesh(double *points, int n_points,
 	   Material **materials,
 	   int *boundary, int nboundary,
 		int *ntype, int n_ntype,
-		int *ptype, int n_ptype)
+		int *ptype, int n_ptype,
+	   kdtree *_kdt)
 {
 	this->mpos = new double[2*n_points];
 	this->is_boundary = new int[n_points];
 	this->is_n_type = new int[n_points];
 	this->is_p_type = new int[n_points];
 	this->materials = new Material_Ptr[n_points];
+	this->electrons_pos = new list<int>[n_points];
+	this->holes_pos = new list<int>[n_points];
 	
 	//cout << this->mpos << endl;
 	cout << "c_mesh" << this << endl;
@@ -67,6 +70,13 @@ Mesh::Mesh(double *points, int n_points,
 			this->materials[i] = materials[0];
 		}
 	}
+	//Zero electron and hole count at each point
+	for(int i = 0; i< n_points;i++)
+	{
+		electrons_pos[i]= list<int>();
+		holes_pos[i] = list<int>();
+	}
+	this->kdt = _kdt;
 	printf("hi6\n");
 }
 
@@ -74,13 +84,13 @@ extern "C" Mesh *create_mesh(double *points, int n_points,
 			     Material **materials,
 			     int *boundary, int nboundary,
 			     int *ptype, int n_ptype, 
-			     int *ntype, int n_ntype)
+			     int *ntype, int n_ntype, kdtree *kdt)
 {
 	Mesh *bob = new Mesh(points, n_points,
 				  materials,
 				  boundary, nboundary,
 				  ntype, n_ntype,
-				  ptype, n_ptype);
+				  ptype, n_ptype, kdt);
 	//cout << bob << endl;;
 
 	return bob;

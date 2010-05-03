@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <math.h>
 #include <list>
 #include <iostream>
@@ -8,18 +10,18 @@
 extern "C" {
 #include "kdtree.h"
 }
-//Macros
+//Macro Definitions
 #define EC (1.60217646e-19)
 using namespace std;
 
 extern "C" list<int> *init_particle_list(int n)
 {
 	list<int> *particle_list = new list<int>;
+	srand(time(NULL));
 	for(int i = 0; i < n;i++)
 	{
 		particle_list->push_back(i);
 	}
-	//cout <<"p_live Location " <<particle_list << endl;
 	return particle_list;
 }
 
@@ -30,7 +32,6 @@ extern "C" list<int> *init_dead_list(int start,int n)
 	{
 		particle_list->push_back(i);
 	}
-//	cout <<"pdead Location " <<particle_list << endl;
 	return particle_list;
 }
 
@@ -46,12 +47,9 @@ void randomElectronMovement(double *particles,
 	//Move
 	double dx = pkx(i)*dt/p_mass[i];
 	double dy = pky(i)*dt/p_mass[i];
-	double old_pkx = pkx(i);
-	double old_pky = pky(i);
+	//double old_pkx = pkx(i);
+	//double old_pky = pky(i);
 	if(i % 1000 == 0)
-	//cout << "x:" << px(i) << " y: " << py(i) <<
-	//	" dx: " << dx <<  " dy: " << dy << " i: "<<i<<endl;
-	//cout << "dx: "<< dx << " dy: " << dy;
 	px(i) += dx;
 	py(i) += dy;
 	//Drift
@@ -59,17 +57,6 @@ void randomElectronMovement(double *particles,
 			*EC;
 	pky(i) += (efield[2*p_id[i]+1]*p_charge[i]*dt/length_scale)
 			*EC;
-	if(old_pkx != 0 && old_pky != 0 && i%1000 == 0)
-		cout << p_id[i]<<" field:"<< efield[2*p_id[i]] <<" " <<efield[2*p_id[i]+1]<< " delta_p: "<< 
-		(pkx(i)*dt/p_mass[i])<<"/"<<(old_pkx *dt/p_mass[i]) <<" "<<
-		(pky(i)*dt/p_mass[i])<<"/"<<(old_pky *dt/p_mass[i])<< endl;
-
-			/*	if(i %1000 == 0)
-		cout << "after:" <<endl << 
-		"x:" << px(i) << " y: " << px(i) <<
-		" dx: " << dx <<  " dy: " << dy << 
-		" pkx: " << pkx(i) << " pky: "<<pky(i)<<endl;*/
-
 	//Scatter
 }
 
@@ -77,7 +64,8 @@ extern "C" void move_particles(Particles *pdata,
 			double *efield,
 			int *nextDensity,
 			double dt,
-			double length_scale)
+			double length_scale,
+			Mesh *mesh)
 {
 	int i;
 	list<int>::iterator end = pdata->p_live->end();
@@ -86,18 +74,11 @@ extern "C" void move_particles(Particles *pdata,
 	for(list<int>::iterator it = pdata->p_live->begin();
 				it!= end;++it)
 	{
-		//cout << "doom!" << endl;
 		i = *it;
-		int id = pdata->p_id[i];
-		int charge = pdata->p_charge[i];
-//		cout << "charge: "<<charge << endl;
-		nextDensity[id] -= charge;
-//		cout << "density = " << nextDensity[id];
+		pick_up_particle(i,pdata,nextDensity,mesh); //Lift particle
 		randomElectronMovement(pdata->pos,pdata->p_mass,
 					pdata->p_id,pdata->p_charge,i,
 					efield,dt,length_scale);
-	//	nextDensity[id] = 3;
-	//	cout << id << endl;
 	}
 	printf("Particles Moved\n");
 }
@@ -128,7 +109,6 @@ extern "C" Polygon *new_polygon(double *points,int n)
 		points_copy[2*i+1] = points[2*i+1];
 		polygon->push_back(points_copy+2*i);
 	}
-	cout << "Copied Points" << endl;
 	return polygon;
 }
 
@@ -187,6 +167,10 @@ bool point_in_polygon(Polygon *boundary, vector2 *pos)
 	return true;
 }
 
+
+/*update_density:
+Expected: All particles in nextdensity are 'lifted'
+Output: Nextdensity has all particles 'put down'*/
 extern "C" double update_density(Particles *ap,
 			Mesh *mesh,
 			int *nextDensity,
@@ -195,7 +179,7 @@ extern "C" double update_density(Particles *ap,
 {
 	double *particles = ap->pos;
 	double current = 0;
-	int *p_id = ap->p_id;
+	//int *p_id = ap->p_id;
 	cout << "Updating Density" << endl;
 	for(list<int>::iterator it = ap->p_live->begin();
 				it != ap->p_live->end();++it)
@@ -204,26 +188,24 @@ extern "C" double update_density(Particles *ap,
 		vector2 pos;
 		pos[0] = px(i);
 		pos[1] = py(i);
-		if(!point_in_polygon(boundary,&pos))
+		if(!point_in_polygon(boundary,&pos)) //Outside particles are destroyed
 		{	
-			/*cout <<i << " died " << endl
-			  <<"x: "   <<pos[0] << " y: " <<pos[1] <<endl;*/
+			//Nearest exit to determine which side 
 			int nearest_exit = kdtree_find_point_id(kdt,&pos);
-			if(mesh->is_n_type[nearest_exit])
+ 			/*Ntype is assumed to be high voltage, 
+			so particles leaving it should have opposite their*/
+			//current value
+			//Ntype is assumed high voltage, so particles move
+			if(mesh->is_n_type[nearest_exit])	
 				current -= current_exit(particles,i,ap->p_mass[i])*ap->p_charge[i];
 			else
 				current += current_exit(particles,i,ap->p_mass[i])*ap->p_charge[i];
-			it = ap->p_live->erase(it);
-			ap->p_dead->push_back(i);
+			it = destroy_particle(ap,i,it);
 			--it;
 		}
 		else
 		{
-			p_id[i] = kdtree_find_point_id(kdt,&pos);
-			//cout << "id" << p_id[i] << endl;
-/*			cout << "x: "<<pos[0]<<" y: "
-				<<pos[1]<<" id: "<<p_id[i] << endl;*/
-			nextDensity[p_id[i]] += ap->p_charge[i];
+			put_down_particle(i,ap,nextDensity,mesh);
 		}
 	}
 	cout << "Update current: " << current << endl;
@@ -236,23 +218,20 @@ double handle_region(int mpos_id, Mesh *mesh, Particles *p_data,
 {
 	double current = 0;
 	//If we have too few carriers, inject them
-//	cout << "handle_region density(b):" << mpos_id<< " " <<
-//			density[mpos_id]<<" sign: "<<sign<< endl;
 	while (density[mpos_id]*sign < 0) //not charge netural, need more 
 	{	
 		int i;
-	//	cout << "mpos_id before: " << density[mpos_id];
 		i = create_particle(mpos_id,p_data,density,sign,
 				    mesh->materials[mpos_id]->electron_mass,
 				    mesh); 
-	//	cout << "mpos_id after: "<<density[mpos_id];
+		//ntype is higher voltage, so incoming particles
+		//are going the 'right way'
 		if(mesh->is_n_type[i])
-			current += current_exit(p_data->pos,i,p_data->p_mass[i])*sign;
+			current += current_exit(p_data->pos,i,p_data->p_mass[i])*sign; //If you are leaving from ntype side
+		//Incoming particles on p side are going the 'wrong' way.
 		if(mesh->is_p_type[i])
-			current -= current_exit(p_data->pos,i,p_data->p_mass[i])*sign;
+			current -= current_exit(p_data->pos,i,p_data->p_mass[i])*sign; //leaving from ptype side
 	}
-	//cout << "handle_region density:" << density[mpos_id]<< endl;
-	//cout << "handle_region current:" << current << endl;
 	return current;
 }
 
@@ -266,8 +245,6 @@ double replenish_boundary(Particles *p_data,
 	for(;it != end;++it)
 	{
 		int id = (*it);
-/*		cout << id << " mpos: "<<mesh->mpos[id]<<" "
-			<< mesh->mpos[id+1]<<endl;*/
 		if(mesh->is_p_type[id])
 		{
 			sign = 1;//Holes get injected
@@ -277,7 +254,7 @@ double replenish_boundary(Particles *p_data,
 		else if(mesh->is_n_type[id])
 		{
 			sign = -1;//Electrons get injected
-			current += handle_region(id,mesh,p_data,
+			current -= handle_region(id,mesh,p_data,
 						nextDensity,sign);
 		}else
 		{
@@ -294,4 +271,31 @@ extern "C" double replenish(Particles *p_data, int *nextDensity, Mesh *mesh)
 	current = replenish_boundary(p_data,nextDensity,mesh);
 	cout << "replenish complete" << endl;
 	return current;
+}
+
+/*recombinate:
+Expected to be called after update_density, so need to pick up particles particles
+before destruction*/
+extern "C" double recombinate(Particles *p_data, int *nextDensity, Mesh *mesh)
+{
+	//For each cell, determine the number recombinations
+	//delete particles from each
+	//remember to remove both charge types from their position
+	//Should be same
+	
+	for(int mesh_pos = 0; mesh_pos < mesh->npoints;mesh_pos++)
+	{
+		if( mesh->electrons_pos[mesh_pos].size() > 0 && 
+		    mesh->holes_pos[mesh_pos].size() > 0)
+		{
+			//For now, obliterate the first two.
+			int e_id = *mesh->holes_pos[mesh_pos].begin();
+			int h_id = *mesh->holes_pos[mesh_pos].begin();
+			pick_up_particle(e_id,p_data,nextDensity,mesh);//electron
+			destroy_particle(p_data,e_id,mesh->electrons_pos[mesh_pos].begin());
+			pick_up_particle(h_id,p_data,nextDensity,mesh);//hole
+			destroy_particle(p_data,h_id,mesh->holes_pos[mesh_pos].begin());
+		}
+	}
+	return 0;
 }
