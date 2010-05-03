@@ -22,14 +22,15 @@ lib.replenish.restype = ctypes.c_double
 def print_list(string,list):
 	print string,list,len(list)
 
-def move_particles(particles_ptr,
-			 c_efield,nextDensity,
-			 dt,length_scale):
-	lib.move_particles(particles_ptr,
+def move_particles(system,
+		   c_efield,nextDensity,
+		   dt,length_scale):
+	lib.move_particles(system.particles.ptr,
 			   c_efield.ctypes.data,
 			   nextDensity.ctypes.data,
 			   ctypes.c_double(dt),
-			   ctypes.c_double(length_scale))
+			   ctypes.c_double(length_scale),
+			   system.c_mesh);
 
 def update_density(system,nextDensity,kdt):
 	return lib.update_density(system.particles.ptr,
@@ -48,7 +49,7 @@ class System():
 	pass
 
 class CParticles():
-	def __init__(self,nparticles):#particles,p_mass,p_charge,p_id,p_live):
+	def __init__(self,nparticles,mesh):#particles,p_mass,p_charge,p_id,p_live):
 		nparticles = nparticles
 		self.pos = np.zeros((nparticles,4))
 		self.p_id = np.zeros((nparticles,1),'int')
@@ -62,7 +63,8 @@ class CParticles():
 					      self.p_charge.ctypes.data,
 					      self.p_mass.ctypes.data,
 					      self.p_live,
-					      self.p_dead)
+					      self.p_dead,
+					      mesh)
 
 def replenish(system,nextDensity):
 	return lib.replenish(system.particles.ptr,	
@@ -121,7 +123,8 @@ def init_system(mesh,nextDensity,particles_point):
 				    ptype_ids.ctypes.data,
 				    len(ptype_ids),
 				    ntype_ids.ctypes.data,
-				    len(ntype_ids))
+				    len(ntype_ids),
+				    mesh.kdt)
 	print "c_mesh",hex(system.c_mesh)
 				    
 	#create bounding polygon
@@ -134,7 +137,7 @@ def init_system(mesh,nextDensity,particles_point):
 	system.bounding_polygon = polygon
 	print "Creating a ton of particles..."
 	#create particles
-	system.particles = CParticles(10**6)
+	system.particles = CParticles(10**6,system.c_mesh)
 	#initialize particles
 	for i in xrange(len(mesh_coord)):
 		if tuple(mesh_coord[i]) in mesh.p_region:
@@ -154,3 +157,6 @@ def init_system(mesh,nextDensity,particles_point):
 		nextDensity[i] = 0
 	print "Created system"
 	return system
+
+def recombinate(system,nextDensity,mesh):
+	lib.recombinate(system.particles.ptr,nextDensity.ctypes.data,system.c_mesh)

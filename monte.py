@@ -53,8 +53,8 @@ def init_problem(mesh,V,V2,options):
 	# Define boundary condition
 	#for reasons I don't know, pBoundary needs to be 
 	#kept globally
-	pBoundary = Constant(mesh, options.V)
-	nBoundary = Constant(mesh, 0.0) 
+	pBoundary = Constant(mesh, 0.0)
+	nBoundary = Constant(mesh, options.V) 
 	print mesh.InnerBoundary
 	bc0 = DirichletBC(V, pBoundary, mesh.InnerBoundary)
 	bc1 = DirichletBC(V, nBoundary, mesh.OuterBoundary)

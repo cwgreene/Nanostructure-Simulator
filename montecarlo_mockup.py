@@ -319,13 +319,14 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	print max(map(lambda x:max(abs(x[0]),abs(x[1])),c_efield)),\
 		min(map(lambda x:min(abs(x[0]),abs(x[1])),c_efield))
 	#raw_input()
-	move_particles_c.move_particles(system.particles.ptr,
+	move_particles_c.move_particles(system,
 					c_efield,nextDensity,
 					 mesh.dt,mesh.length_scale)
 	print "About to update"
 	current = move_particles_c.update_density(system,
 						  nextDensity,
 						  mesh.kdt)
+	move_particles_c.recombinate(system,nextDensity,mesh.kdt)
 	print current
 	print "time:",time.time()-start
 	start = time.time()

@@ -10,7 +10,8 @@ class Silicon:
 	free_mass = ( 9.10938188 *10**-31)
 
 	electron_mass = 1.08*free_mass
-	hole_mass = .58*free_mass
+	hole_mass = 1.08*free_mass #test
+#	hole_mass = .58*free_mass
 	dielectric = 11.7
 	epsilon = dielectric*8.85418782*10**-12
 	doping = 10.**24
