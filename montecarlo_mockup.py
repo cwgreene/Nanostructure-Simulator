@@ -160,22 +160,6 @@ def handle_region(mesh,density,point,add_list,reaper,sign,id):
 		print "too much!"
 	return exit_current
 
-def replenish_boundary(mesh,density,holes,electrons,reaper):
-	#these are the thermal equilibrium holes and
-	#electrons provided by the contacts
-	bmesh = BoundaryMesh(mesh)
-	boundary = bmesh.coordinates()
-
-	current = 0
-	for point in boundary:
-		id = mesh.point_index[tuple(point)]
-		if mesh.in_p_region(point):
-			current += handle_region(mesh,density,point,
-					holes,reaper,1,id)
-		else:
-			current += handle_region(mesh,density,point,
-					electrons,reaper,-1,id)
-	return current
 
 def photo_generate(mesh,density,holes,electrons):
 	#these are the photogenerated electron hole pairs
@@ -184,30 +168,6 @@ def photo_generate(mesh,density,holes,electrons):
 	for point in coord:
 		holes.append(array(point))
 		electrons.append(array(point))
-
-
-def replenish(mesh,density,boundary,reaper):
-	print "boundary",len(boundary)
-	print "prior particles",len(mesh.particles)
-	
-	holes = []
-	electrons = []	
-	
-	#currents
-	exit_current = 0
-	enter_current = 0
-	
-	exit_current=replenish_boundary(mesh,density,holes,electrons,reaper)
-#	photo_generate(mesh,density,holes,electrons)
-
-	new_particles = init_electrons(1,electrons,-10,mesh)
-	new_particles += init_electrons(1,holes,10,mesh)
-	for p in new_particles:
-		density[p.id] += p.charge
-		enter_current += -current_exit(p,mesh)
-	print "parts",len(new_particles)
-	print "total particles",len(mesh.particles)
-	return enter_current+exit_current
 
 def print_avg(name,value,count):
 	print "Avg",name+":",value/count,count
@@ -230,7 +190,7 @@ def calculate_scaled_density(mesh,nextDensity):
 		material = mesh.material[tuple(point)]
 		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
 		id = mesh.point_index[tuple(point)]
-		scaled_density[id] = (nextDensity[id]*1000*
+		scaled_density[id] = (nextDensity[id]*
 				  constants.eC/mesh.gen_num*
 				  (material.doping3d\
 					*((mesh.length_scale)**3)
@@ -274,6 +234,7 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	current = move_particles_c.update_density(system,
 						  nextDensity,
 						  mesh.kdt)
+	print "Recombination"
 	move_particles_c.recombinate(system,nextDensity,mesh.kdt)
 	print current
 	print "time:",time.time()-start

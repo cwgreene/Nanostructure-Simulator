@@ -6,6 +6,7 @@
 #include <iostream>
 #include "particles.hpp"
 #include "mesh.hpp"
+#include "statistics.hpp"
 
 extern "C" {
 #include "kdtree.h"
@@ -45,8 +46,8 @@ void randomElectronMovement(double *particles,
 				double length_scale)
 {
 	//Move
-	double dx = pkx(i)*dt/p_mass[i];
-	double dy = pky(i)*dt/p_mass[i];
+	double dx = pkx(i)*dt/(length_scale*p_mass[i]);
+	double dy = pky(i)*dt/(length_scale*p_mass[i]);
 	//double old_pkx = pkx(i);
 	//double old_pky = pky(i);
 	if(i % 1000 == 0)
@@ -71,6 +72,7 @@ extern "C" void move_particles(Particles *pdata,
 	list<int>::iterator end = pdata->p_live->end();
 	printf("moving particles now\n");
 	
+	avg_momentum_grid(pdata,mesh);
 	for(list<int>::iterator it = pdata->p_live->begin();
 				it!= end;++it)
 	{
@@ -232,6 +234,7 @@ double handle_region(int mpos_id, Mesh *mesh, Particles *p_data,
 		if(mesh->is_p_type[i])
 			current -= current_exit(p_data->pos,i,p_data->p_mass[i])*sign; //leaving from ptype side
 	}
+	//Not handling too many, need to. Should probably figure out what failure to do this will resul tin.
 	return current;
 }
 
@@ -285,16 +288,21 @@ extern "C" double recombinate(Particles *p_data, int *nextDensity, Mesh *mesh)
 	
 	for(int mesh_pos = 0; mesh_pos < mesh->npoints;mesh_pos++)
 	{
-		if( mesh->electrons_pos[mesh_pos].size() > 0 && 
+		/*cout << "num particles:" << 
+			mesh->electrons_pos[mesh_pos].size()+mesh->holes_pos[mesh_pos].size() << 
+			"/" << mesh->electrons_pos[mesh_pos].size() <<" "<<
+			" dens: "<<nextDensity[mesh_pos]<<endl;*/
+		while( mesh->electrons_pos[mesh_pos].size() > 0 && 
 		    mesh->holes_pos[mesh_pos].size() > 0)
 		{
 			//For now, obliterate the first two.
-			int e_id = *mesh->holes_pos[mesh_pos].begin();
-			int h_id = *mesh->holes_pos[mesh_pos].begin();
+			int e_id = *(mesh->electrons_pos[mesh_pos].begin());
+			int h_id = *(mesh->holes_pos[mesh_pos].begin());
+			cout << "Recombinate: "<<e_id <<" "<<h_id << endl;
 			pick_up_particle(e_id,p_data,nextDensity,mesh);//electron
-			destroy_particle(p_data,e_id,mesh->electrons_pos[mesh_pos].begin());
+			destroy_particle(p_data,e_id,p_data->live_id[e_id]);
 			pick_up_particle(h_id,p_data,nextDensity,mesh);//hole
-			destroy_particle(p_data,h_id,mesh->holes_pos[mesh_pos].begin());
+			destroy_particle(p_data,h_id,p_data->live_id[h_id]);
 		}
 	}
 	return 0;

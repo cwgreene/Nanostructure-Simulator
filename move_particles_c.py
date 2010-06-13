@@ -137,7 +137,7 @@ def init_system(mesh,nextDensity,particles_point):
 	system.bounding_polygon = polygon
 	print "Creating a ton of particles..."
 	#create particles
-	system.particles = CParticles(10**6,system.c_mesh)
+	system.particles = CParticles(5*10**6,system.c_mesh)
 	#initialize particles
 	for i in xrange(len(mesh_coord)):
 		if tuple(mesh_coord[i]) in mesh.p_region:
@@ -159,4 +159,6 @@ def init_system(mesh,nextDensity,particles_point):
 	return system
 
 def recombinate(system,nextDensity,mesh):
+	print "doom"
 	lib.recombinate(system.particles.ptr,nextDensity.ctypes.data,system.c_mesh)
+	print "don edoom"

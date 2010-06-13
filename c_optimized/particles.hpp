@@ -1,6 +1,8 @@
 #ifndef PARTICLES_HPP
 #define PARTICLES_HPP
 #include <list>
+#include <iostream> 
+
 #include "mesh.hpp"
 #include "materials.hpp"
 
@@ -25,20 +27,23 @@ public:
 	int *p_charge; //array of particle's charges
 	int *p_id; //array of particle's mesh Position ids
 	list<int>::iterator *local_id; //array of local_ids, which point into the mesh local list
+	list<int>::iterator *live_id; //array of live_ids, which point into the p_live list
 	double *p_mass; //array Particle masses, scaled to real units
 	list<int> *p_live; //list of living particles, particle id's
 	list<int> *p_dead; //List of available dead particles, particle ids
 	Particles(double *_pos, int *_p_id, int *_p_charge,double *_p_mass,
 			list<int> *_p_live, list<int> *_p_dead,Mesh *mesh)
 	{
+		//Initialize pointer blocks
 		pos = _pos;
 		p_charge = _p_charge;
 		p_id = _p_id;
-		p_live = _p_live;
+		p_live = _p_live; //should be empty
 		p_dead = _p_dead;
 		p_mass = _p_mass;
 		int num = p_dead->size();
 		this->local_id = new list<int>::iterator[num];
+		this->live_id = new list<int>::iterator[num];
 		std::cout << "Imminent doom!" << p_dead->size() <<std::endl;
 	}
 };

@@ -134,7 +134,7 @@ vector2 *find_point_r(vector2 *point,kdtree *node,
 	}
 	return best;
 }
-
+static int static_count = 0;
 vector2 *find_point_r_id(vector2 *point,kdtree *node,
 			vector2 *best,double *bdist,int *id)
 {
@@ -145,6 +145,9 @@ vector2 *find_point_r_id(vector2 *point,kdtree *node,
 	//printf("Visiting:%lf,%lf best:%lf\n",
 		//node->location[0],node->location[1],
 		//*bdist);
+	
+	if( (static_count++) % (1000*1000) == 0)
+		printf("called: %d \n",static_count);
 
 	//if cur_dist is smaller than the current best
 	if(*bdist > cur_dist) 

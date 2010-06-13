@@ -3,6 +3,8 @@ import distribution as dist
 import constants
 import itertools as it
 import math
+import pickle
+import os
 
 class Silicon:
 	eV = 1.60217646*10**-19
@@ -18,10 +20,14 @@ class Silicon:
 	doping3d = 10.**24
 	doping2d = 10.**22
 
-	def random_momentum(self,type):
-		print "Generating",type,"momentum table"
+	def random_momentum(self,mtype):
+		filename="materials/momentum_tables/silicon_"+mtype+"array"
+		if os.path.exists(filename):
+			retarray= np.fromfile(open(filename))
+			return retarray
+		print "Generating",mtype,"momentum table"
 		kbT = constants.kbT
-		if type == "ptype":
+		if mtype == "ptype":
 			m = self.hole_mass
 		else:
 			m = self.electron_mass
@@ -36,6 +42,7 @@ class Silicon:
 				i = index.next()
 				retarray[i][0] = v*math.cos(theta)
 				retarray[i][1] = v*math.sin(theta)
+		retarray.tofile(open(filename,"w"))
 		print "generated"
 		return retarray
 	

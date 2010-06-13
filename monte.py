@@ -16,6 +16,7 @@ __date__ = "2009-08-18"
 __copyright__ = "Copyright (C) 2007-2008 Anders Logg"
 __license__  = "GNU LGPL Version 2.1"
 
+import rpy2.robjects
 from dolfin import *
 import montecarlo_mockup as mc
 import move_particles_c as c_interface
@@ -143,7 +144,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		#problem.density_funcs.poisson_density.vector().set(problem.density_funcs.scaled_density)
 		#print problem.density_funcs.poisson_density.vector().array()
 		sol = PoissonSolve(problem.density_funcs.scaled_density,problem.bcs)
-
+		print "scale_density",problem.density_funcs.scaled_density
 		#handle Monte Carlo
 		print "Starting Step ",x
 		electric_field = mc.negGradient(mesh,sol,problem.V2)
@@ -187,6 +188,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		#rf.trajectory.write(str(mesh.trajectories[particle]))
 		#rf.trajectory.write("\n")
 	print current_values
+	rpy2.robjects.r.plot(range(len(current_values)),current_values)
 #	avg_length /= 1.*len(mesh.trajectories)
 	print "Average trajectory length:",avg_length
 

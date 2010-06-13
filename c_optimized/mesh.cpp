@@ -19,6 +19,7 @@ Mesh::Mesh(double *points, int n_points,
 		int *ptype, int n_ptype,
 	   kdtree *_kdt)
 {
+	this->npoints = n_points;
 	this->mpos = new double[2*n_points];
 	this->is_boundary = new int[n_points];
 	this->is_n_type = new int[n_points];
