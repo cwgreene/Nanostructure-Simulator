@@ -1,0 +1,35 @@
+3/10
+Okay, associate with each point a list of electrons and holes (seperate)
+
+Potential Problem:
+Removing particle from list. This will be an n/2 operation, with n
+the number of particles present. There are estimated to be 100 per point,
+so 2600*100 operations. Big deal? This is about 2.6 million operations.
+probably not.
+
+%Alter the move particle function so that once a particle moves to a new
+%location, we check the opposite particle list. If anything is present in that
+%list, we destroy each particle.
+
+Above is wrong. Create recombinate function that does the same.
+
+
+So files to alter:
+Mesh: particle list at each point
+move_particles: updated for recombination function.
+
+recombination
+	for point in mesh:
+		if mesh->hole_list[point].size()*mesh->hole_list[point]
+
+
+How to destroy particles: #we REALLY should wrap this into a function.
+	1. If the particle is not free, subtract it's charge from density.
+	2. Remove the particle id from the live list.
+	3. Add the particle id to the dead list.
+	3. Remove the particle from the [particles at mesh point] list.
+
+So Summary of todo:
+1. Write destroy particle function. (replace exisiting)?
+2. This means re-implementing the reaper in C.
+3. Write recombination
