@@ -1,0 +1,26 @@
+How many vertices in a nxn square?
+. . . . .
+ x x x x
+. . . . .
+ x x x x
+. . . . .
+ x x x x
+. . . . .
+
+
+start off with 4 dots
+
+adding a row adds c+1 dots, increases r by 1
+adding a column adds r+1 dots, increases c by 1
+
+adding a row, and then a column increases by (c+1)+((r+1)+1)
+so going from nxn (z) => (n+1)x(n+1) is  z + (n+1)+((n+1)+1)=z+2n+3
+
+
+(n+1)*(n+1)
+
+so 1x1 => 2x2 => 4+2+3=9
+
+1 4
+2 9
+3 
