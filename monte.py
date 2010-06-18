@@ -124,12 +124,14 @@ def new_file(name):
 	return results_file
 		
 
-def PoissonSolve(density,bcs):
+def PoissonSolve(mesh,density,bcs):
 	print "Solving Poisson Equation"
+	lengthr = Constant(mesh,1./mesh.length_scale)
+	length = Constant(mesh,mesh.length_scale)
 	u = TrialFunction(V)
 	v = TestFunction(V)
-	a = dot(grad(v), grad(u))*dx
-	L = v*(density)*dx
+	a = dot(grad(v), grad(u))*lengthr*dx
+	L = v*(density)*length*dx
 	# Compute solution
 	problem = VariationalProblem(a, L, bcs)
 	sol = problem.solve()
@@ -145,11 +147,13 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		#Solve equation using avg_dens
 		#problem.density_funcs.poisson_density.vector().set(problem.density_funcs.scaled_density)
 		#print problem.density_funcs.poisson_density.vector().array()
-		sol = PoissonSolve(problem.density_funcs.scaled_density,problem.bcs)
+		sol = PoissonSolve(mesh,
+				problem.density_funcs.scaled_density,
+				problem.bcs)
 		print "scale_density",problem.density_funcs.scaled_density
 		#handle Monte Carlo
 		print "Starting Step ",x
-		electric_field = mc.negGradient(mesh,sol,problem.V2)
+		electric_field = (mc.negGradient(mesh,sol,problem.V2))
 		df.gradfile << electric_field
 		start2 = time.time()
 		mc.MonteCarlo(mesh,system,sol,electric_field,
@@ -194,8 +198,8 @@ def mainloop(mesh,system,problem,df,rf,scale):
 #	avg_length /= 1.*len(mesh.trajectories)
 	print "Average trajectory length:",avg_length
 
-#mesh = meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon())
-mesh = meshes.PlanarMesh(options,materials.Silicon(),materials.Silicon())
+mesh = meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon())
+#mesh = meshes.PlanarMesh(options,materials.Silicon(),materials.Silicon())
 #these seem to need to be global
 V = FunctionSpace(mesh, "CG", 1)
 V2 = VectorFunctionSpace(mesh,"CG",1,2)

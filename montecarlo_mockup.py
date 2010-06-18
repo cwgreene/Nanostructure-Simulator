@@ -178,8 +178,9 @@ def pre_compute_field(mesh,field):
 	coord = mesh.coordinates()
 	for index in xrange(len(coord)):
 		pos = coord[index]
-		vec = du.get_vec(mesh,field,pos)
+		vec = du.get_vec(mesh,field,pos)/mesh.length_scale
 		c_efield.append(vec)
+		print vec
 	print "Forces Calculated:",time.time()-start
 	return c_efield
 
@@ -193,7 +194,7 @@ def calculate_scaled_density(mesh,nextDensity):
 		scaled_density[id] = (nextDensity[id]*
 				  constants.eC/mesh.gen_num*
 				  (material.doping3d\
-					*((mesh.length_scale/100)**3)
+					*((mesh.length_scale)**3)
 				  /material.epsilon))
 		stats.avg_charge += abs(scaled_density[id])
 	return scaled_density
@@ -248,6 +249,7 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 
 	#update avg_dens
 	scaled_density = calculate_scaled_density(mesh,nextDensity)
+	print scaled_density
 	avg_dens.inc(scaled_density)
 	#for pos,x in zip(range(len(mesh.coordinates())),nextDensity):
 		#print x,

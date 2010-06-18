@@ -2,11 +2,11 @@ import os,time,sys
 import run_options
 
 options = run_options.create_options(sys.argv)
-start = -1.0
-end   = 1.0
-max   = 8
+start = 0.0
+end   = 0.4
+max   = 4
 total_time = time.time()
-tag = "C++_400_scatter"
+tag = "C++_400_triangle"
 
 for x in range(0,max):
 	start_time = time.time()
@@ -22,7 +22,7 @@ for x in range(0,max):
 		+"--particles=100"+ " "
 		+"-V " +str(voltage) +" "
 		+"--tag="+tag +" "
-		+"-d data"+str(x)+" "
+		+"-d data"+str(voltage)[:4]+" "
 		)
 	elapse = time.time()-start_time
 	print "finished",elapse
