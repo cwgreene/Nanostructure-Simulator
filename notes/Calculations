@@ -1,0 +1,49 @@
+div V = rho/epsilon = 10
+rho = 10*epsilon = 10^18/cm^3 ==>10^18/cm^2
+
+time = lifetime
+
+what's distance?
+velocity = speed/time = distance/time = sqrt((3/2)kbT/me)
+
+lifetime silicon with 10^18 doping => tau = 8*10^-7
+time = tau/1000
+time = 8*10^-10
+
+velocity = 23000 m/s (NSM)
+velocity = 2300 nm /ps
+Since our mean velocity had been .5, it would mean that our
+device is 4.6 microns.
+
+length = velocity
+
+If we want the device dimensions to be correct, we must scale by
+a factor of 10-100
+
+in order to scale that, we must subdivide the triangle by a factor
+of 4 and 8
+
+Lifetime is not relevant it seems, as we seem to reach equilibrium
+before that. Must perform autocorrelation.
+
+So that being said:
+length = 4.8 microns
+time = 8*10^-10
+charge = 1*10^18/(cm) ^3 =
+
+total volume is (4.6 microns*4.6 microns*L)/2
+number of triangles = 350
+each triangles is therefor (4.6 microns)^2*L/(2*350)
+(.03 microns^2)
+Total charge is 21.16*10**10
+rho = 5.8*10**8 electrons per superparticle
+
+Total current = (1*10^18/cm^3)/((4.6 Microns)^2*L/2)*(particles/s)*L
+
+Frame = 1 ps 
+200 particles/frame = 5.8*10**8 electrons/frame = 9.2*10^-11 coulombs/(100 ps)
+9.2*10^-13 coulombs/ps = 9.2*10^-1 coulombs /s = .92 amps *10^-6= .092 microamps= 92 nanoamps for 4.6 microns
+
+reasonable.
+
+Voltage = rho**length^2 = 

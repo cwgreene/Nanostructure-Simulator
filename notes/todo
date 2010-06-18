@@ -1,0 +1,34 @@
+Things to get done:
+
+1) Renormalize the mesh so that ALL mesh cells are the same size. If we don't
+do this, we mess up the charge_density calculations.
+
+a)how to do this:
+	Figure out how to make a submesh, and then intersect the mesh
+we don't want out.
+
+	Alternatively, write script to tile the triangle by hand.
+
+2) Get more realistic replenish working.
+
+3) Scattering and recombination. To a certain exten the gradients
+provide this to a limited extent, so it is perhaps not critical for a
+qualitative evaluation of the problem. NOTE: are We are simulating a metal for
+ without scatter?.
+
+4) FIGURE out if the lack of a true depletion region is realistic or not.
+Easiest way is to generate code for the N-Gon mesh and hollowed internal
+thingy and see if it matches the cylindrical calculations.
+
+5) VERY IMPORTANT: Extract current information. Don't forget! Easy calc is
+just find out if nearest exit was an inner or outer boundary and then just
+add in the charge. This shouldn't be too hard.
+
+6) Transform current averages into running totals (possibly as class) and dump them at the end. That way we can see if the average begins to converge. important
+averages would be the current.
+
+7) are we going fast enough?
+
+8) Okay, we need to be able to dump the state of the simulation,
+and resume it from where we left off. I think this will also help
+reduce the relaxation time when we vary the voltage diff.

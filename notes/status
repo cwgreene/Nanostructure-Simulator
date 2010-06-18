@@ -1,0 +1,55 @@
+>>Older
+As it stands, something that is sort of a depletion region is being detected,
+unfortunately, it's not right because the depletion region needs to be a non-neutral
+region, which this isn't.
+
+>>2/17/10
+Issues:
+1.0 Averaging
+1.1 Recombination
+
+1.0 Averaging
+	Okay, big problem. The way we're averaging doesn't work. It's highly conceptually wrong.
+
+	If I move from point a to point b, we need to not weight earlier things more:
+
+	We weight earlier things more: False. An average is an average.
+
+	Okay, my concern may not be valid, yes we are treating all times as
+similar, which is definitely wrong. It would probably be better to only
+average the system every X number of frames, where X is on the order of the
+lifetime of a particle to ensure no correlation between averages.
+
+	This may not be _that_ big of a problem, but it's a problem.
+---
+1.1 Recombination
+	Recombination DOES NOT WORK. You can't say: "Hey! I'm over a positive charge! Let's go away!". Because this means the charge won't cancel the other charge out.
+It has to stick around, which means leaving behind the charge, but destroying
+the particle. This is problematic, since the naive way of doing it is simply
+to increase the present charge. This won't work since we also use this to 
+keep track of how many charges are at a location, and whether we need to get
+rid of them.
+	
+
+
+1.1.1 Current Behvaviour:
+
+	Recombination DOES have an effect. if you turn it off, then you get two carrierless regions.  If you turn it ON, then you get an inversion of regions it seems. I think this makes sense.
+
+	Explanation: The p-region is injecting holes, which have positive charge. But we have no recombination
+so the charge will just away to the higher potential region. This leaves a net negative charge.
+
+	Turn recombination ON (implemented incorrectly), and 
+
+	(p is inside, n is outside)
+
+
+>>2/12/10
+Discussing with Ethan about simulation, raises possibility that a physical
+situation is when the particle will actually miss the exit region entirely
+this can't happen in a planar semiconductor, but CAN happen in a nanowire.
+
+Should alter simulation to track this sort of phenomenon, and see if
+it is voltage dependent. Should create a planar mesh to test this.
+
+Should track trajectories of particles. Useful.
