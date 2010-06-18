@@ -3,3 +3,11 @@ This is currently implemnted wrong. We need to transform the mesh
 so that it has it's true dimensions, rather than working with
 normalized coordinates. This will drastically simplify a bunch of the code.
 
+Until that happens (hopefully I'll document it at the very least in the
+git checkins) all velocities and positions must be put into normalized
+coordinates. Since the forces are going to be the real forces this
+means that delta(p) must be normalized by dividing by the length scale.
+
+--Update!
+I checked the code, and I was wrong. I should not normalize pkx. I should
+only normalize the x coordinate.
