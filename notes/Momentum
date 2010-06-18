@@ -1,0 +1,5 @@
+Momentum and Position:
+This is currently implemnted wrong. We need to transform the mesh
+so that it has it's true dimensions, rather than working with
+normalized coordinates. This will drastically simplify a bunch of the code.
+

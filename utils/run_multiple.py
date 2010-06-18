@@ -3,7 +3,7 @@ import run_options
 
 options = run_options.create_options(sys.argv)
 start = 0.0
-end   = 0.4
+end   = 0.1
 max   = 4
 total_time = time.time()
 tag = "C++_400_triangle"
@@ -15,6 +15,7 @@ for x in range(0,max):
 	else:
 		voltage = start
 	print "running",voltage,"/",x+1,"out of",max
+	data_dir = str(voltage)[:5].replace(".","_").replace("-","_n")
 	os.system("python monte.py "
 		+"-c 400"       + " "
 		+"--size=1"     + " "
@@ -22,7 +23,7 @@ for x in range(0,max):
 		+"--particles=100"+ " "
 		+"-V " +str(voltage) +" "
 		+"--tag="+tag +" "
-		+"-d data"+str(voltage)[:4]+" "
+		+"-d data"+data_dir+" "
 		)
 	elapse = time.time()-start_time
 	print "finished",elapse

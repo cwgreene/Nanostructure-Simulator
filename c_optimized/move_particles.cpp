@@ -12,6 +12,7 @@ extern "C" {
 #include "kdtree.h"
 }
 //Macro Definitions
+#define sq(x) (x*x)
 #define EC (1.60217646e-19)
 using namespace std;
 
@@ -46,6 +47,7 @@ void randomElectronMovement(double *particles,
 				double length_scale,
 				double particle_weight)
 {
+	static int check = 0;
 	//Move
 	double dx = pkx(i)*dt/(length_scale*p_mass[i]);
 	double dy = pky(i)*dt/(length_scale*p_mass[i]);
@@ -55,10 +57,12 @@ void randomElectronMovement(double *particles,
 	px(i) += dx;
 	py(i) += dy;
 	//Drift
-	pkx(i) += (efield[2*p_id[i]]*p_charge[i]*dt/length_scale)
+	pkx(i) += (efield[2*p_id[i]]*p_charge[i]*dt)
 			*EC*particle_weight;
-	pky(i) += (efield[2*p_id[i]+1]*p_charge[i]*dt/length_scale)
+	pky(i) += (efield[2*p_id[i]+1]*p_charge[i]*dt)
 			*EC*particle_weight;
+	if(++check % 1000 == 0)
+		cout << sqrt(sq(pkx(i))+sq(pky(i)))<<endl;
 	//Scatter
 	double theta = rand()*2*3.1415192/RAND_MAX;
 	pkx(i) = pkx(i)*cos(theta)-pky(i)*sin(theta);
@@ -99,7 +103,7 @@ double current_exit(double *particles,int i,double mass)
 {
 	double _pkx = pkx(i);
 	double _pky = pky(i);
-	double current = sqrt(_pkx*_pkx+_pky*_pky)/mass;
+	double current = sqrt(_pkx*_pkx+_pky*_pky)/mass;//velocity
 	return current;
 }
 
