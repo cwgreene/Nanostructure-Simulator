@@ -180,7 +180,6 @@ def pre_compute_field(mesh,field):
 		pos = coord[index]
 		vec = du.get_vec(mesh,field,pos)/mesh.length_scale
 		c_efield.append(vec)
-		print vec
 	print "Forces Calculated:",time.time()-start
 	return c_efield
 
@@ -211,9 +210,6 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	#next_step density function array
 
 	nextDensity = density_funcs.combined_density.vector().array().astype('int')
-	print len(filter(lambda x: x!=0,nextDensity)),len(nextDensity),len(mesh.coordinates())
-	for x in nextDensity:
-		print x,
 
 	#holeDensity = density_funcs.holes.vector().array()
 	#electronDensity = density_funcs.electrons.vector().array()
@@ -225,8 +221,8 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	start =time.time()
 	print "About to move particles"
 	c_efield = array(c_efield)
-	print max(map(lambda x:max(abs(x[0]),abs(x[1])),c_efield)),\
-		min(map(lambda x:min(abs(x[0]),abs(x[1])),c_efield))
+	#print max(map(lambda x:max(abs(x[0]),abs(x[1])),c_efield)),\
+	#	min(map(lambda x:min(abs(x[0]),abs(x[1])),c_efield))
 	#raw_input()
 	move_particles_c.move_particles(system,
 					c_efield,nextDensity,
@@ -249,7 +245,6 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 
 	#update avg_dens
 	scaled_density = calculate_scaled_density(mesh,nextDensity)
-	print scaled_density
 	avg_dens.inc(scaled_density)
 	#for pos,x in zip(range(len(mesh.coordinates())),nextDensity):
 		#print x,

@@ -305,7 +305,7 @@ extern "C" double recombinate(Particles *p_data, int *nextDensity, Mesh *mesh)
 			//For now, obliterate the first two.
 			int e_id = *(mesh->electrons_pos[mesh_pos].begin());
 			int h_id = *(mesh->holes_pos[mesh_pos].begin());
-			cout << "Recombinate: "<<e_id <<" "<<h_id << endl;
+			//cout << "Recombinate: "<<e_id <<" "<<h_id << endl;
 			pick_up_particle(e_id,p_data,nextDensity,mesh);//electron
 			destroy_particle(p_data,e_id,p_data->live_id[e_id]);
 			pick_up_particle(h_id,p_data,nextDensity,mesh);//hole
