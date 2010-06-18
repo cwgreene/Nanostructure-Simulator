@@ -11,3 +11,8 @@ means that delta(p) must be normalized by dividing by the length scale.
 --Update!
 I checked the code, and I was wrong. I should not normalize pkx. I should
 only normalize the x coordinate.
+
+--Update 2:
+I was seeing momentums on the order of 10^-8, which looked good, until
+I remembered that this was momentum. I need to divide by the number of 
+particles in the cluster to deal with the increased mass.

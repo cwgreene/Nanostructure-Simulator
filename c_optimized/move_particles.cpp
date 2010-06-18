@@ -49,8 +49,8 @@ void randomElectronMovement(double *particles,
 {
 	static int check = 0;
 	//Move
-	double dx = pkx(i)*dt/(length_scale*p_mass[i]);
-	double dy = pky(i)*dt/(length_scale*p_mass[i]);
+	double dx = pkx(i)*dt/(length_scale*p_mass[i]*particle_weight);
+	double dy = pky(i)*dt/(length_scale*p_mass[i]*particle_weight);
 	//double old_pkx = pkx(i);
 	//double old_pky = pky(i);
 	if(i % 1000 == 0)
@@ -62,7 +62,11 @@ void randomElectronMovement(double *particles,
 	pky(i) += (efield[2*p_id[i]+1]*p_charge[i]*dt)
 			*EC*particle_weight;
 	if(++check % 1000 == 0)
-		cout << sqrt(sq(pkx(i))+sq(pky(i)))<<endl;
+	{
+		cout << "pk:" <<sqrt(sq(pkx(i))+sq(pky(i)))<<endl;
+		cout << "dx:" <<sqrt(sq(dx)+sq(dy))<<endl;
+
+	}
 	//Scatter
 	double theta = rand()*2*3.1415192/RAND_MAX;
 	pkx(i) = pkx(i)*cos(theta)-pky(i)*sin(theta);
@@ -104,7 +108,7 @@ double current_exit(double *particles,int i,double mass)
 	double _pkx = pkx(i);
 	double _pky = pky(i);
 	double current = sqrt(_pkx*_pkx+_pky*_pky)/mass;//velocity
-	return current;
+	return current*EC;
 }
 
 typedef list<double *> Polygon;
@@ -262,13 +266,13 @@ double replenish_boundary(Particles *p_data,
 		if(mesh->is_p_type[id])
 		{
 			sign = 1;//Holes get injected
-			current += handle_region(id,mesh,p_data,
+			current -= handle_region(id,mesh,p_data,
 						 nextDensity,sign);
 		}
 		else if(mesh->is_n_type[id])
 		{
 			sign = -1;//Electrons get injected
-			current -= handle_region(id,mesh,p_data,
+			current += handle_region(id,mesh,p_data,
 						nextDensity,sign);
 		}else
 		{

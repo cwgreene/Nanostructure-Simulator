@@ -183,7 +183,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 	for x in problem.avg_dens.func:
 		rf.density.write(str(x)+" ")
 	df.adfile << problem.density_funcs.combined_density
-	avgE=mc.negGradient(mesh,PoissonSolve(
+	avgE=mc.negGradient(mesh,PoissonSolve(mesh,
 					problem.density_funcs.combined_density,
 					problem.bcs),
 				problem.V2)
