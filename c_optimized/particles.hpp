@@ -44,7 +44,6 @@ public:
 		int num = p_dead->size();
 		this->local_id = new list<int>::iterator[num];
 		this->live_id = new list<int>::iterator[num];
-		std::cout << "Imminent doom!" << p_dead->size() <<std::endl;
 	}
 };
 

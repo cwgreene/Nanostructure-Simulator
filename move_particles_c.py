@@ -124,7 +124,8 @@ def init_system(mesh,nextDensity,particles_point):
 				    len(ptype_ids),
 				    ntype_ids.ctypes.data,
 				    len(ntype_ids),
-				    mesh.kdt)
+				    mesh.kdt,
+				    ctypes.c_double(1.*10**18))
 	print "c_mesh",hex(system.c_mesh)
 				    
 	#create bounding polygon

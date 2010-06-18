@@ -43,7 +43,8 @@ void randomElectronMovement(double *particles,
 				int i,
 				double *efield,
 				double dt,
-				double length_scale)
+				double length_scale,
+				double particle_weight)
 {
 	//Move
 	double dx = pkx(i)*dt/(length_scale*p_mass[i]);
@@ -55,10 +56,13 @@ void randomElectronMovement(double *particles,
 	py(i) += dy;
 	//Drift
 	pkx(i) += (efield[2*p_id[i]]*p_charge[i]*dt/length_scale)
-			*EC;
+			*EC*particle_weight;
 	pky(i) += (efield[2*p_id[i]+1]*p_charge[i]*dt/length_scale)
-			*EC;
+			*EC*particle_weight;
 	//Scatter
+	double theta = rand()*2*3.1415192/RAND_MAX;
+	pkx(i) = pkx(i)*cos(theta)-pky(i)*sin(theta);
+	pky(i) = pkx(i)*sin(theta)+pky(i)*cos(theta);
 }
 
 extern "C" void move_particles(Particles *pdata,
@@ -80,7 +84,8 @@ extern "C" void move_particles(Particles *pdata,
 		pick_up_particle(i,pdata,nextDensity,mesh); //Lift particle
 		randomElectronMovement(pdata->pos,pdata->p_mass,
 					pdata->p_id,pdata->p_charge,i,
-					efield,dt,length_scale);
+					efield,dt,length_scale,
+					mesh->particle_weight);
 	}
 	printf("Particles Moved\n");
 }
@@ -172,7 +177,9 @@ bool point_in_polygon(Polygon *boundary, vector2 *pos)
 
 /*update_density:
 Expected: All particles in nextdensity are 'lifted'
-Output: Nextdensity has all particles 'put down'*/
+Output: Nextdensity has all particles 'put down'
+NOTE: This is excessively complicated.
+TODO: Keep track of only the particles.*/
 extern "C" double update_density(Particles *ap,
 			Mesh *mesh,
 			int *nextDensity,
@@ -232,7 +239,7 @@ double handle_region(int mpos_id, Mesh *mesh, Particles *p_data,
 			current += current_exit(p_data->pos,i,p_data->p_mass[i])*sign; //If you are leaving from ntype side
 		//Incoming particles on p side are going the 'wrong' way.
 		if(mesh->is_p_type[i])
-			current -= current_exit(p_data->pos,i,p_data->p_mass[i])*sign; //leaving from ptype side
+			current += current_exit(p_data->pos,i,p_data->p_mass[i])*sign; //leaving from ptype side
 	}
 	//Not handling too many, need to. Should probably figure out what failure to do this will resul tin.
 	return current;

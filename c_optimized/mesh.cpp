@@ -17,7 +17,7 @@ Mesh::Mesh(double *points, int n_points,
 	   int *boundary, int nboundary,
 		int *ntype, int n_ntype,
 		int *ptype, int n_ptype,
-	   kdtree *_kdt)
+	   kdtree *_kdt,double particle_weight)
 {
 	this->npoints = n_points;
 	this->mpos = new double[2*n_points];
@@ -27,6 +27,7 @@ Mesh::Mesh(double *points, int n_points,
 	this->materials = new Material_Ptr[n_points];
 	this->electrons_pos = new list<int>[n_points];
 	this->holes_pos = new list<int>[n_points];
+	this->particle_weight = particle_weight;
 	
 	//cout << this->mpos << endl;
 	cout << "c_mesh" << this << endl;
@@ -85,13 +86,14 @@ extern "C" Mesh *create_mesh(double *points, int n_points,
 			     Material **materials,
 			     int *boundary, int nboundary,
 			     int *ptype, int n_ptype, 
-			     int *ntype, int n_ntype, kdtree *kdt)
+			     int *ntype, int n_ntype, kdtree *kdt,
+			     double particle_weight)
 {
 	Mesh *bob = new Mesh(points, n_points,
 				  materials,
 				  boundary, nboundary,
 				  ntype, n_ntype,
-				  ptype, n_ptype, kdt);
+				  ptype, n_ptype, kdt,particle_weight);
 	//cout << bob << endl;;
 
 	return bob;

@@ -94,6 +94,8 @@ def init_dolfin_files():
 	df = DolfinFiles()
 	print "Creating Files"
 	df.datadir = options.datadir
+	if not os.path.exists(df.datadir):
+		os.mkdir(df.datadir)
 	df.file = File(df.datadir+"/poisson_attract.pvd")
 	df.dfile = File(df.datadir+"/density_attract.pvd")
 	df.adfile = File(df.datadir+"/avg_density.pvd")

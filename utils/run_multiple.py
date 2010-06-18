@@ -2,11 +2,11 @@ import os,time,sys
 import run_options
 
 options = run_options.create_options(sys.argv)
-start = 0.0
+start = -1.0
 end   = 1.0
-max   = 4
+max   = 8
 total_time = time.time()
-tag = "C++_400"
+tag = "C++_400_scatter"
 
 for x in range(0,max):
 	start_time = time.time()

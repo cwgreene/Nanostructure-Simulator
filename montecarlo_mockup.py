@@ -7,7 +7,7 @@ import time
 #import triangle
 import sys
 
-import driftscatter
+#import driftscatter
 import stats
 import convexhull
 import materials
@@ -193,7 +193,7 @@ def calculate_scaled_density(mesh,nextDensity):
 		scaled_density[id] = (nextDensity[id]*
 				  constants.eC/mesh.gen_num*
 				  (material.doping3d\
-					*((mesh.length_scale)**3)
+					*((mesh.length_scale/100)**3)
 				  /material.epsilon))
 		stats.avg_charge += abs(scaled_density[id])
 	return scaled_density

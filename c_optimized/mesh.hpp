@@ -41,11 +41,12 @@ public:
 
 	double *mpos;//coordinates of points
 	int npoints;
+	double particle_weight;
 	Mesh(double *points, int n_points,
 		Material **materials,
 		int *boundary, int nboundary,
 		int *ntype, int n_ntype,
-		int *ptype, int n_ptype,kdtree *kdt);
+		int *ptype, int n_ptype,kdtree *kdt,double particle_weight);
 };
 
 /*extern "C" Mesh *create_mesh(double *points, int n_points,

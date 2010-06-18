@@ -1,4 +1,4 @@
-import driftscatter as ds
+#import driftscatter as ds
 import montecarlo_mockup as mc
 import dolfin_util as du
 import kdtree_c
