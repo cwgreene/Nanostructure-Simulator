@@ -6,16 +6,23 @@
 #include "mesh.hpp"
 #include "materials.hpp"
 
-#define POSITIONX(i)  4*i
-#define POSITIONY(i)  4*i+1
-#define MOMENTUMX(i)  4*i+2
-#define MOMENTUMY(i)  4*i+3
-#define MASS(i)  4*i+4
+#define POSITIONSTART(i) ((2*dim)*i)
+#define MOMENTUMSTART(i) ((2*dim)*i+dim)
+#define POSITIONX(i)  (4*(i))
+#define POSITIONY(i)  (4*(i)+1)
+#define MOMENTUMX(i)  (4*(i)+2)
+#define MOMENTUMY(i)  (4*(i)+3)
 
-#define px(i)  particles[POSITIONX(i)]
-#define py(i)  particles[POSITIONY(i)]
-#define pkx(i)  particles[MOMENTUMX(i)]
-#define pky(i)  particles[MOMENTUMY(i)]
+//pnc expects 'dim' to be locally defined.
+//pnc expects 'particles' to be locally defined
+//Remember there is both momentum and position taken care of
+//so for each dimension there are two variables. Hence the times 2
+#define pnx(n,c) particles[(dim*2)*n+c]
+#define pknx(n,c) particles[(dim*2)*n+c]
+//#define px(i)  particles[POSITIONX(i)]
+//#define py(i)  particles[POSITIONY(i)]
+//#define pkx(i)  particles[MOMENTUMX(i)]
+//#define pky(i)  particles[MOMENTUMY(i)]
 //#define pmass(i)  particles[MASS(i)]
 
 using namespace std;
@@ -31,8 +38,9 @@ public:
 	double *p_mass; //array Particle masses, scaled to real units
 	list<int> *p_live; //list of living particles, particle id's
 	list<int> *p_dead; //List of available dead particles, particle ids
+	int dim;//Dimension of particles
 	Particles(double *_pos, int *_p_id, int *_p_charge,double *_p_mass,
-			list<int> *_p_live, list<int> *_p_dead,Mesh *mesh)
+			list<int> *_p_live, list<int> *_p_dead,int _dim)
 	{
 		//Initialize pointer blocks
 		pos = _pos;
@@ -44,13 +52,23 @@ public:
 		int num = p_dead->size();
 		this->local_id = new list<int>::iterator[num];
 		this->live_id = new list<int>::iterator[num];
+		dim = _dim;
 	}
 };
 
 extern "C" int create_particle(int mpos_id, Particles *p_data,int *density,
-		        int charge, double mass,Mesh *mesh);
-void pick_up_particle(int part_id, Particles *p_data, int *density, Mesh *mesh);
-void put_down_particle(int part_id, Particles *p_data, int *density,Mesh *mesh);
+		        int charge, double mass,void *mesh);
+
+template <class KD> 
+	void pick_up_particle(int part_id, 
+		Particles *p_data, 
+		int *density, 
+		Mesh<KD> *mesh);
+template <class KD>
+	void put_down_particle(int part_id, 	
+				Particles *p_data, 
+				int *density,
+				Mesh<KD> *mesh);
 list<int>::iterator destroy_particle(Particles *p_data, int part_id, list<int>::iterator pos);
 
 #endif

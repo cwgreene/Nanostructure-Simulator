@@ -12,15 +12,16 @@ Point::Point(int _mpos_id, double *_mpos, int _type)
 }
 
 typedef Material *Material_Ptr;
-Mesh::Mesh(double *points, int n_points,
+template <class KD> Mesh<KD>::Mesh(double *points, int n_points, int dim,
 	   Material **materials,
 	   int *boundary, int nboundary,
-		int *ntype, int n_ntype,
-		int *ptype, int n_ptype,
-	   kdtree *_kdt,double particle_weight)
+	   int *ntype, int n_ntype,
+	   int *ptype, int n_ptype,
+	   KD *_kdt,double particle_weight)
 {
 	this->npoints = n_points;
-	this->mpos = new double[2*n_points];
+	this->dim = dim;
+	this->mpos = new double[dim*n_points];
 	this->is_boundary = new int[n_points];
 	this->is_n_type = new int[n_points];
 	this->is_p_type = new int[n_points];
@@ -31,12 +32,14 @@ Mesh::Mesh(double *points, int n_points,
 	
 	//cout << this->mpos << endl;
 	cout << "c_mesh" << this << endl;
-	for(int i = 0; i < 2*n_points;i+=2)
+	for(int i = 0; i < dim*n_points;i+=dim)
 	{
-		this->mpos[i] = points[i];
-		this->mpos[i+1] = points[i+1];
-		is_n_type[i/2] = 0;
-		is_p_type[i/2] = 0;
+		//copy points
+		for(int d = 0; d < dim;d++)
+			this->mpos[i+d] = points[i+d];
+
+		is_n_type[i/dim] = 0;
+		is_p_type[i/dim] = 0;
 	}
 	for(int i = 0; i < nboundary;i++)
 	{
@@ -82,14 +85,14 @@ Mesh::Mesh(double *points, int n_points,
 	printf("hi6\n");
 }
 
-extern "C" Mesh *create_mesh(double *points, int n_points,
+extern "C" void *create_mesh(double *points, int n_points, int dim,
 			     Material **materials,
 			     int *boundary, int nboundary,
 			     int *ptype, int n_ptype, 
 			     int *ntype, int n_ntype, kdtree *kdt,
 			     double particle_weight)
 {
-	Mesh *bob = new Mesh(points, n_points,
+	Mesh<kdtree> *bob = new Mesh<kdtree>(points, n_points, dim,
 				  materials,
 				  boundary, nboundary,
 				  ntype, n_ntype,
@@ -98,3 +101,19 @@ extern "C" Mesh *create_mesh(double *points, int n_points,
 
 	return bob;
 }
+/*
+extern "C" void *create_mesh3(double *points, int n_points, int dim, Material **materials,
+			     int *boundary, int nboundary,
+			     int *ptype, int n_ptype, 
+			     int *ntype, int n_ntype, kdtree *kdt,
+			     double particle_weight)
+{
+	Mesh<kdtree3> = new Mesh(points, n_points, dim,
+				  materials,
+				  boundary, nboundary,
+				  ntype, n_ntype,
+				  ptype, n_ptype, kdt,particle_weight);
+	//cout << bob << endl;;
+
+	return (void *)mesh; 
+}*/

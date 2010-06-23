@@ -3,23 +3,40 @@
 #include "particles.hpp"
 extern "C" {
 #include "kdtree.h"
+#include "kdtree3.h"
 }
 using namespace std;
-extern "C" Particles *init_particles(double *pos, int *p_id, 
+extern "C" Particles *init_particles(double *positions, int *p_id, 
 				       int *p_charge,
 				       double *p_mass,
 				       list<int> *p_live,
 				       list<int> *p_dead,
-				       Mesh *mesh)
+				       int dim)
 {
-	return new Particles(pos,p_id,p_charge,p_mass,p_live,p_dead,mesh);
+	return new Particles(positions,
+			     p_id,p_charge,p_mass,p_live,p_dead,
+			     dim);
 }
 
+extern "C" int create_particle(int mpos_id,Particles *p_data,int *density,
+				int charge, double mass, void *mesh)
+{
+	int i=-1;
+	if(p_data->dim == 3)
+		i=create_particle(mpos_id,p_data,density,charge,mass,
+				(Mesh<kdtree3> *)mesh);
+	if(p_data->dim == 2)
+		i=create_particle(mpos_id,p_data,density,charge,mass,
+				(Mesh<kdtree> *)mesh);
+	return i;
+}
 
-extern "C" int create_particle(int mpos_id, Particles *p_data,int *density,
-		        int charge, double mass,Mesh *mesh)
+template<class KD> 
+int create_particle(int mpos_id, Particles *p_data,int *density,
+		        int charge, double mass,Mesh<KD> *mesh)
 {	
 	int i = p_data->p_dead->back();
+	int dim = p_data->dim;
 	p_data->p_dead->pop_back();	
 	p_data->p_live->push_back(i);
 
@@ -36,15 +53,14 @@ extern "C" int create_particle(int mpos_id, Particles *p_data,int *density,
 	}
 
 	double *particles = p_data->pos;
-	px(i) = mesh->mpos[2*mpos_id];
-	py(i) = mesh->mpos[2*mpos_id+1];
+	for(int c= 0; c < dim;c++)
+		pnx(i,c) = mesh->mpos[dim*mpos_id];
 	material_random_momentum(mesh->materials[mpos_id],
-				 p_data->pos+MOMENTUMX(i)); //init pkx,pky
+				 p_data->pos+MOMENTUMSTART(i)); //init pkx,pky
 	p_data->p_charge[i] = charge;
 	p_data->p_mass[i] = mass;	
 	p_data->p_id[i] = mpos_id;
 	density[mpos_id] += charge;
-	
 	
 	return i;
 }
@@ -61,7 +77,7 @@ list<int>::iterator destroy_particle(Particles *p_data, int part_id, list<int>::
 	return it;
 }
 
-void pick_up_particle(int part_id, Particles *p_data, int *density, Mesh *mesh)
+void pick_up_particle(int part_id, Particles *p_data, int *density, Mesh<kdtree> *mesh)
 {
 	int mesh_pos_id = p_data->p_id[part_id];
 	if(p_data->local_id[part_id] == NULL)
@@ -79,15 +95,18 @@ void pick_up_particle(int part_id, Particles *p_data, int *density, Mesh *mesh)
 	density[mesh_pos_id] -= p_data->p_charge[part_id];  //Pick particle up from density
 }
 
-void put_down_particle(int part_id, Particles *p_data, int *density,Mesh *mesh)
+void put_down_particle2(int part_id, Particles *p_data, int *density,Mesh<kdtree> *mesh)
 {	
+	
 	int mesh_pos_id = p_data->p_id[part_id];
-	double *particles = p_data->pos; //alias for macro
-	vector2 pos;
-	pos[0] = px(part_id);
-	pos[1] = py(part_id);
-	p_data->p_id[part_id] = kdtree_find_point_id(mesh->kdt,&pos); //find nearest spot
+	//double *particles = p_data->pos; //alias for macro,not needed now
+	//int dim = p_data->dim;
+
+	//todo: make next line mesh dependent function
+	vector2 x = {p_data->pos[part_id],p_data->pos[part_id+1]};
+	p_data->p_id[part_id] = kdtree_find_point_id(mesh->kdt,&x); //find nearest spot
 	density[mesh_pos_id] += p_data->p_charge[part_id];  //Put particle back down
+
 	if(p_data->p_charge[part_id] < 0) //it's an electron
 	{
 		mesh->electrons_pos[mesh_pos_id].push_back(part_id); //add particle from local list
@@ -98,5 +117,4 @@ void put_down_particle(int part_id, Particles *p_data, int *density,Mesh *mesh)
 		mesh->holes_pos[mesh_pos_id].push_back(part_id); //add particle from local list
 		p_data->local_id[part_id] = --(mesh->holes_pos[mesh_pos_id].end()); //grab iterator position
 	}
-
 }

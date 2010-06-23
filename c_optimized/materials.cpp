@@ -2,15 +2,17 @@
 #include <iostream>
 #include "materials.hpp"
 
-#define DIM 2
 
 using namespace std;
-Material::Material(double _electron_mass, double *_random_momentum,int _max_n)
+Material::Material(double _electron_mass, double *_random_momentum,
+		int _max_n,int _dim)
 {
-	random_momentum = new double[DIM*_max_n];
+	random_momentum = new double[_dim*_max_n];
+	dim = _dim;
 	electron_mass = _electron_mass; 
 	max_n = _max_n; 
-	for(int i = 0; i < DIM*max_n; i++)
+	dim = _dim;
+	for(int i = 0; i < dim*max_n; i++)
 	{
 		random_momentum[i] = _random_momentum[i];
 	}
@@ -18,18 +20,22 @@ Material::Material(double _electron_mass, double *_random_momentum,int _max_n)
 
 void material_random_momentum(Material *material,double *momentum)
 {
+	int dim = material->dim;
 	int max_n = material->max_n;
 	int i = rand()%max_n;
-	momentum[0] = material->random_momentum[DIM*i];
-	momentum[1] = material->random_momentum[DIM*i+1];
+	for(int component = 0; component < material->dim;component++)
+	{
+		momentum[component] = material->random_momentum[dim*i];
+		momentum[component] = material->random_momentum[dim*i+1];
+	}
 }
 
 extern "C" Material *new_material(double electron_mass,
 				  double *random_momentum,
-				  int max_n)
+				  int max_n,int dim)
 {
 	return new Material(electron_mass,
-				  random_momentum,max_n);
+				  random_momentum,max_n,dim);
 }
 
 extern "C" Material **material_pair(Material *p_type, Material *n_type)

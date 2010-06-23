@@ -13,6 +13,9 @@ kdtree.new_kdtree.restype = ctypes.POINTER(ctypes.c_int)
 kdtree.find_point_r.restype = ctypes.POINTER(vector2)
 kdtree.kdtree_find_point.restype = ctypes.POINTER(vector2)
 
+def longest_chain(tree,depth,maxdepth):
+	return kdtree.longest_chain(tree,depth,maxdepth)
+
 def new_kdtree(points):
 	for id in xrange(len(points)):
 		points[id].append(id*1.)

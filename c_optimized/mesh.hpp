@@ -18,9 +18,10 @@ public:
 	Point(int mpos_id, double *mpos, int type);
 };
 
-class Mesh
+template<class KD> class Mesh
 {
 public:
+	int dim;
 	//These are for ordered transversal, store mesh_pos_id's
 	list<int> boundary;
 	list<int> n_type;
@@ -30,7 +31,7 @@ public:
 	//Inverse hole and electron count lookup, indexed by mesh_pos_id
 	list<int> *electrons_pos;//array of lists, indexed by mesh_pos_id
 	list<int> *holes_pos;//Array of lists
-	kdtree *kdt;
+	KD *kdt;
 
 	//These are indexed by mesh_pos_id	
 	int *is_boundary;
@@ -42,11 +43,12 @@ public:
 	double *mpos;//coordinates of points
 	int npoints;
 	double particle_weight;
-	Mesh(double *points, int n_points,
+	int find_point_id(double *position);
+	Mesh(double *points, int n_points, int dim,
 		Material **materials,
 		int *boundary, int nboundary,
 		int *ntype, int n_ntype,
-		int *ptype, int n_ptype,kdtree *kdt,double particle_weight);
+		int *ptype, int n_ptype,KD *_kdt,double particle_weight);
 };
 
 /*extern "C" Mesh *create_mesh(double *points, int n_points,

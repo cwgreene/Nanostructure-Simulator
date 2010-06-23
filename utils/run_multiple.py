@@ -2,11 +2,11 @@ import os,time,sys
 import run_options
 
 options = run_options.create_options(sys.argv)
-start = 0.0
-end   = 0.1
+start = -0.1
+end   = 0.3
 max   = 4
 total_time = time.time()
-tag = "C++_400_triangle"
+tag = "C++_400_triangle_2"
 
 for x in range(0,max):
 	start_time = time.time()
