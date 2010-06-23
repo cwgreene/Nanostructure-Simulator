@@ -1,0 +1,8 @@
+The makefile should get everything working properly. I probably need
+to do some sort of autoconfigure thing amabob to check for dependencies to
+make it play nice with everyone.
+
+To test the python scripts, you have to run them from the directory below.
+This is due partially to historical decisions, and the fact that I wanted
+all the python scripts in the root directory. If you try and run the
+python in this directory after building, it will fail.
