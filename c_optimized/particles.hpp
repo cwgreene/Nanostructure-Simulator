@@ -21,7 +21,7 @@ extern "C"{
 //Remember there is both momentum and position taken care of
 //so for each dimension there are two variables. Hence the times 2
 #define pnx(n,c) particles[(dim*2)*n+c]
-#define pknx(n,c) particles[(dim*2)*n+c]
+#define pknx(n,c) particles[(dim*2)*n+dim+c]
 //#define px(i)  particles[POSITIONX(i)]
 //#define py(i)  particles[POSITIONY(i)]
 //#define pkx(i)  particles[MOMENTUMX(i)]
@@ -110,10 +110,11 @@ void put_down_particle<kdtree>(int part_id, Particles *p_data, int *density,Mesh
 	//int dim = p_data->dim;
 
 	//todo: make next line mesh dependent function
-	vector2 x = {p_data->pos[part_id],p_data->pos[part_id+1]};
+	double *particles = p_data->pos;
+	int dim =2;
+	vector2 x = {pnx(part_id,0),pnx(part_id,1)};
 	p_data->p_id[part_id] = kdtree_find_point_id(mesh->kdt,&x); //find nearest spot
 	density[mesh_pos_id] += p_data->p_charge[part_id];  //Put particle back down
-	cout << "charge:"<<p_data->p_charge[part_id]<<endl;
 
 	if(p_data->p_charge[part_id] < 0) //it's an electron
 	{
@@ -150,7 +151,7 @@ int create_particle(int mpos_id, Particles *p_data,int *density,
 
 	double *particles = p_data->pos;
 	for(int c= 0; c < dim;c++)
-		pnx(i,c) = mesh->mpos[dim*mpos_id];
+		pnx(i,c) = mesh->mpos[dim*mpos_id+c];
 	material_random_momentum(mesh->materials[mpos_id],
 				 p_data->pos+MOMENTUMSTART(i)); //init pkx,pky
 	p_data->p_charge[i] = charge;

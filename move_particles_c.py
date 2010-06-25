@@ -12,12 +12,12 @@ lib.init_particle_list.argtype = [ctypes.c_int]
 lib.init_particle_list.restype = ctypes.POINTER(ctypes.c_int)
 lib.init_dead_list.argtype = [ctypes.c_int]
 lib.init_dead_list.restype = ctypes.POINTER(ctypes.c_int)
-lib.update_density2.argtype = [ctypes.POINTER(ctypes.c_int),
+lib.update_densityC.argtype = [ctypes.POINTER(ctypes.c_int),
 			      ctypes.POINTER(ctypes.c_int),
 			      ctypes.POINTER(ctypes.c_int),
 			      ctypes.POINTER(ctypes.c_int)]
-lib.update_density2.restype = ctypes.c_double
-lib.replenish2.restype = ctypes.c_double
+lib.update_densityC.restype = ctypes.c_double
+lib.replenishC.restype = ctypes.c_double
 
 def print_list(string,list):
 	print string,list,len(list)
@@ -75,7 +75,7 @@ class CParticles():
 
 def replenish(system,nextDensity):
 	print "replenish"
-	return lib.replenish2(system.particles.ptr,	
+	return lib.replenish(system.particles.ptr,	
 			nextDensity.ctypes.data,
 			system.c_mesh)
 

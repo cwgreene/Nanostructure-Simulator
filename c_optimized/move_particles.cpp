@@ -1,8 +1,12 @@
+//Standard Library Includes
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
 #include <list>
 #include <iostream>
+
+//HPP Includes
 #include "particles.hpp"
 #include "mesh.hpp"
 #include "statistics.hpp"
@@ -53,9 +57,15 @@ void randomElectronMovement(double *particles,
 	//Move
 	for(int c = 0; c < dim; c++)	
 	{
+		if(i % 1000 == 0)
+			cout<<"x_"<<c<<": "<< pnx(i,c) << endl;
 		dx[c] = pknx(i,c)*dt/(length_scale*p_mass[i]*particle_weight);
 		pnx(i,c) += dx[c];
-		cout<< dx[c]<<endl;
+		if(i % 1000 ==0)
+		{
+			cout<< "dx_"<<c<<": "<<dx[c]<<endl;
+			cout<< "x_"<<c<<": "<<pnx(i,c) << endl;
+		}
 	}
 	//Drift
 	for(int c = 0; c < dim; c++)
@@ -63,8 +73,11 @@ void randomElectronMovement(double *particles,
 		pknx(i,c) += (efield[dim*p_id[i]]*p_charge[i]*dt)
 				*EC*particle_weight;
 		if(i %1000 == 0)
-		cout << "dir: "<<c<<" force: "<<
-			((efield[dim*p_id[i]]*p_charge[i]*dt)*EC*particle_weight)<<endl;
+		{
+			cout << "dir: "<<c<<" force: "<<
+		 	((efield[dim*p_id[i]]*p_charge[i]*dt)
+			*EC*particle_weight)<<endl;
+		}
 	}
 	//Scatter... ugh... this is going to be complicated.
 	//we're going to need to seperate drift and diffusion
@@ -73,8 +86,10 @@ void randomElectronMovement(double *particles,
 
 	//handle x and y cooridinates.
 	//this should be a bandstructure lookup
-	pknx(i,0) = pknx(i,0)*cos(theta)-pknx(i,1)*sin(theta);
-	pknx(i,1) = pknx(i,0)*sin(theta)+pknx(i,1)*cos(theta);
+	double _pknx = pknx(i,0);
+	double _pkny = pknx(i,1);
+	pknx(i,0) = _pknx*cos(theta)-_pkny*sin(theta);
+	pknx(i,1) = _pknx*sin(theta)+_pkny*cos(theta);
 }
 
 extern "C" void move_particlesC(Particles *pdata,
@@ -117,8 +132,6 @@ void move_particles(Particles *pdata,
 				it!= end;++it)
 	{
 		i = *it;
-		if(i == 4985199)
-			cout << "doomyyy"<<endl;
 		pick_up_particle<KD>(i,pdata,nextDensity,mesh); //Lift particle
 		randomElectronMovement(pdata->pos,pdata->p_mass,
 					pdata->p_id,pdata->p_charge,i,
@@ -143,8 +156,8 @@ double current_exit2(double *particles,int i,double mass)
 	return current*EC;
 }
 
-typedef list<double *> Polygon;
 
+typedef list<double *> Polygon;
 //copies original points into new polygon array
 //polygon will remain two dimensional but we need to handle
 //polytopes and SOON.
@@ -216,13 +229,27 @@ bool point_in_polygon(Polygon *boundary, vector2 *pos)
 	return true;
 }
 
+template<class KD>
+double update_density(Particles *p_data,
+			Mesh<KD> *mesh,
+			int *nextDensity,
+			Polygon *boundary,
+			KD *kdt)
+{
+	cout << "update_density:"<<endl;
+	cout << "Dimension ("<<p_data->dim<<") not supported"<<endl;
+	exit(0);
+	return 0;
+}
+
 
 /*update_density:
 Expected: All particles in nextdensity are 'lifted'
 Output: Nextdensity has all particles 'put down'
 NOTE: This is excessively complicated.
 TODO: Keep track of only the particles.*/
-extern "C" double update_density2(Particles *ap,
+template<>
+double update_density(Particles *ap,
 			Mesh<kdtree> *mesh,
 			int *nextDensity,
 			Polygon *boundary,
@@ -265,8 +292,40 @@ extern "C" double update_density2(Particles *ap,
 	return current;
 }
 
-double handle_region(int mpos_id, Mesh<kdtree> *mesh, Particles *p_data, 
+extern "C" double update_densityC(Particles *p_data,
+			void *mesh,
+			int *nextDensity,
+			Polygon *boundary,
+			kdtree *kdt)
+{
+	if(p_data->dim == 2)
+	{
+		return update_density(p_data,(Mesh<kdtree> *)mesh,
+					nextDensity,boundary,kdt);
+	}
+	if(p_data->dim == 3)
+	{
+		return update_density(p_data,(Mesh<kdtree3> *)mesh,
+					nextDensity,boundary,kdt);
+	}
+	printf("Invalid Dimension: %d\n",p_data->dim);
+	exit(-7);
+	return -7;
+}
+
+template<class KD>
+double handle_region(int mpos_id,Mesh<KD> *mesh, Particles *p_data,
 			int *density, int sign)
+{
+	cout << "handle_region:"<<endl;
+	cout << "Dimension ("<<p_data->dim<<") not supported"<<endl;
+	exit(-1);
+	return 0;
+}
+
+template<>
+double handle_region(int mpos_id, Mesh<kdtree> *mesh, 
+				Particles *p_data, int *density, int sign)
 {
 	double current = 0;
 	//If we have too few carriers, inject them
@@ -288,8 +347,8 @@ double handle_region(int mpos_id, Mesh<kdtree> *mesh, Particles *p_data,
 	return current;
 }
 
-double replenish_boundary2(Particles *p_data,
-			  int *nextDensity, Mesh<kdtree> *mesh)
+template<class KD>double replenish_boundary(Particles *p_data,
+			  int *nextDensity, Mesh<KD> *mesh)
 {
 	list<int>::iterator it = mesh->boundary.begin();
 	list<int>::iterator end = mesh->boundary.end();
@@ -317,14 +376,34 @@ double replenish_boundary2(Particles *p_data,
 	return current;
 }
 
-extern "C" double replenish2(Particles *p_data, int *nextDensity, Mesh<kdtree> *mesh)
+
+extern "C" double replenishC(Particles *p_data, 
+			int *nextDensity, 
+			void *mesh)
+
+{
+	if(p_data->dim == 2)
+	{
+		return replenish(p_data,nextDensity,(Mesh<kdtree> *) mesh);
+	}
+	if(p_data->dim == 3)
+	{
+		return replenish(p_data,nextDensity,(Mesh<kdtree3> *) mesh);
+	}
+	printf("Invalid Dimension: %d\n",p_data->dim);
+	exit(-7);
+}
+
+template<class KD>
+double replenish(Particles *p_data, int *nextDensity, Mesh<KD> *mesh)
 {	
 	double current;
 	cout << "Beginning replenish" << endl;
-	current = replenish_boundary2(p_data,nextDensity,mesh);
+	current = replenish_boundary(p_data,nextDensity,mesh);
 	cout << "replenish complete" << endl;
 	return current;
 }
+
 template <class KD>
 double recombinate(Particles *p_data, int *nextDensity, Mesh<KD> *mesh)
 {
@@ -336,10 +415,6 @@ double recombinate(Particles *p_data, int *nextDensity, Mesh<KD> *mesh)
 	for(int mesh_pos = 0; mesh_pos < mesh->npoints;mesh_pos++)
 	{
 	
-		for(list<int>::iterator it = mesh->electrons_pos[mesh_pos].begin(); it != mesh->electrons_pos[mesh_pos].end();++it)
-				if(*it == 4985199)
-					cout << "doomxxxx"<<endl;
-
 		/*cout << "num particles:" << 
 			mesh->electrons_pos[mesh_pos].size()+mesh->holes_pos[mesh_pos].size() << 
 			"/" << mesh->electrons_pos[mesh_pos].size() <<" "<<
