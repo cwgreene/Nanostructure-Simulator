@@ -55,4 +55,7 @@ public:
 			     int *boundary, int nboundary,
 			     int *ntype, int n_ntype, 
 			     int *ptype, int n_ptype);*/
+#ifndef MESH_CPP
+#include "mesh.cpp"
+#endif
 #endif

@@ -18,7 +18,7 @@ typedef struct kdtree3
 
 //Macro that generates comaprison function
 #define COMPARE(direction,index) \
-int compare##direction (const vector3p a, const vector3p b)\
+int compare3##direction (const vector3p a, const vector3p b)\
 {\
 	if(a[index] < b[index])	\
 		return -1;\
@@ -63,7 +63,7 @@ int comparez(const vector3p a, const vector3p b)
 
 typedef int (*comparisonFunc3)(const vector3p a,const vector3p b);
 
-comparisonFunc3 compare[3] = {comparex,comparey,comparez};
+comparisonFunc3 compare3[3] = {compare3x,compare3y,compare3z};
 
 kdtree3 *kdtree3_cons()
 {
@@ -82,7 +82,7 @@ kdtree3 *new_kdtree3(vector3p *array,int length,int depth)
 		return NULL;
 	qsort ((void *)array, 
 		length, sizeof(vector3p), 
-		(int(*)(const void*,const void*))compare[axis]);
+		(int(*)(const void*,const void*))compare3[axis]);
 	median = length/2;
 
 	kdtree3 *kdTree = kdtree3_cons();
@@ -258,12 +258,12 @@ void print_kdtree3(kdtree3 *tree)
 	print_kdtree3(tree->rightChild);
 }
 
-void call_this()
+void call_this3()
 {
 	printf("Hello Python!\n");
 }
 
-int do_nothing(int x)
+int do_nothing3(int x)
 {
 	return x;
 }

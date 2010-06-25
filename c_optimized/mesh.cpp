@@ -1,3 +1,4 @@
+#define MESH_CPP
 #include "mesh.hpp"
 #include "materials.hpp"
 

@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
@@ -7,9 +6,11 @@
 #include "particles.hpp"
 #include "mesh.hpp"
 #include "statistics.hpp"
+#include "move_particles.hpp"
 
 extern "C" {
 #include "kdtree.h"
+#include "kdtree3.h"
 }
 //Macro Definitions
 #define sq(x) (x*x)
@@ -54,12 +55,17 @@ void randomElectronMovement(double *particles,
 	{
 		dx[c] = pknx(i,c)*dt/(length_scale*p_mass[i]*particle_weight);
 		pnx(i,c) += dx[c];
+		cout<< dx[c]<<endl;
 	}
 	//Drift
 	for(int c = 0; c < dim; c++)
+	{
 		pknx(i,c) += (efield[dim*p_id[i]]*p_charge[i]*dt)
 				*EC*particle_weight;
-
+		if(i %1000 == 0)
+		cout << "dir: "<<c<<" force: "<<
+			((efield[dim*p_id[i]]*p_charge[i]*dt)*EC*particle_weight)<<endl;
+	}
 	//Scatter... ugh... this is going to be complicated.
 	//we're going to need to seperate drift and diffusion
 	//we already knew that... but damn.
@@ -71,12 +77,36 @@ void randomElectronMovement(double *particles,
 	pknx(i,1) = pknx(i,0)*sin(theta)+pknx(i,1)*cos(theta);
 }
 
-extern "C" void move_particles(Particles *pdata,
+extern "C" void move_particlesC(Particles *pdata,
 			double *efield,
 			int *nextDensity,
 			double dt,
 			double length_scale,
-			Mesh<kdtree> *mesh)
+			void *mesh)
+{
+	if(pdata->dim == 3)
+	{
+		printf("3D movement not implemented\n");
+		move_particles(pdata,efield,nextDensity,dt,length_scale,(Mesh<kdtree3> *)mesh);
+		exit(-1);
+		return;
+	}
+	if(pdata->dim == 2)
+	{
+		move_particles(pdata,efield,nextDensity,dt,length_scale,(Mesh<kdtree> *)mesh);
+		return;
+	}
+	cout << "Invalid dimension: "<<pdata->dim<<endl;
+	exit(0);
+}
+
+template<class KD>
+void move_particles(Particles *pdata,
+			double *efield,
+			int *nextDensity,
+			double dt,
+			double length_scale,
+			Mesh<KD> *mesh)
 {
 	int i;
 	list<int>::iterator end = pdata->p_live->end();
@@ -87,7 +117,9 @@ extern "C" void move_particles(Particles *pdata,
 				it!= end;++it)
 	{
 		i = *it;
-		pick_up_particle(i,pdata,nextDensity,mesh); //Lift particle
+		if(i == 4985199)
+			cout << "doomyyy"<<endl;
+		pick_up_particle<KD>(i,pdata,nextDensity,mesh); //Lift particle
 		randomElectronMovement(pdata->pos,pdata->p_mass,
 					pdata->p_id,pdata->p_charge,i,
 					efield,dt,length_scale,
@@ -293,11 +325,8 @@ extern "C" double replenish2(Particles *p_data, int *nextDensity, Mesh<kdtree> *
 	cout << "replenish complete" << endl;
 	return current;
 }
-
-/*recombinate:
-Expected to be called after update_density, so need to pick up particles particles
-before destruction*/
-extern "C" double recombinate2(Particles *p_data, int *nextDensity, Mesh<kdtree> *mesh)
+template <class KD>
+double recombinate(Particles *p_data, int *nextDensity, Mesh<KD> *mesh)
 {
 	//For each cell, determine the number recombinations
 	//delete particles from each
@@ -306,6 +335,11 @@ extern "C" double recombinate2(Particles *p_data, int *nextDensity, Mesh<kdtree>
 	
 	for(int mesh_pos = 0; mesh_pos < mesh->npoints;mesh_pos++)
 	{
+	
+		for(list<int>::iterator it = mesh->electrons_pos[mesh_pos].begin(); it != mesh->electrons_pos[mesh_pos].end();++it)
+				if(*it == 4985199)
+					cout << "doomxxxx"<<endl;
+
 		/*cout << "num particles:" << 
 			mesh->electrons_pos[mesh_pos].size()+mesh->holes_pos[mesh_pos].size() << 
 			"/" << mesh->electrons_pos[mesh_pos].size() <<" "<<
@@ -313,15 +347,34 @@ extern "C" double recombinate2(Particles *p_data, int *nextDensity, Mesh<kdtree>
 		while( mesh->electrons_pos[mesh_pos].size() > 0 && 
 		    mesh->holes_pos[mesh_pos].size() > 0)
 		{
-			//For now, obliterate the first two.
+						//For now, obliterate the first two.
 			int e_id = *(mesh->electrons_pos[mesh_pos].begin());
 			int h_id = *(mesh->holes_pos[mesh_pos].begin());
 			//cout << "Recombinate: "<<e_id <<" "<<h_id << endl;
-			pick_up_particle(e_id,p_data,nextDensity,mesh);//electron
+			pick_up_particle<KD>(e_id,p_data,nextDensity,mesh);//electron
 			destroy_particle(p_data,e_id,p_data->live_id[e_id]);
-			pick_up_particle(h_id,p_data,nextDensity,mesh);//hole
+			pick_up_particle<KD>(h_id,p_data,nextDensity,mesh);//hole
 			destroy_particle(p_data,h_id,p_data->live_id[h_id]);
 		}
 	}
 	return 0;
 }
+/*recombinate:
+Expected to be called after update_density, so need to pick up particles particles
+before destruction*/
+extern "C" double recombinateC(Particles *p_data, int *nextDensity, void *mesh)
+{
+	if(p_data->dim == 2)
+	{
+		return recombinate(p_data,nextDensity,(Mesh<kdtree> *) mesh);
+	}
+	if(p_data->dim == 3)
+	{
+		return recombinate(p_data,nextDensity,(Mesh<kdtree3> *) mesh);
+	}
+	printf("Invalid Dimension: %d\n",p_data->dim);
+	exit(-7);
+	return -7;
+}
+
+

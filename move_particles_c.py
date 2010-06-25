@@ -12,12 +12,12 @@ lib.init_particle_list.argtype = [ctypes.c_int]
 lib.init_particle_list.restype = ctypes.POINTER(ctypes.c_int)
 lib.init_dead_list.argtype = [ctypes.c_int]
 lib.init_dead_list.restype = ctypes.POINTER(ctypes.c_int)
-lib.update_density.argtype = [ctypes.POINTER(ctypes.c_int),
+lib.update_density2.argtype = [ctypes.POINTER(ctypes.c_int),
 			      ctypes.POINTER(ctypes.c_int),
 			      ctypes.POINTER(ctypes.c_int),
 			      ctypes.POINTER(ctypes.c_int)]
-lib.update_density.restype = ctypes.c_double
-lib.replenish.restype = ctypes.c_double
+lib.update_density2.restype = ctypes.c_double
+lib.replenish2.restype = ctypes.c_double
 
 def print_list(string,list):
 	print string,list,len(list)
@@ -25,7 +25,8 @@ def print_list(string,list):
 def move_particles(system,
 		   c_efield,nextDensity,
 		   dt,length_scale):
-	lib.move_particles(system.particles.ptr,
+	print "move_particles"
+	lib.move_particlesC(system.particles.ptr,
 			   c_efield.ctypes.data,
 			   nextDensity.ctypes.data,
 			   ctypes.c_double(dt),
@@ -33,24 +34,28 @@ def move_particles(system,
 			   system.c_mesh);
 
 def update_density(system,nextDensity,kdt):
-	return lib.update_density(system.particles.ptr,
+	print "update_density"
+	return lib.update_density2(system.particles.ptr,
 			   system.c_mesh,
 			   nextDensity.ctypes.data,
 			   system.bounding_polygon,
 			   kdt)
 def new_polygon(points):
+	print "new_polygon"
 	return lib.new_polygon(points.ctypes.data,len(points))
 def init_particle_list(n):
+	print "init_particle_list"
 	return lib.init_particle_list(n)
 def init_dead_list(start,n):
+	print "init_dead_list"
 	return lib.init_dead_list(start,n)
 
 class System():
 	pass
 
 class CParticles():
-	def __init__(self,nparticles,mesh):#particles,p_mass,p_charge,p_id,p_live):
-		nparticles = nparticles
+	def __init__(self,nparticles,c_mesh,dim):#particles,p_mass,p_charge,p_id,p_live):
+		print "Creating CParticles:",nparticles,c_mesh,dim
 		self.pos = np.zeros((nparticles,4))
 		self.p_id = np.zeros((nparticles,1),'int')
 		self.p_charge = np.zeros((nparticles,1),'int')
@@ -58,21 +63,25 @@ class CParticles():
 		self.p_live = lib.init_particle_list(0)
 		print "p_live",self.p_live
 		self.p_dead = lib.init_dead_list(0,nparticles)
+		print "p_dead",self.p_dead
 		self.ptr = lib.init_particles(self.pos.ctypes.data,
 					      self.p_id.ctypes.data,
 					      self.p_charge.ctypes.data,
 					      self.p_mass.ctypes.data,
 					      self.p_live,
 					      self.p_dead,
-					      mesh)
+					      dim)
+		print "created particles"
 
 def replenish(system,nextDensity):
-	return lib.replenish(system.particles.ptr,	
+	print "replenish"
+	return lib.replenish2(system.particles.ptr,	
 			nextDensity.ctypes.data,
 			system.c_mesh)
 
 def init_system(mesh,nextDensity,particles_point):
 	print "Creating system"
+	dim = mesh.geometry().dim()
 	system = System()
 	ntypepy = materials.Silicon()
 	ptypepy = materials.Silicon()
@@ -83,10 +92,10 @@ def init_system(mesh,nextDensity,particles_point):
 	print system.n_dist
 	ntype = lib.new_material(ctypes.c_double(ntypepy.electron_mass),
 				  system.n_dist.ctypes.data,
-				  len(system.n_dist))
+				  len(system.n_dist),dim)
 	ptype = lib.new_material(ctypes.c_double(ptypepy.hole_mass),
 				system.p_dist.ctypes.data,
-				len(system.p_dist))
+				len(system.p_dist),dim)
 	system.materials=lib.material_pair(ptype,ntype)
 
 	#create mesh
@@ -97,7 +106,6 @@ def init_system(mesh,nextDensity,particles_point):
 	ptype_ids = []
 	
 	mesh_coord = mesh.coordinates()
-	print "hiuh",len(mesh.coordinates()),len(nextDensity)
 	for x in mesh_coord:
 		i = index.next()
 		if tuple(x) in mesh.p_region:
@@ -109,14 +117,10 @@ def init_system(mesh,nextDensity,particles_point):
 	ptype_ids = np.array(ptype_ids)
 	ntype_ids = np.array(ntype_ids)
 	boundary_ids = np.array(boundary_ids)
-	print boundary_ids
-	for x in boundary_ids:
-		print x,mesh_coord[x/2],
 	print ""
-	print ntype_ids
-	print ptype_ids
 	system.c_mesh = lib.create_mesh(mesh_coord.ctypes.data,
 				    len(mesh_coord),
+				    dim,
 				    system.materials,
 				    boundary_ids.ctypes.data,
 				    len(boundary_ids),
@@ -126,19 +130,17 @@ def init_system(mesh,nextDensity,particles_point):
 				    len(ntype_ids),
 				    mesh.kdt,
 				    ctypes.c_double(1.*10**18))
-	print "c_mesh",hex(system.c_mesh)
 				    
 	#create bounding polygon
 	convex_hull = list(convexhull.convexHull(map(tuple,list(mesh.bd))))
 	convex_hull.reverse() 
-	print np.array(convex_hull),np.array(convex_hull).dtype
 	convex_hull = np.array(convex_hull)
 	polygon = lib.new_polygon(convex_hull.ctypes.data,
 					ctypes.c_int(len(convex_hull)))
 	system.bounding_polygon = polygon
 	print "Creating a ton of particles..."
 	#create particles
-	system.particles = CParticles(5*10**6,system.c_mesh)
+	system.particles = CParticles(5*10**6,system.c_mesh,dim)
 	#initialize particles
 	for i in xrange(len(mesh_coord)):
 		if tuple(mesh_coord[i]) in mesh.p_region:
@@ -148,7 +150,7 @@ def init_system(mesh,nextDensity,particles_point):
 			sign = -1
 			mass = ntypepy.electron_mass
 		for delta in range(particles_point):
-			lib.create_particle(ctypes.c_int(i),
+			lib.create_particleC(ctypes.c_int(i),
 					system.particles.ptr,
 					nextDensity.ctypes.data,
 					ctypes.c_int(sign),
@@ -161,5 +163,5 @@ def init_system(mesh,nextDensity,particles_point):
 
 def recombinate(system,nextDensity,mesh):
 	print "doom"
-	lib.recombinate(system.particles.ptr,nextDensity.ctypes.data,system.c_mesh)
+	lib.recombinateC(system.particles.ptr,nextDensity.ctypes.data,system.c_mesh)
 	print "don edoom"

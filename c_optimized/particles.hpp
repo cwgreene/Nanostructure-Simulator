@@ -2,7 +2,10 @@
 #define PARTICLES_HPP
 #include <list>
 #include <iostream> 
-
+extern "C"{
+#include "kdtree.h"
+#include "kdtree3.h"
+}
 #include "mesh.hpp"
 #include "materials.hpp"
 
@@ -56,7 +59,7 @@ public:
 	}
 };
 
-extern "C" int create_particle(int mpos_id, Particles *p_data,int *density,
+extern "C" int create_particleC(int mpos_id, Particles *p_data,int *density,
 		        int charge, double mass,void *mesh);
 
 template <class KD> 
@@ -71,4 +74,93 @@ template <class KD>
 				Mesh<KD> *mesh);
 list<int>::iterator destroy_particle(Particles *p_data, int part_id, list<int>::iterator pos);
 
+/*templates*/
+template <class KD> 
+void pick_up_particle(int part_id, Particles *p_data, int *density, Mesh<KD> *mesh)
+{
+	int mesh_pos_id = p_data->p_id[part_id];
+	if(p_data->local_id[part_id] == NULL)
+		cout << "We're about to die"<<endl;
+	if(p_data->p_charge[part_id] < 0) //it's an electron
+	{
+		list<int>::iterator it = p_data->local_id[part_id];
+		mesh->electrons_pos[mesh_pos_id].erase(it); //unlink particle from local list
+	}
+	else //it's a hole
+	{
+		list<int>::iterator it = p_data->local_id[part_id];
+		mesh->holes_pos[mesh_pos_id].erase(it); //unlink particle from local list
+	}
+	density[mesh_pos_id] -= p_data->p_charge[part_id];  //Pick particle up from density
+}
+
+template <>
+void put_down_particle<kdtree3>(int part_id, Particles *p_data, int *density,Mesh<kdtree3> *mesh)
+{
+	cout << "Oh noes! 3D put down not implemented" << endl;
+	exit(-1);
+}
+
+template <>
+void put_down_particle<kdtree>(int part_id, Particles *p_data, int *density,Mesh<kdtree> *mesh)
+{	
+	
+	int mesh_pos_id = p_data->p_id[part_id];
+	//double *particles = p_data->pos; //alias for macro,not needed now
+	//int dim = p_data->dim;
+
+	//todo: make next line mesh dependent function
+	vector2 x = {p_data->pos[part_id],p_data->pos[part_id+1]};
+	p_data->p_id[part_id] = kdtree_find_point_id(mesh->kdt,&x); //find nearest spot
+	density[mesh_pos_id] += p_data->p_charge[part_id];  //Put particle back down
+	cout << "charge:"<<p_data->p_charge[part_id]<<endl;
+
+	if(p_data->p_charge[part_id] < 0) //it's an electron
+	{
+		mesh->electrons_pos[mesh_pos_id].push_back(part_id); //add particle from local list
+		p_data->local_id[part_id] = --(mesh->electrons_pos[mesh_pos_id].end()); //grab iterator position
+	}
+	else //it's a hole
+	{
+		mesh->holes_pos[mesh_pos_id].push_back(part_id); //add particle from local list
+		p_data->local_id[part_id] = --(mesh->holes_pos[mesh_pos_id].end()); //grab iterator position
+	}
+}
+
+template<class KD> 
+int create_particle(int mpos_id, Particles *p_data,int *density,
+		        int charge, double mass,Mesh<KD> *mesh)
+{	
+	int i = p_data->p_dead->back();
+	int dim = p_data->dim;
+	p_data->p_dead->pop_back();	
+	p_data->p_live->push_back(i);
+
+	p_data->live_id[i] = --(p_data->p_live->end());  //Get inverse lookup of p_live
+	if(charge < 0)
+	{
+		mesh->electrons_pos[mpos_id].push_back(i);
+		p_data->local_id[i] = --(mesh->electrons_pos[mpos_id].end());
+	}
+	else
+	{
+		mesh->holes_pos[mpos_id].push_back(i);
+		p_data->local_id[i] = --(mesh->holes_pos[mpos_id].end());
+	}
+
+	double *particles = p_data->pos;
+	for(int c= 0; c < dim;c++)
+		pnx(i,c) = mesh->mpos[dim*mpos_id];
+	material_random_momentum(mesh->materials[mpos_id],
+				 p_data->pos+MOMENTUMSTART(i)); //init pkx,pky
+	p_data->p_charge[i] = charge;
+	p_data->p_mass[i] = mass;	
+	p_data->p_id[i] = mpos_id;
+	density[mpos_id] += charge;
+	
+	return i;
+}
+#ifndef PARTICLES_CPP
+#include "particles.cpp"
+#endif
 #endif
