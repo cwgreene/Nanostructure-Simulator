@@ -19,7 +19,7 @@ double handle_region(int mpos_id,Mesh<KD> *mesh, Particles *p_data,
 
 template<class KD>
 double update_density(Particles *p_data,
-			Mesh<kdtree> *mesh,
+			Mesh<KD> *mesh,
 			int *nextDensity,
 			Polygon *boundary,
 			KD *kdt);

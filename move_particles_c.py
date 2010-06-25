@@ -35,7 +35,7 @@ def move_particles(system,
 
 def update_density(system,nextDensity,kdt):
 	print "update_density"
-	return lib.update_density2(system.particles.ptr,
+	return lib.update_densityC(system.particles.ptr,
 			   system.c_mesh,
 			   nextDensity.ctypes.data,
 			   system.bounding_polygon,
@@ -75,7 +75,7 @@ class CParticles():
 
 def replenish(system,nextDensity):
 	print "replenish"
-	return lib.replenish(system.particles.ptr,	
+	return lib.replenishC(system.particles.ptr,	
 			nextDensity.ctypes.data,
 			system.c_mesh)
 

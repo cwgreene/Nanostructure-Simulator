@@ -241,7 +241,8 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	reap_list(mesh.particles,reaper)
 
 	#update current values
-	current_values.append(current*constants.eC/(mesh.dt*mesh.gen_num**2))
+	current_values.append(current*constants.eC/
+				(mesh.dt*mesh.gen_num*mesh.numCells()))
 
 	#update avg_dens
 	scaled_density = calculate_scaled_density(mesh,nextDensity)

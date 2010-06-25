@@ -57,32 +57,32 @@ void randomElectronMovement(double *particles,
 	//Move
 	for(int c = 0; c < dim; c++)	
 	{
-		if(i % 1000 == 0)
-			cout<<"x_"<<c<<": "<< pnx(i,c) << endl;
+		//if(i % 1000 == 0)
+		//	cout<<"x_"<<c<<": "<< pnx(i,c) << endl;
 		dx[c] = pknx(i,c)*dt/(length_scale*p_mass[i]*particle_weight);
 		pnx(i,c) += dx[c];
-		if(i % 1000 ==0)
+		/*if(i % 1000 ==0)
 		{
 			cout<< "dx_"<<c<<": "<<dx[c]<<endl;
 			cout<< "x_"<<c<<": "<<pnx(i,c) << endl;
-		}
+		}*/
 	}
 	//Drift
 	for(int c = 0; c < dim; c++)
 	{
 		pknx(i,c) += (efield[dim*p_id[i]]*p_charge[i]*dt)
 				*EC*particle_weight;
-		if(i %1000 == 0)
+		/*if(i %1000 == 0)
 		{
-			cout << "dir: "<<c<<" force: "<<
+		cout << "dir: "<<c<<" force: "<<
 		 	((efield[dim*p_id[i]]*p_charge[i]*dt)
 			*EC*particle_weight)<<endl;
-		}
+		}*/
 	}
 	//Scatter... ugh... this is going to be complicated.
 	//we're going to need to seperate drift and diffusion
 	//we already knew that... but damn.
-	double theta = rand()*2*(3.1415192)/RAND_MAX;
+	double theta = rand()*(3.1415192)/RAND_MAX-3.141592/2;
 
 	//handle x and y cooridinates.
 	//this should be a bandstructure lookup
@@ -296,17 +296,19 @@ extern "C" double update_densityC(Particles *p_data,
 			void *mesh,
 			int *nextDensity,
 			Polygon *boundary,
-			kdtree *kdt)
+			void *kdt)
 {
 	if(p_data->dim == 2)
 	{
 		return update_density(p_data,(Mesh<kdtree> *)mesh,
-					nextDensity,boundary,kdt);
+					nextDensity,boundary,
+					(kdtree *)kdt);
 	}
 	if(p_data->dim == 3)
 	{
 		return update_density(p_data,(Mesh<kdtree3> *)mesh,
-					nextDensity,boundary,kdt);
+					nextDensity,boundary,
+					(kdtree3 *)kdt);
 	}
 	printf("Invalid Dimension: %d\n",p_data->dim);
 	exit(-7);
@@ -338,10 +340,14 @@ double handle_region(int mpos_id, Mesh<kdtree> *mesh,
 		//ntype is higher voltage, so incoming particles
 		//are going the 'right way'
 		if(mesh->is_n_type[i])
-			current += current_exit2(p_data->pos,i,p_data->p_mass[i])*sign; //If you are leaving from ntype side
+		{
+			current -= current_exit2(p_data->pos,i,p_data->p_mass[i])*sign; //If you are leaving from ntype side
+		}
 		//Incoming particles on p side are going the 'wrong' way.
 		if(mesh->is_p_type[i])
+		{
 			current += current_exit2(p_data->pos,i,p_data->p_mass[i])*sign; //leaving from ptype side
+		}
 	}
 	//Not handling too many, need to. Should probably figure out what failure to do this will resul tin.
 	return current;
@@ -360,7 +366,7 @@ template<class KD>double replenish_boundary(Particles *p_data,
 		if(mesh->is_p_type[id])
 		{
 			sign = 1;//Holes get injected
-			current -= handle_region(id,mesh,p_data,
+			current += handle_region(id,mesh,p_data,
 						 nextDensity,sign);
 		}
 		else if(mesh->is_n_type[id])
@@ -451,5 +457,3 @@ extern "C" double recombinateC(Particles *p_data, int *nextDensity, void *mesh)
 	exit(-7);
 	return -7;
 }
-
-
