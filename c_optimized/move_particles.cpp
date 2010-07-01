@@ -11,6 +11,7 @@
 #include "mesh.hpp"
 #include "statistics.hpp"
 #include "move_particles.hpp"
+#include "Polytope.hpp"
 
 extern "C" {
 #include "kdtree.h"
@@ -101,27 +102,29 @@ extern "C" void move_particlesC(Particles *pdata,
 {
 	if(pdata->dim == 3)
 	{
-		printf("3D movement not implemented\n");
-		move_particles(pdata,efield,nextDensity,dt,length_scale,(Mesh<kdtree3> *)mesh);
-		exit(-1);
+		move_particles(pdata,efield,
+				nextDensity,dt,length_scale,
+				(Mesh<kdtree3,3> *)mesh);
 		return;
 	}
 	if(pdata->dim == 2)
 	{
-		move_particles(pdata,efield,nextDensity,dt,length_scale,(Mesh<kdtree> *)mesh);
+		move_particles(pdata,efield,
+				nextDensity,dt,length_scale,
+				(Mesh<kdtree,2> *)mesh);
 		return;
 	}
 	cout << "Invalid dimension: "<<pdata->dim<<endl;
 	exit(0);
 }
 
-template<class KD>
+template<class KD,int dim>
 void move_particles(Particles *pdata,
 			double *efield,
 			int *nextDensity,
 			double dt,
 			double length_scale,
-			Mesh<KD> *mesh)
+			Mesh<KD,dim> *mesh)
 {
 	int i;
 	list<int>::iterator end = pdata->p_live->end();
@@ -137,7 +140,7 @@ void move_particles(Particles *pdata,
 					pdata->p_id,pdata->p_charge,i,
 					efield,dt,length_scale,
 					mesh->particle_weight,
-					mesh->dim);
+					dim);
 	}
 	printf("Particles Moved\n");
 }
@@ -146,16 +149,6 @@ void call_me()
 {
 	printf("I got called!\n");
 }
-
-double current_exit2(double *particles,int i,double mass)
-{
-	int dim = 2;
-	double _pkx = pknx(i,0);
-	double _pky = pknx(i,1);
-	double current = sqrt(_pkx*_pkx+_pky*_pky)/mass;//velocity
-	return current*EC;
-}
-
 
 typedef list<double *> Polygon;
 //copies original points into new polygon array
@@ -173,62 +166,7 @@ extern "C" Polygon *new_polygon(double *points,int n)
 	}
 	return polygon;
 }
-
-double cross_segment_point(double seg1_x,double seg1_y,
-			   double seg2_x,double seg2_y,
-			   double point_x,double point_y)
-{
-	double segment_x = seg1_x-seg2_x;
-	double segment_y = seg1_y-seg2_y;
-	double cur_vec_x = seg1_x-point_x;
-	double cur_vec_y = seg1_y-point_y;
-	double cross_z = (segment_x)*(cur_vec_y)-
-			 (cur_vec_x)*(segment_y);
-	return cross_z;
-}
-
-bool point_in_polygon(Polygon *boundary, vector2 *pos)
-{
-	double *point;
-	list<double *>::iterator it = boundary->begin();
-	list<double *>::iterator end = boundary->end();
-
-	double cur_x,cur_y;
-	double prev_x = (*it)[0];
-	double prev_y = (*it)[1];
-	double first_x = prev_x;
-	double first_y = prev_y;
-	double p_x = (*pos)[0];
-	double p_y = (*pos)[1];
-	++it;
-	double sign = 0;
-	for(;it != end;++it)
-	{
-		point = *it;
-		cur_x = point[0];
-		cur_y = point[1];
-		double cross_z = cross_segment_point(cur_x,cur_y,
-						     prev_x,prev_y,
-						     p_x,p_y);
-		if(sign == 0)
-		{
-			sign = cross_z;
-		}else if( cross_z*sign < 0)
-		{
-			return false;
-		}
-		prev_x = cur_x;
-		prev_y = cur_y;
-	}
-	//Last with first
-	if(cross_segment_point(first_x,first_y,
-				prev_x,prev_y,
-				p_x,p_y)*sign < 0)
-		return false;
-	
-	return true;
-}
-
+/*
 template<class KD>
 double update_density(Particles *p_data,
 			Mesh<KD> *mesh,
@@ -240,23 +178,51 @@ double update_density(Particles *p_data,
 	cout << "Dimension ("<<p_data->dim<<") not supported"<<endl;
 	exit(0);
 	return 0;
+}*/
+
+
+//has_escaped
+//returns id of nearest_exit
+//or -1 if it has not escaped.
+//This makes me unhappy, we would like 0 if not escaped so we can say
+//if(has_escaped), but since the id can be zero we can't do it that way.
+//the alternative would involve antoher call to nearest_exit, 
+//which also makes me unhappy.
+template<class KD,int _dim>
+int has_escaped(Polytope<_dim> *poly, 
+		Particles *p_data, 	
+		int part_id, 
+		Mesh<KD,_dim> *mesh)
+{
+	double *particles = p_data->pos;
+	int dim = _dim;
+	
+	if(poly->contains(&pnx(part_id,0)))
+		return -1;
+	//Check if nearest_exit is reflecting boundary
+	int nearest_exit = mesh->find_point_id(&pnx(part_id,0));
+	//TODO: Implement is_reflecting and uncomment the following code
+	//if(is_reflecting[nearest_exit])
+	//{
+	//	reflect(poly,p_data,part_id);
+	//	return has_escaped(poly,p_data,part_id,mesh);
+	//}
+	return nearest_exit;
 }
 
-
-/*update_density:
+/*update_density<kdtree>:
 Expected: All particles in nextdensity are 'lifted'
 Output: Nextdensity has all particles 'put down'
 NOTE: This is excessively complicated.
 TODO: Keep track of only the particles.*/
-template<>
+template<class KD,int dim>
 double update_density(Particles *ap,
-			Mesh<kdtree> *mesh,
+			Mesh<KD,dim> *mesh,
 			int *nextDensity,
-			Polygon *boundary,
-			kdtree *kdt)
+			Polytope<dim> *boundary,
+			KD *kdt)
 {
-	int dim = 2; //For macros
-	double *particles = ap->pos;
+	double *particles = ap->pos; //For Macros
 	double current = 0;
 	//int *p_id = ap->p_id;
 	cout << "Updating Density" << endl;
@@ -264,21 +230,25 @@ double update_density(Particles *ap,
 				it != ap->p_live->end();++it)
 	{
 		int i = *it;
-		vector2 pos;
-		pos[0] = pnx(i,0);
-		pos[1] = pnx(i,1);
-		if(!point_in_polygon(boundary,&pos)) //Outside particles are destroyed
-		{	
+		int nearest_exit = has_escaped<KD,dim>(boundary,ap,i,mesh);
+		if(nearest_exit != -1) //Outside particles are destroyed
+		{
 			//Nearest exit to determine which side 
-			int nearest_exit = kdtree_find_point_id(kdt,&pos);
+			//int nearest_exit = kdtree_find_point_id(kdt,&pos);
+			//Check if nearest_exit is reflecting boundary
  			/*Ntype is assumed to be high voltage, 
 			so particles leaving it should have opposite their*/
 			//current value
 			//Ntype is assumed high voltage, so particles move
+			int nearest_exit = mesh->find_point_id(&pnx(i,0));
 			if(mesh->is_n_type[nearest_exit])	
-				current -= current_exit2(particles,i,ap->p_mass[i])*ap->p_charge[i];
+				current -= (mesh->current_exit(ap,	
+						i))
+						*ap->p_charge[i];
 			else
-				current += current_exit2(particles,i,ap->p_mass[i])*ap->p_charge[i];
+				current += (mesh->current_exit(ap,
+						i))
+						*ap->p_charge[i];
 			it = destroy_particle(ap,i,it);
 			--it;
 		}
@@ -295,19 +265,23 @@ double update_density(Particles *ap,
 extern "C" double update_densityC(Particles *p_data,
 			void *mesh,
 			int *nextDensity,
-			Polygon *boundary,
+			void *boundary,
 			void *kdt)
 {
 	if(p_data->dim == 2)
 	{
-		return update_density(p_data,(Mesh<kdtree> *)mesh,
-					nextDensity,boundary,
+		return update_density(p_data,
+					(Mesh<kdtree,2> *)mesh,
+					nextDensity,
+					(Polytope<2> *) boundary,
 					(kdtree *)kdt);
 	}
 	if(p_data->dim == 3)
 	{
-		return update_density(p_data,(Mesh<kdtree3> *)mesh,
-					nextDensity,boundary,
+		return update_density(p_data,
+					(Mesh<kdtree3,3> *)mesh,
+					nextDensity,
+					(Polytope<3> *)boundary,
 					(kdtree3 *)kdt);
 	}
 	printf("Invalid Dimension: %d\n",p_data->dim);
@@ -315,19 +289,52 @@ extern "C" double update_densityC(Particles *p_data,
 	return -7;
 }
 
-template<class KD>
-double handle_region(int mpos_id,Mesh<KD> *mesh, Particles *p_data,
+template<class KD, int dim>
+double handle_region(int mpos_id,Mesh<KD,dim> *mesh, Particles *p_data,
 			int *density, int sign)
 {
 	cout << "handle_region:"<<endl;
-	cout << "Dimension ("<<p_data->dim<<") not supported"<<endl;
+	cout << "Dimension ("<<dim<<") not supported"<<endl;
 	exit(-1);
 	return 0;
 }
 
 template<>
-double handle_region(int mpos_id, Mesh<kdtree> *mesh, 
-				Particles *p_data, int *density, int sign)
+double handle_region(int mpos_id, Mesh<kdtree3,3> *mesh,
+			Particles *p_data, int *density, int sign)
+{
+	double current = 0;
+	while (density[mpos_id]*sign < 0) //not charge netural, need more 
+	{	
+		int i;
+		i = create_particle(mpos_id,p_data,density,sign,
+				    mesh->materials[mpos_id]->electron_mass,
+				    mesh); 
+		//ntype is higher voltage, so incoming particles
+		//are going the 'right way'
+		if(mesh->is_n_type[i])
+		{
+			//If you are leaving from ntype side
+			Vector3f pos(p_data[i][0],p_data[i][1],p_data[i][2]);
+			current += mesh->current_exit(p_data,i,
+					mesh.nearest_face(pos))
+					*sign; 
+		}
+		//Incoming particles on p side are going the 'wrong' way.
+		if(mesh->is_p_type[i])
+		{ 
+			//leaving from ptype side
+			current += mesh->current_exit(p_data,i,
+					mesh.nearest_face(pos))
+					*sign; 
+		}
+	}
+	return current;
+}
+
+template<>
+double handle_region(int mpos_id, Mesh<kdtree,2> *mesh, 
+			Particles *p_data, int *density, int sign)
 {
 	double current = 0;
 	//If we have too few carriers, inject them
@@ -341,20 +348,41 @@ double handle_region(int mpos_id, Mesh<kdtree> *mesh,
 		//are going the 'right way'
 		if(mesh->is_n_type[i])
 		{
-			current -= current_exit2(p_data->pos,i,p_data->p_mass[i])*sign; //If you are leaving from ntype side
+			//If you are leaving from ntype side
+			current -= mesh->current_exit(p_data,i)*sign; 
 		}
 		//Incoming particles on p side are going the 'wrong' way.
 		if(mesh->is_p_type[i])
-		{
-			current += current_exit2(p_data->pos,i,p_data->p_mass[i])*sign; //leaving from ptype side
+		{ 
+			//leaving from ptype side
+			current += mesh->current_exit(p_data,i)*sign; 
 		}
 	}
-	//Not handling too many, need to. Should probably figure out what failure to do this will resul tin.
+	//Not handling excess of charges, need to. 
+	//Should probably figure out what failing to do this will result in.
+/*
+	while (density[mpos_id]*sign > 0) 
+	{
+		//Need Less, suck or inject opposite?
+		//Pretty sure I'm supposed to suck...
+		//or does it depend on which side we're on?
+		//check bluebook
+		if(sign < 0) //too many electrons
+		{
+			int i = mesh->electrons_pos[mpos_id];
+			
+		}
+		if(sign > 0) //too many holes
+		{
+			int i = mesh->holes_pos[mpos_id];
+			
+		}
+	}*/
 	return current;
 }
 
-template<class KD>double replenish_boundary(Particles *p_data,
-			  int *nextDensity, Mesh<KD> *mesh)
+template<class KD,int dim>double replenish_boundary(Particles *p_data,
+			  int *nextDensity, Mesh<KD,dim> *mesh)
 {
 	list<int>::iterator it = mesh->boundary.begin();
 	list<int>::iterator end = mesh->boundary.end();
@@ -390,18 +418,18 @@ extern "C" double replenishC(Particles *p_data,
 {
 	if(p_data->dim == 2)
 	{
-		return replenish(p_data,nextDensity,(Mesh<kdtree> *) mesh);
+		return replenish(p_data,nextDensity,(Mesh<kdtree,2> *) mesh);
 	}
 	if(p_data->dim == 3)
 	{
-		return replenish(p_data,nextDensity,(Mesh<kdtree3> *) mesh);
+		return replenish(p_data,nextDensity,(Mesh<kdtree3,3> *) mesh);
 	}
 	printf("Invalid Dimension: %d\n",p_data->dim);
 	exit(-7);
 }
 
-template<class KD>
-double replenish(Particles *p_data, int *nextDensity, Mesh<KD> *mesh)
+template<class KD,int dim>
+double replenish(Particles *p_data, int *nextDensity, Mesh<KD,dim> *mesh)
 {	
 	double current;
 	cout << "Beginning replenish" << endl;
@@ -410,8 +438,8 @@ double replenish(Particles *p_data, int *nextDensity, Mesh<KD> *mesh)
 	return current;
 }
 
-template <class KD>
-double recombinate(Particles *p_data, int *nextDensity, Mesh<KD> *mesh)
+template <class KD,int dim>
+double recombinate(Particles *p_data, int *nextDensity, Mesh<KD,dim> *mesh)
 {
 	//For each cell, determine the number recombinations
 	//delete particles from each
@@ -421,37 +449,37 @@ double recombinate(Particles *p_data, int *nextDensity, Mesh<KD> *mesh)
 	for(int mesh_pos = 0; mesh_pos < mesh->npoints;mesh_pos++)
 	{
 	
-		/*cout << "num particles:" << 
-			mesh->electrons_pos[mesh_pos].size()+mesh->holes_pos[mesh_pos].size() << 
-			"/" << mesh->electrons_pos[mesh_pos].size() <<" "<<
-			" dens: "<<nextDensity[mesh_pos]<<endl;*/
 		while( mesh->electrons_pos[mesh_pos].size() > 0 && 
 		    mesh->holes_pos[mesh_pos].size() > 0)
 		{
-						//For now, obliterate the first two.
+			//For now, obliterate the first two.
 			int e_id = *(mesh->electrons_pos[mesh_pos].begin());
 			int h_id = *(mesh->holes_pos[mesh_pos].begin());
-			//cout << "Recombinate: "<<e_id <<" "<<h_id << endl;
-			pick_up_particle<KD>(e_id,p_data,nextDensity,mesh);//electron
+			
+			//electron
+			pick_up_particle<KD>(e_id,p_data,nextDensity,mesh);
 			destroy_particle(p_data,e_id,p_data->live_id[e_id]);
-			pick_up_particle<KD>(h_id,p_data,nextDensity,mesh);//hole
+		
+			//hole
+			pick_up_particle<KD>(h_id,p_data,nextDensity,mesh);
 			destroy_particle(p_data,h_id,p_data->live_id[h_id]);
 		}
 	}
 	return 0;
 }
 /*recombinate:
-Expected to be called after update_density, so need to pick up particles particles
+Expected to be called after update_density, 
+so need to pick up particles particles
 before destruction*/
 extern "C" double recombinateC(Particles *p_data, int *nextDensity, void *mesh)
 {
 	if(p_data->dim == 2)
 	{
-		return recombinate(p_data,nextDensity,(Mesh<kdtree> *) mesh);
+		return recombinate(p_data,nextDensity,(Mesh<kdtree,2> *) mesh);
 	}
 	if(p_data->dim == 3)
 	{
-		return recombinate(p_data,nextDensity,(Mesh<kdtree3> *) mesh);
+		return recombinate(p_data,nextDensity,(Mesh<kdtree3,3> *) mesh);
 	}
 	printf("Invalid Dimension: %d\n",p_data->dim);
 	exit(-7);

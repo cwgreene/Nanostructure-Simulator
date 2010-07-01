@@ -6,9 +6,15 @@ extern "C"{
 #include "kdtree.h"
 #include "kdtree3.h"
 }
-#include "mesh.hpp"
+//Types for headers
+class Particles;
+template<class KD,int dim> class Mesh;
+
+//Headers
 #include "materials.hpp"
 
+
+//Macros
 #define POSITIONSTART(i) ((2*dim)*i)
 #define MOMENTUMSTART(i) ((2*dim)*i+dim)
 #define POSITIONX(i)  (4*(i))
@@ -62,21 +68,22 @@ public:
 extern "C" int create_particleC(int mpos_id, Particles *p_data,int *density,
 		        int charge, double mass,void *mesh);
 
-template <class KD> 
-	void pick_up_particle(int part_id, 
+template <class KD,int dim> 
+void pick_up_particle(int part_id, 
 		Particles *p_data, 
 		int *density, 
-		Mesh<KD> *mesh);
-template <class KD>
-	void put_down_particle(int part_id, 	
-				Particles *p_data, 
-				int *density,
-				Mesh<KD> *mesh);
+		Mesh<KD,dim> *mesh);
+template <class KD,int dim>
+void put_down_particle(int part_id, 	
+			Particles *p_data, 
+			int *density,
+			Mesh<KD,dim> *mesh);
 list<int>::iterator destroy_particle(Particles *p_data, int part_id, list<int>::iterator pos);
 
 /*templates*/
-template <class KD> 
-void pick_up_particle(int part_id, Particles *p_data, int *density, Mesh<KD> *mesh)
+template <class KD,int dim> 
+void pick_up_particle(int part_id, Particles *p_data, 
+			int *density, Mesh<KD,dim> *mesh)
 {
 	int mesh_pos_id = p_data->p_id[part_id];
 	if(p_data->local_id[part_id] == NULL)
@@ -93,16 +100,18 @@ void pick_up_particle(int part_id, Particles *p_data, int *density, Mesh<KD> *me
 	}
 	density[mesh_pos_id] -= p_data->p_charge[part_id];  //Pick particle up from density
 }
-
+/**
 template <>
 void put_down_particle<kdtree3>(int part_id, Particles *p_data, int *density,Mesh<kdtree3> *mesh)
 {
 	cout << "Oh noes! 3D put down not implemented" << endl;
 	exit(-1);
-}
+}*/
 
-template <>
-void put_down_particle<kdtree>(int part_id, Particles *p_data, int *density,Mesh<kdtree> *mesh)
+/*put down particle assumes that point is valid? If so, why do we bother with the kdtree_find_point_id call?*/
+template <class KD,int dim>
+void put_down_particle(int part_id, Particles *p_data, 
+			int *density,Mesh<KD,dim> *mesh)
 {	
 	
 	int mesh_pos_id = p_data->p_id[part_id];
@@ -110,10 +119,9 @@ void put_down_particle<kdtree>(int part_id, Particles *p_data, int *density,Mesh
 	//int dim = p_data->dim;
 
 	//todo: make next line mesh dependent function
-	double *particles = p_data->pos;
-	int dim =2;
-	vector2 x = {pnx(part_id,0),pnx(part_id,1)};
-	p_data->p_id[part_id] = kdtree_find_point_id(mesh->kdt,&x); //find nearest spot
+	//double *particles = p_data->pos;
+	//int dim =p_data->dim;
+	p_data->p_id[part_id] = mesh->find_point_id(&(p_data->pos[part_id])); //find nearest spot
 	density[mesh_pos_id] += p_data->p_charge[part_id];  //Put particle back down
 
 	if(p_data->p_charge[part_id] < 0) //it's an electron
@@ -128,9 +136,9 @@ void put_down_particle<kdtree>(int part_id, Particles *p_data, int *density,Mesh
 	}
 }
 
-template<class KD> 
+template<class KD,int _dim> 
 int create_particle(int mpos_id, Particles *p_data,int *density,
-		        int charge, double mass,Mesh<KD> *mesh)
+		        int charge, double mass,Mesh<KD,_dim> *mesh)
 {	
 	int i = p_data->p_dead->back();
 	int dim = p_data->dim;

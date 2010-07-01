@@ -26,10 +26,10 @@ extern "C" int create_particleC(int mpos_id,Particles *p_data,int *density,
 {
 	if(p_data->dim == 3)
 		return create_particle(mpos_id,p_data,density,charge,mass,
-				(Mesh<kdtree3> *)mesh);
+				(Mesh<kdtree3,3> *)mesh);
 	if(p_data->dim == 2)
 		return create_particle(mpos_id,p_data,density,charge,mass,
-				(Mesh<kdtree> *)mesh);
+				(Mesh<kdtree,2> *)mesh);
 	printf("Invalid dimension: %d\n",p_data->dim);
 	exit(-3);
 	return -3;

@@ -1,12 +1,24 @@
 #ifndef MESH_HPP
 #define MESH_HPP
 #include <list>
+
+//Types needed for other headers (pointers)
+template<class KD,int _dim> class Mesh;
+
+//Headers
+#include "Polytope.hpp"
+#include "particles.hpp"
 #include "materials.hpp"
 extern "C"{
 #include "kdtree.h"
+#include "kdtree3.h"
 }
+
+//Namespaces
 using namespace std;
 enum {P_TYPE,N_TYPE};
+
+//Classes
 class Point
 {
 public:
@@ -18,10 +30,11 @@ public:
 	Point(int mpos_id, double *mpos, int type);
 };
 
-template<class KD> class Mesh
+template<class KD,int dim> class Mesh
 {
 public:
-	int dim;
+	Polytope<dim> *outer;
+	Polytope<dim> *inner;
 	//These are for ordered transversal, store mesh_pos_id's
 	list<int> boundary;
 	list<int> n_type;
@@ -44,11 +57,15 @@ public:
 	int npoints;
 	double particle_weight;
 	int find_point_id(double *position);
-	Mesh(double *points, int n_points, int dim,
+	double current_exit(Particles *p_data,int part_id);
+	double current_exit(Particles *p_data,int part_id, Face &exit_face);
+	int gen_num;
+	Mesh(double *points, int n_points,
 		Material **materials,
 		int *boundary, int nboundary,
 		int *ntype, int n_ntype,
-		int *ptype, int n_ptype,KD *_kdt,double particle_weight);
+		int *ptype, int n_ptype,KD *_kdt,
+		int gen_num,double particle_weight);
 };
 
 /*extern "C" Mesh *create_mesh(double *points, int n_points,

@@ -10,7 +10,9 @@ public:
 	int dim;
 	double *random_momentum;
 
-	Material(double _electron_mass, double *_random_momentum,int max_n,int dim);
+	Material(double _electron_mass, 
+		double *_random_momentum,
+		int max_n,int dim);
 };
 void material_random_momentum(Material *material,double *momentum);
 #endif
