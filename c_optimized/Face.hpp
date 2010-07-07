@@ -13,6 +13,9 @@ class Plane
 public:	
 	Vector3f v1;
 	Vector3f v2;
+	Matrix3f projection;
+	
+	Vector3f Plane::project(const Vector3f &vec);
 	Plane(double *spanvectors);
 };
 
@@ -35,7 +38,12 @@ public:
 				   Vector3f &intersect);
 	bool line_intersects(const Vector3f &point,
 				const Vector3f &vec);//detection only
+	Face *nearest_face(Vector3f point);
+	Face *nearest_face(Vector3f point,double *dist);
+	double Face::distance(const Vector3f &point);
 };
+
+
 
 bool Face::contains(const Vector3f &point)
 {
@@ -82,6 +90,25 @@ bool Face::line_intersects_plane(const Vector3f &point,
 		return false;
 	intersect = left.inverse()*point;
 	return true;
+}
+
+Plane::Plane(double *spanvectors)
+{
+	
+}
+
+Vector3f Plane::project(const Vector3f &vec)
+{
+	return projection*vec;
+}
+
+double Face::distance(const Vector3f &point)
+{
+	Vector3f p_vec= plane.project(point);
+	//We should figure out how far the projected point is if it's outside the hull,
+	//But in the convex situation, we're guaranteed that the projection is _inside_ the face.
+	//I think.
+	return p_vec.norm();
 }
 
 #endif

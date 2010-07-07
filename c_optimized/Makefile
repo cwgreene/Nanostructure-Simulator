@@ -6,9 +6,12 @@ EIGEN = /opt/local/include/eigen2
 Face: Face.hpp
 	 g++ -g -fPIC -O2 -c -Wall -x c++ -I $(EIGEN) Face.hpp
 
+testGeometry: 
+	 g++ -g -O2 -Wall -x c++ -I $(EIGEN) testGeometry.cpp -o testGeometry
+
 move_particles.so: move_particles.cpp kdtree.so materials.cpp particles.cpp\
 		   mesh.cpp kdtree.o kdtree3.o particles.hpp statistics.cpp\
-		   statistics.hpp mesh.hpp Face.hpp
+		   statistics.hpp mesh.hpp Face.hpp Polytope.hpp
 #	g++ -g -fPIC -O2 -c -Wall -I $(EIGEN) mesh.cpp
 	g++ -g -fPIC -O2 -c -Wall -I $(EIGEN) materials.cpp
 #	g++ -g -fPIC -O2 -c -Wall -I $(EIGEN) particles.cpp

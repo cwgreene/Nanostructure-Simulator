@@ -162,7 +162,7 @@ template <>
 double Mesh<kdtree3,3>::current_exit(
 				Particles *p_data, 
 				int part_id,
-				Face &exit_face)
+				Face *exit_face)
 {
 	Vector3f velocity;
 	double *particles = p_data->pos;
@@ -171,16 +171,22 @@ double Mesh<kdtree3,3>::current_exit(
 	{
 		velocity[i] = pknx(part_id,i)/p_data->p_mass[part_id];
 	}
-	return velocity.dot(exit_face.normal);
+	return velocity.dot(exit_face->normal);
 }
 
-Face *Mesh::nearest_edge(double *point)
+//template <class KD, int dim>
+//Face *Mesh<KD,dim>nearest_face::nearest_face(double *point)
+
+template <class KD,int dim>
+Face *Mesh<KD,dim>::nearest_edge(double *point)
 {
 	double inner_dist;
 	double outer_dist;
 	Vector3f vpoint(point[0],point[1],point[2]);
-	Face *inner_face,outer_face;
-	inner_face = mesh->outer->nearest_face(vpoint,&inner_dist);
-	outer_face = mesh->inner->nearest_face(vpoint,&outer_dist);
-	return inner_face < outer_face ? inner_face : outer_face;
+	Face *inner_face,*outer_face;
+	inner_face = inner->nearest_face(vpoint,&inner_dist);
+	outer_face = outer->nearest_face(vpoint,&outer_dist);
+	if(inner_dist < outer_dist)
+		return inner_face;
+	return outer_face;
 }

@@ -58,7 +58,7 @@ public:
 	double particle_weight;
 	int find_point_id(double *position);
 	double current_exit(Particles *p_data,int part_id);
-	double current_exit(Particles *p_data,int part_id, Face &exit_face);
+	double current_exit(Particles *p_data,int part_id, Face *exit_face);
 	int gen_num;
 	Mesh(double *points, int n_points,
 		Material **materials,
@@ -66,6 +66,7 @@ public:
 		int *ntype, int n_ntype,
 		int *ptype, int n_ptype,KD *_kdt,
 		int gen_num,double particle_weight);
+	Face *nearest_edge(double *point);
 };
 
 /*extern "C" Mesh *create_mesh(double *points, int n_points,

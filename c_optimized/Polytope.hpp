@@ -15,6 +15,8 @@ class Polytope<3>
 public:
 	vector<Face> faces;
 	bool contains(double point[3]);
+	Face *nearest_face(Vector3f &point,double *dist);
+	Face *nearest_face(Vector3f &point);
 	Polytope(vector<Face> faces);
 };
 
@@ -110,28 +112,29 @@ bool Polytope<2>::contains(double *point)
 
 }
 
-Face *Polytope::nearest_face(Vector3f &point,double *dist)
+Face *Polytope<3>::nearest_face(Vector3f &point,double *dist)
 {
 	vector<Face>::iterator face = faces.begin();
 	vector<Face>::iterator end = faces.end();
 
-	Face *closest;
-	double nearest_dist;
+	Face *closest = &(*face);
+	double nearest_dist = face->distance(point);
+	++face;
 	for(;face!=end;++face)
 	{
-		double dist = face->distance(point) < nearest_dist;
+		double dist = face->distance(point);
 		if(nearest_dist > dist)
 		{
-			closest = face;
+			closest = &(*face);
 		}
 	}
 	*dist = nearest_dist;
 	return closest;
 }
 
-Face *Polytope::nearest_face(Vector3f &point)
+Face *Polytope<3>::nearest_face(Vector3f &point)
 {
-	double temp = 0;
-	return nearest_face(point, dist);
+	double dist = 0;
+	return nearest_face(point, &dist);
 }
 #endif

@@ -315,9 +315,8 @@ double handle_region(int mpos_id, Mesh<kdtree3,3> *mesh,
 		if(mesh->is_n_type[i])
 		{
 			//If you are leaving from ntype side
-			Vector3f pos(p_data[i][0],p_data[i][1],p_data[i][2]);
 			current += mesh->current_exit(p_data,i,
-					mesh.nearest_face(pos))
+					mesh->nearest_edge(p_data->pos))
 					*sign; 
 		}
 		//Incoming particles on p side are going the 'wrong' way.
@@ -325,7 +324,7 @@ double handle_region(int mpos_id, Mesh<kdtree3,3> *mesh,
 		{ 
 			//leaving from ptype side
 			current += mesh->current_exit(p_data,i,
-					mesh.nearest_face(pos))
+					mesh->nearest_edge(p_data->pos))
 					*sign; 
 		}
 	}
