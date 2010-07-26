@@ -2,22 +2,27 @@ import ctypes
 import materials
 import itertools as it
 import numpy as np
+import dolfin
+
+import qhull
 
 import convexhull
 lib = ctypes.cdll.LoadLibrary("c_optimized/move_particles.so")
 
 lib.new_polygon.argtype = [ctypes.POINTER(ctypes.c_double),ctypes.c_int]
 lib.new_polygon.restype = ctypes.POINTER(ctypes.c_int)
+lib.create_polytope2.restype = ctypes.POINTER(ctypes.c_int)
+lib.create_polytope3.restype = ctypes.POINTER(ctypes.c_int)
 lib.init_particle_list.argtype = [ctypes.c_int]
 lib.init_particle_list.restype = ctypes.POINTER(ctypes.c_int)
 lib.init_dead_list.argtype = [ctypes.c_int]
 lib.init_dead_list.restype = ctypes.POINTER(ctypes.c_int)
 lib.update_densityC.argtype = [ctypes.POINTER(ctypes.c_int),
 			      ctypes.POINTER(ctypes.c_int),
-			      ctypes.POINTER(ctypes.c_int),
 			      ctypes.POINTER(ctypes.c_int)]
 lib.update_densityC.restype = ctypes.c_double
 lib.replenishC.restype = ctypes.c_double
+lib.create_particleC.restype = ctypes.c_int
 
 def print_list(string,list):
 	print string,list,len(list)
@@ -38,11 +43,10 @@ def update_density(system,nextDensity,kdt):
 	return lib.update_densityC(system.particles.ptr,
 			   system.c_mesh,
 			   nextDensity.ctypes.data,
-			   system.bounding_polygon,
 			   kdt)
 def new_polygon(points):
 	print "new_polygon"
-	return lib.new_polygon(points.ctypes.data,len(points))
+	return lib.new_polytope2(points.ctypes.data,len(points))
 def init_particle_list(n):
 	print "init_particle_list"
 	return lib.init_particle_list(n)
@@ -56,7 +60,7 @@ class System():
 class CParticles():
 	def __init__(self,nparticles,c_mesh,dim):#particles,p_mass,p_charge,p_id,p_live):
 		print "Creating CParticles:",nparticles,c_mesh,dim
-		self.pos = np.zeros((nparticles,4))
+		self.pos = np.zeros((nparticles,2*dim))
 		self.p_id = np.zeros((nparticles,1),'int')
 		self.p_charge = np.zeros((nparticles,1),'int')
 		self.p_mass = np.zeros((nparticles,1))
@@ -79,10 +83,15 @@ def replenish(system,nextDensity):
 			nextDensity.ctypes.data,
 			system.c_mesh)
 
+#the below is WAY too big.
+#should be broken into multiple functions
+#in fact, I should make a system.py file
 def init_system(mesh,nextDensity,particles_point):
 	print "Creating system"
 	dim = mesh.geometry().dim()
 	system = System()
+
+	#this will need to be fixed.
 	ntypepy = materials.Silicon()
 	ptypepy = materials.Silicon()
 
@@ -117,7 +126,25 @@ def init_system(mesh,nextDensity,particles_point):
 	ptype_ids = np.array(ptype_ids)
 	ntype_ids = np.array(ntype_ids)
 	boundary_ids = np.array(boundary_ids)
-	print ""
+
+	#get inner and outer bounding arrays
+	#at the moment, boundaries must be convex.
+	bm = dolfin.BoundaryMesh(mesh);
+	bmc = bm.coordinates().copy()
+	inner,outer = 	map(np.array,
+			 qhull.inner_outer(bmc))
+	print "inner",inner
+	print "outer",outer
+	#Construct polytope from points
+	if mesh.geometry().dim()==2:
+		inner_p = lib.create_polytope2(inner.ctypes.data,len(inner))
+		outer_p = lib.create_polytope2(outer.ctypes.data,len(outer))
+	elif mesh.geometry().dim()==3:
+		inner_p = lib.create_polytope3(inner.ctypes.data,len(inner))
+		outer_p = lib.create_polytope3(outer.ctypes.data,len(outer))
+	else:
+		raise("Invalid dimension.")
+	print "Polytopes",inner_p,outer_p
 	system.c_mesh = lib.create_mesh(mesh_coord.ctypes.data,
 				    len(mesh_coord),
 				    dim,
@@ -129,7 +156,9 @@ def init_system(mesh,nextDensity,particles_point):
 				    ntype_ids.ctypes.data,
 				    len(ntype_ids),
 				    mesh.kdt,
-				    ctypes.c_double(1.*10**18))
+				    100,
+				    ctypes.c_double(1.*10**18),
+				    outer_p,inner_p)
 				    
 	#create bounding polygon
 	convex_hull = list(convexhull.convexHull(map(tuple,list(mesh.bd))))
@@ -150,12 +179,15 @@ def init_system(mesh,nextDensity,particles_point):
 			sign = -1
 			mass = ntypepy.electron_mass
 		for delta in range(particles_point):
-			lib.create_particleC(ctypes.c_int(i),
+			index = lib.create_particleC(ctypes.c_int(i),
 					system.particles.ptr,
 					nextDensity.ctypes.data,
 					ctypes.c_int(sign),
 					ctypes.c_double(mass),
 					system.c_mesh)
+			#print hex(system.particles.pos.ctypes.data)
+			#print system.particles.pos[index]
+			#raw_input()
 	for i in xrange(len(nextDensity)):
 		nextDensity[i] = 0
 	print "Created system"
@@ -163,5 +195,7 @@ def init_system(mesh,nextDensity,particles_point):
 
 def recombinate(system,nextDensity,mesh):
 	print "doom"
-	lib.recombinateC(system.particles.ptr,nextDensity.ctypes.data,system.c_mesh)
+	lib.recombinateC(system.particles.ptr,
+			nextDensity.ctypes.data,
+			system.c_mesh)
 	print "don edoom"

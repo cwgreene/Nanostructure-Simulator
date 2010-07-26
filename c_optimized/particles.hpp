@@ -26,8 +26,8 @@ template<class KD,int dim> class Mesh;
 //pnc expects 'particles' to be locally defined
 //Remember there is both momentum and position taken care of
 //so for each dimension there are two variables. Hence the times 2
-#define pnx(n,c) particles[(dim*2)*n+c]
-#define pknx(n,c) particles[(dim*2)*n+dim+c]
+#define pnx(n,c) (particles[(dim*2)*n+c])
+#define pknx(n,c) (particles[(dim*2)*n+dim+c])
 //#define px(i)  particles[POSITIONX(i)]
 //#define py(i)  particles[POSITIONY(i)]
 //#define pkx(i)  particles[MOMENTUMX(i)]
@@ -88,14 +88,13 @@ void pick_up_particle(int part_id, Particles *p_data,
 	int mesh_pos_id = p_data->p_id[part_id];
 	if(p_data->local_id[part_id] == NULL)
 		cout << "We're about to die"<<endl;
+	list<int>::iterator it = p_data->local_id[part_id];
 	if(p_data->p_charge[part_id] < 0) //it's an electron
 	{
-		list<int>::iterator it = p_data->local_id[part_id];
 		mesh->electrons_pos[mesh_pos_id].erase(it); //unlink particle from local list
 	}
 	else //it's a hole
 	{
-		list<int>::iterator it = p_data->local_id[part_id];
 		mesh->holes_pos[mesh_pos_id].erase(it); //unlink particle from local list
 	}
 	density[mesh_pos_id] -= p_data->p_charge[part_id];  //Pick particle up from density
@@ -121,7 +120,9 @@ void put_down_particle(int part_id, Particles *p_data,
 	//todo: make next line mesh dependent function
 	//double *particles = p_data->pos;
 	//int dim =p_data->dim;
-	p_data->p_id[part_id] = mesh->find_point_id(&(p_data->pos[part_id])); //find nearest spot
+	//cout << "put_down_particle: entering kd_tree"<<endl;
+	p_data->p_id[part_id] = mesh->find_point_id(p_data->pos + 2*dim*part_id); //find nearest spot
+	//cout << "put_down_particle: exiting kd_tree"<<endl;
 	density[mesh_pos_id] += p_data->p_charge[part_id];  //Put particle back down
 
 	if(p_data->p_charge[part_id] < 0) //it's an electron
@@ -136,12 +137,11 @@ void put_down_particle(int part_id, Particles *p_data,
 	}
 }
 
-template<class KD,int _dim> 
+template<class KD,int dim> 
 int create_particle(int mpos_id, Particles *p_data,int *density,
-		        int charge, double mass,Mesh<KD,_dim> *mesh)
+		        int charge, double mass,Mesh<KD,dim> *mesh)
 {	
 	int i = p_data->p_dead->back();
-	int dim = p_data->dim;
 	p_data->p_dead->pop_back();	
 	p_data->p_live->push_back(i);
 
@@ -159,7 +159,9 @@ int create_particle(int mpos_id, Particles *p_data,int *density,
 
 	double *particles = p_data->pos;
 	for(int c= 0; c < dim;c++)
+	{
 		pnx(i,c) = mesh->mpos[dim*mpos_id+c];
+	}
 	material_random_momentum(mesh->materials[mpos_id],
 				 p_data->pos+MOMENTUMSTART(i)); //init pkx,pky
 	p_data->p_charge[i] = charge;
@@ -169,6 +171,7 @@ int create_particle(int mpos_id, Particles *p_data,int *density,
 	
 	return i;
 }
+
 #ifndef PARTICLES_CPP
 #include "particles.cpp"
 #endif

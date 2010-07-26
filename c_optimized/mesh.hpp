@@ -56,16 +56,22 @@ public:
 	double *mpos;//coordinates of points
 	int npoints;
 	double particle_weight;
+	int gen_num;
+
+	//Methods
 	int find_point_id(double *position);
 	double current_exit(Particles *p_data,int part_id);
 	double current_exit(Particles *p_data,int part_id, Face *exit_face);
-	int gen_num;
+	int has_escaped(Particles *p_data,int i);
+
+	//Constructors
 	Mesh(double *points, int n_points,
 		Material **materials,
 		int *boundary, int nboundary,
 		int *ntype, int n_ntype,
 		int *ptype, int n_ptype,KD *_kdt,
-		int gen_num,double particle_weight);
+		int gen_num,double particle_weight,
+		Polytope<dim> *outer, Polytope<dim> *inner);
 	Face *nearest_edge(double *point);
 };
 

@@ -5,37 +5,63 @@
 #include <vector>
 #include <stdlib.h>
 
+#include <Eigen/Geometry>
+
 #include "Face.hpp"
 
+//General Polytope Declaration.
 template<int dim> class Polytope{};
 
+//3d Polytope Class
 template<>
 class Polytope<3>
 {
 public:
 	vector<Face> faces;
 	bool contains(double point[3]);
-	Face *nearest_face(Vector3f &point,double *dist);
-	Face *nearest_face(Vector3f &point);
+	Face *nearest_face(Vector3d &point,double *dist);
+	Face *nearest_face(Vector3d &point);
 	Polytope(vector<Face> faces);
 };
 
+//2D Polytope Class
 template<>
 class Polytope<2>//Polygon
 {
 public:
 	bool contains(double *point);
-	vector<double *> points;
-	Polytope(double * points);
+	vector<Vector2d> points;
+	Polytope(double * _points,int num);
 };
 
-/*To determine if you're inside a polytope, travel in one direction and count intersections.*/
+//Polytope<2> Constructor
+Polytope<2>::Polytope(double *_points,int num)
+{
+	for(int i= 0; i < num;i++)
+	{
+		points.push_back(Vector2d(_points[2*i],_points[2*i+1]));
+	}
+}
+
+
+//Polytope<3> Constructor
+Polytope<3>::Polytope(vector<Face> _faces)
+{
+	faces = _faces;
+}
+
+
+//bool Polytope<3>::contains(double p[3])
+//Checks to see if polytope contains the given point
+//Presumably this is called by some function that has a view
+//into an array that contains all points. This is probably
+//why we pass in a double * instead of a Vector3d.
 bool Polytope<3>::contains(double p[3])
 {
 	int dim =3;
-	Vector3f ray_vector;
-	Vector3f intersect;	
-	Vector3f point = Vector3f(p[0],p[1],p[2]);
+	Vector3d ray_vector;
+	Vector3d intersect;	
+	Vector3d point = Vector3d(p[0],p[1],p[2]);
 	
 	for(int i = 0; i < dim; i++)
 		ray_vector[i] = (1.*rand())/RAND_MAX;
@@ -54,65 +80,67 @@ bool Polytope<3>::contains(double p[3])
 	return false; 
 }
 
-/*bool point_in_polygon(Polygon *boundary, vector2 *pos)
-{
-}*/
-
+//double cross_segment_point
+//Helper function, given a point and a line, essentially
+//determines the angle subtended by the point and the segment
+//sin of the angle is calculated, since that's the cross product
+//and we only care about the sign. (if it changes, we're outside)
 double cross_segment_point(double seg1_x,double seg1_y,
 			   double seg2_x,double seg2_y,
 			   double point_x,double point_y)
 {
-	double segment_x = seg1_x-seg2_x;
+/*	double segment_x = seg1_x-seg2_x;
 	double segment_y = seg1_y-seg2_y;
 	double cur_vec_x = seg1_x-point_x;
 	double cur_vec_y = seg1_y-point_y;
 	double cross_z = (segment_x)*(cur_vec_y)-
-			 (cur_vec_x)*(segment_y);
-	return cross_z;
+			 (cur_vec_x)*(segment_y);*/
+	Vector3d v1(seg1_x-point_x,seg1_y-point_y,0);
+	Vector3d v2(seg2_x-point_x,seg2_y-point_y,0);
+	return v1.cross(v2)[2];
 }
+
+//bool Polytope<2>::contains(double *point)
+//Determines if the polytope contains the point
+//For two dimesions, we use the winding method.
+//This was originally a Polygon function.
 bool Polytope<2>::contains(double *point)
 {
-	vector<double *>::iterator it = points.begin();
-	vector<double *>::iterator end = points.end();
-
 	double cur_x,cur_y;
-	double prev_x = (*it)[0];
-	double prev_y = (*it)[1];
-	double first_x = prev_x;
-	double first_y = prev_y;
+	double prev_x = points[0][0];
+	double prev_y = points[0][1];
 	double p_x = point[0];
 	double p_y = point[1];
-	++it;
 	double sign = 0;
-	for(;it != end;++it)
+	
+	//Check to see if the sign changes as we go around
+	//the polygon and compute the cross product
+	for(unsigned int i = 1;i < points.size()+1;i++)
 	{
-		point = *it;
-		cur_x = point[0];
-		cur_y = point[1];
+		Vector2d edge_point = points[i%points.size()];
+		cur_x = edge_point[0];
+		cur_y = edge_point[1];
 		double cross_z = cross_segment_point(cur_x,cur_y,
 						     prev_x,prev_y,
 						     p_x,p_y);
 		if(sign == 0)
 		{
 			sign = cross_z;
-		}else if( cross_z*sign < 0)
+		}else if( cross_z*sign < -10e-10)
 		{
 			return false;
 		}
 		prev_x = cur_x;
 		prev_y = cur_y;
 	}
-	//Last with first
-	if(cross_segment_point(first_x,first_y,
-				prev_x,prev_y,
-				p_x,p_y)*sign < 0)
-		return false;
-	
 	return true;
 
 }
 
-Face *Polytope<3>::nearest_face(Vector3f &point,double *dist)
+//Face *Polytope<3>::nearest_face(Vector3d &point,double *dist)
+//Finds the face of the polyope closest to a given point. 'dist'
+//holds the distance.
+Face *Polytope<3>::nearest_face(Vector3d &point,double *dist)
 {
 	vector<Face>::iterator face = faces.begin();
 	vector<Face>::iterator end = faces.end();
@@ -132,9 +160,26 @@ Face *Polytope<3>::nearest_face(Vector3f &point,double *dist)
 	return closest;
 }
 
-Face *Polytope<3>::nearest_face(Vector3f &point)
+//Face *Polytope<3>::nearest_face(Vector3d &point)
+//Currying function to: nearest_face(point, &dist).
+Face *Polytope<3>::nearest_face(Vector3d &point)
 {
 	double dist = 0;
 	return nearest_face(point, &dist);
 }
+
+//C Interfaces
+//Create 2 dimensional polytope, aka polygon
+extern "C" Polytope<2> *create_polytope2(double *points, int num_points)
+{
+	Polytope<2> *res = new Polytope<2>(points,num_points);
+	return res;
+}
+
+extern "C" Polytope<3> *create_polytope3(Face *faces, int num_faces)
+{
+	vector<Face> vfaces(faces,faces+num_faces);
+	return new Polytope<3>(vfaces);
+}
+
 #endif

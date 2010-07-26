@@ -22,6 +22,6 @@ template<class KD, int _dim>
 double update_density(Particles *p_data,
 			Mesh<KD,_dim> *mesh,
 			int *nextDensity,
-			Polytope<_dim> *boundary,
+			//Polytope<_dim> *boundary,
 			KD *kdt);
 #endif

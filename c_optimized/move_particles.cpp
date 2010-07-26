@@ -12,6 +12,7 @@
 #include "statistics.hpp"
 #include "move_particles.hpp"
 #include "Polytope.hpp"
+#include "debug.hpp"
 
 extern "C" {
 #include "kdtree.h"
@@ -21,6 +22,7 @@ extern "C" {
 #define sq(x) (x*x)
 #define EC (1.60217646e-19)
 using namespace std;
+using namespace debug;
 
 extern "C" list<int> *init_particle_list(int n)
 {
@@ -58,27 +60,27 @@ void randomElectronMovement(double *particles,
 	//Move
 	for(int c = 0; c < dim; c++)	
 	{
-		//if(i % 1000 == 0)
-		//	cout<<"x_"<<c<<": "<< pnx(i,c) << endl;
+		if(i % 1000 == 0)
+			//debug::dbg<<"x_"<<c<<": "<< pnx(i,c) << endl;
 		dx[c] = pknx(i,c)*dt/(length_scale*p_mass[i]*particle_weight);
 		pnx(i,c) += dx[c];
-		/*if(i % 1000 ==0)
+		if(i % 1000 ==0)
 		{
-			cout<< "dx_"<<c<<": "<<dx[c]<<endl;
-			cout<< "x_"<<c<<": "<<pnx(i,c) << endl;
-		}*/
+			//debug::dbg<< "dx_"<<c<<": "<<dx[c]<<endl;
+			//debug::dbg<< "x_"<<c<<": "<<pnx(i,c) << endl;
+		}
 	}
 	//Drift
 	for(int c = 0; c < dim; c++)
 	{
 		pknx(i,c) += (efield[dim*p_id[i]]*p_charge[i]*dt)
 				*EC*particle_weight;
-		/*if(i %1000 == 0)
+		if(i %1000 == 0)
 		{
-		cout << "dir: "<<c<<" force: "<<
-		 	((efield[dim*p_id[i]]*p_charge[i]*dt)
-			*EC*particle_weight)<<endl;
-		}*/
+		//debug::dbg << "dir: "<<c<<" force: "<<
+		 //	((efield[dim*p_id[i]]*p_charge[i]*dt)
+			//*EC*particle_weight)<<endl;
+		}
 	}
 	//Scatter... ugh... this is going to be complicated.
 	//we're going to need to seperate drift and diffusion
@@ -114,7 +116,7 @@ extern "C" void move_particlesC(Particles *pdata,
 				(Mesh<kdtree,2> *)mesh);
 		return;
 	}
-	cout << "Invalid dimension: "<<pdata->dim<<endl;
+	//debug::dbg << "Invalid dimension: "<<pdata->dim<<endl;
 	exit(0);
 }
 
@@ -129,12 +131,13 @@ void move_particles(Particles *pdata,
 	int i;
 	list<int>::iterator end = pdata->p_live->end();
 	printf("moving particles now\n");
-	
+
 	//avg_momentum_grid(pdata,mesh); //Stats
 	for(list<int>::iterator it = pdata->p_live->begin();
 				it!= end;++it)
 	{
 		i = *it;
+		//double *particles = pdata->pos;
 		pick_up_particle<KD>(i,pdata,nextDensity,mesh); //Lift particle
 		randomElectronMovement(pdata->pos,pdata->p_mass,
 					pdata->p_id,pdata->p_charge,i,
@@ -196,11 +199,12 @@ int has_escaped(Polytope<_dim> *poly,
 {
 	double *particles = p_data->pos;
 	int dim = _dim;
-	
-	if(poly->contains(&pnx(part_id,0)))
+	int x;
+		
+	if(poly->contains(p_data+2*dim*part_id,0))
 		return -1;
 	//Check if nearest_exit is reflecting boundary
-	int nearest_exit = mesh->find_point_id(&pnx(part_id,0));
+	int nearest_exit = mesh->find_point_id(p_data->pos+2*dim*part_id);
 	//TODO: Implement is_reflecting and uncomment the following code
 	//if(is_reflecting[nearest_exit])
 	//{
@@ -216,21 +220,19 @@ Output: Nextdensity has all particles 'put down'
 NOTE: This is excessively complicated.
 TODO: Keep track of only the particles.*/
 template<class KD,int dim>
-double update_density(Particles *ap,
+double update_density(Particles *p_data,
 			Mesh<KD,dim> *mesh,
 			int *nextDensity,
-			Polytope<dim> *boundary,
 			KD *kdt)
 {
-	double *particles = ap->pos; //For Macros
 	double current = 0;
 	//int *p_id = ap->p_id;
-	cout << "Updating Density" << endl;
-	for(list<int>::iterator it = ap->p_live->begin();
-				it != ap->p_live->end();++it)
+	//debug::dbg << "Updating Density" << endl;
+	for(list<int>::iterator it = p_data->p_live->begin();
+				it != p_data->p_live->end();++it)
 	{
 		int i = *it;
-		int nearest_exit = has_escaped<KD,dim>(boundary,ap,i,mesh);
+		int nearest_exit = mesh->has_escaped(p_data,i);
 		if(nearest_exit != -1) //Outside particles are destroyed
 		{
 			//Nearest exit to determine which side 
@@ -240,32 +242,32 @@ double update_density(Particles *ap,
 			so particles leaving it should have opposite their*/
 			//current value
 			//Ntype is assumed high voltage, so particles move
-			int nearest_exit = mesh->find_point_id(&pnx(i,0));
+			int nearest_exit = mesh->find_point_id(p_data->pos+2*dim*i);
 			if(mesh->is_n_type[nearest_exit])	
-				current -= (mesh->current_exit(ap,	
+				current -= (mesh->current_exit(p_data,	
 						i))
-						*ap->p_charge[i];
+						*p_data->p_charge[i];
 			else
-				current += (mesh->current_exit(ap,
+				current += (mesh->current_exit(p_data,
 						i))
-						*ap->p_charge[i];
-			it = destroy_particle(ap,i,it);
+						*p_data->p_charge[i];
+			it = destroy_particle(p_data,i,it);
 			--it;
 		}
 		else
-		{
-			put_down_particle(i,ap,nextDensity,mesh);
+		{	
+			//debug::dbg <<"Placing particle Down"<<endl;
+			put_down_particle(i,p_data,nextDensity,mesh);
 		}
 	}
-	cout << "Update current: " << current << endl;
-	cout << "Density Updated" << endl;
+	//debug::dbg << "Update current: " << current << endl;
+	//debug::dbg << "Density Updated" << endl;
 	return current;
 }
 
 extern "C" double update_densityC(Particles *p_data,
 			void *mesh,
 			int *nextDensity,
-			void *boundary,
 			void *kdt)
 {
 	if(p_data->dim == 2)
@@ -273,7 +275,6 @@ extern "C" double update_densityC(Particles *p_data,
 		return update_density(p_data,
 					(Mesh<kdtree,2> *)mesh,
 					nextDensity,
-					(Polytope<2> *) boundary,
 					(kdtree *)kdt);
 	}
 	if(p_data->dim == 3)
@@ -281,7 +282,6 @@ extern "C" double update_densityC(Particles *p_data,
 		return update_density(p_data,
 					(Mesh<kdtree3,3> *)mesh,
 					nextDensity,
-					(Polytope<3> *)boundary,
 					(kdtree3 *)kdt);
 	}
 	printf("Invalid Dimension: %d\n",p_data->dim);
@@ -293,8 +293,8 @@ template<class KD, int dim>
 double handle_region(int mpos_id,Mesh<KD,dim> *mesh, Particles *p_data,
 			int *density, int sign)
 {
-	cout << "handle_region:"<<endl;
-	cout << "Dimension ("<<dim<<") not supported"<<endl;
+	//debug::dbg << "handle_region:"<<endl;
+	//debug::dbg << "Dimension ("<<dim<<") not supported"<<endl;
 	exit(-1);
 	return 0;
 }
@@ -403,7 +403,7 @@ template<class KD,int dim>double replenish_boundary(Particles *p_data,
 						nextDensity,sign);
 		}else
 		{
-			cout << id << "Danger will robinson!" << endl;
+			//debug::dbg << id << "Danger will robinson!" << endl;
 		}
 	}
 	return current;
@@ -431,9 +431,9 @@ template<class KD,int dim>
 double replenish(Particles *p_data, int *nextDensity, Mesh<KD,dim> *mesh)
 {	
 	double current;
-	cout << "Beginning replenish" << endl;
+	//debug::dbg << "Beginning replenish" << endl;
 	current = replenish_boundary(p_data,nextDensity,mesh);
-	cout << "replenish complete" << endl;
+	//debug::dbg << "replenish complete" << endl;
 	return current;
 }
 
@@ -444,13 +444,15 @@ double recombinate(Particles *p_data, int *nextDensity, Mesh<KD,dim> *mesh)
 	//delete particles from each
 	//remember to remove both charge types from their position
 	//Should be same
-	
 	for(int mesh_pos = 0; mesh_pos < mesh->npoints;mesh_pos++)
 	{
-	
-		while( mesh->electrons_pos[mesh_pos].size() > 0 && 
-		    mesh->holes_pos[mesh_pos].size() > 0)
+		while(mesh->electrons_pos[mesh_pos].size() > 0 && 
+		      mesh->holes_pos[mesh_pos].size() > 0)
 		{
+			//debug::dbg << mesh_pos << endl;
+			//int x;
+			//debug::dbg << "size:"<<mesh->electrons_pos[mesh_pos].size()<<endl;
+			//debug::dbg << "size:"<<mesh->holes_pos[mesh_pos].size()<<endl;
 			//For now, obliterate the first two.
 			int e_id = *(mesh->electrons_pos[mesh_pos].begin());
 			int h_id = *(mesh->holes_pos[mesh_pos].begin());
@@ -464,8 +466,10 @@ double recombinate(Particles *p_data, int *nextDensity, Mesh<KD,dim> *mesh)
 			destroy_particle(p_data,h_id,p_data->live_id[h_id]);
 		}
 	}
+
 	return 0;
 }
+
 /*recombinate:
 Expected to be called after update_density, 
 so need to pick up particles particles

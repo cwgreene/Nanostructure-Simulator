@@ -5,7 +5,7 @@ import numpy as np
 import montecarlo_mockup as mc
 import triangle_util
 
-global mesh
+global mesh #uh, why are we doing this again?
 
 class TriangleMesh(mc.ParticleMesh):
 	def __init__(self,options,n_material,p_material):
@@ -23,10 +23,9 @@ class TriangleMesh(mc.ParticleMesh):
 			triangle_util.point_in_triangle(x,inner),0,0,
 			n_material,
 			p_material) 
-		boundarymesh = BoundaryMesh(mesh)
+		self.boundarymesh = BoundaryMesh(mesh)
 		self.OuterBoundary = OuterTriangle()
 		self.InnerBoundary = InnerTriangle()
-		print len(boundarymesh.coordinates())
 		mesh = self
 
 class InnerTriangle(SubDomain):

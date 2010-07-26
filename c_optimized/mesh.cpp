@@ -4,6 +4,8 @@
 #include "materials.hpp"
 #include "particles.hpp"
 
+#include "debug.hpp"
+
 #include <stdio.h>
 #include <iostream>
 using namespace std;
@@ -25,7 +27,8 @@ Mesh<KD,dim>::Mesh(double *points,
 		int *ptype, int n_ptype,
 		KD *_kdt,
 	   	int gen_num,
-	   	double particle_weight)
+	   	double particle_weight,
+		Polytope<dim> *outer, Polytope<dim> *inner)
 {
 	this->npoints = n_points;
 	this->mpos = new double[dim*n_points];
@@ -38,11 +41,15 @@ Mesh<KD,dim>::Mesh(double *points,
 	this->particle_weight = particle_weight;
 	this->gen_num = gen_num;
 
+	this->inner = inner;
+	this->outer = outer;
+
 	//This is pretty hideous.
 	//I should probably figure out how to nicely
 	//abstract all this
 	//Performance isn't all that important since this is
 	//just called once, and better abstractions would be nice	
+	//Note that i is incremented by dim, not 1
 	for(int i = 0; i < dim*n_points;i+=dim)
 	{
 		//copy points
@@ -79,7 +86,7 @@ Mesh<KD,dim>::Mesh(double *points,
 		}
 		else
 		{
-			cout << "HUH?!"<<endl;
+			//debug::dbg << "HUH?!"<<endl;
 			this->materials[i] = materials[0];
 		}
 	}
@@ -89,6 +96,7 @@ Mesh<KD,dim>::Mesh(double *points,
 		electrons_pos[i]= list<int>();
 		holes_pos[i] = list<int>();
 	}
+	//Attach kdtree.
 	this->kdt = _kdt;
 }
 
@@ -105,7 +113,10 @@ template <>
 int Mesh<kdtree,2>::find_point_id(double *pos)
 {	
 	vector2 x = {pos[0],pos[1]};
-	return kdtree_find_point_id(kdt,&x);
+	//debug::dbg <<"find_point_id:"<<(i++)<<" "<< pos[0] << " " << pos[1] << ": ";
+	int id =  kdtree_find_point_id(kdt,&x);	
+	//cout <<id<<endl;
+	return id;
 }
 
 //Python interfaces
@@ -113,9 +124,11 @@ extern "C" void *create_mesh(double *points, int n_points, int dim,
 			     Material **materials,
 			     int *boundary, int nboundary,
 			     int *ptype, int n_ptype, 
-			     int *ntype, int n_ntype, void *kdt,
+			     int *ntype, int n_ntype, 
+			     void *kdt,
 			     int gen_num,
-			     double particle_weight)
+			     double particle_weight,
+			     void *outer, void *inner)
 {
 	if(dim == 2)
 	{
@@ -123,9 +136,12 @@ extern "C" void *create_mesh(double *points, int n_points, int dim,
 					  materials,
 					  boundary, nboundary,
 					  ntype, n_ntype,
-					  ptype, n_ptype, (kdtree *)kdt,
+					  ptype, n_ptype, 
+					  (kdtree *)kdt,
 					  gen_num,
-					  particle_weight);
+					  particle_weight,
+					  (Polytope<2> *)outer,
+					  (Polytope<2> *)inner);
 		return mesh;
 	}
 	if(dim == 3)
@@ -135,13 +151,16 @@ extern "C" void *create_mesh(double *points, int n_points, int dim,
 						materials,
 						boundary, nboundary,
 						ntype, n_ntype,
-						ptype, n_ptype, (kdtree3 *)kdt,
+						ptype, n_ptype, 
+						(kdtree3 *)kdt,
 						gen_num,
-						particle_weight);
+						particle_weight,
+						(Polytope<3> *)outer,
+						(Polytope<3>*)inner);
 		return mesh;
 
 	}
-	cout << "Invalid dimension ("<<dim<<")"<<endl;
+	//debug::dbg<< "Invalid dimension ("<<dim<<")"<<endl;
 	exit(-1);
 	return 0;
 }
@@ -157,14 +176,26 @@ double Mesh<kdtree,2>::current_exit(Particles *p_data, int part_id)
 	return sqrt(v_x*v_x+v_y*v_y);
 }
 
+template <>
+double Mesh<kdtree3,3>::current_exit(Particles *p_data, int part_id)
+{	
+	//debug::dbg<< "current(Particles *p_data,int part_id) not supported"<<
+	//	" for dim =3"<<endl;
+	exit(-1);
+	return 0;
+}
+
 //3 Dimensional current
+//Another problem here, since calling function
+//will always call wrong one
 template <>
 double Mesh<kdtree3,3>::current_exit(
 				Particles *p_data, 
 				int part_id,
 				Face *exit_face)
+
 {
-	Vector3f velocity;
+	Vector3d velocity;
 	double *particles = p_data->pos;
 	int dim = 3;
 	for(int i = 0; i < 3; i++)
@@ -182,11 +213,84 @@ Face *Mesh<KD,dim>::nearest_edge(double *point)
 {
 	double inner_dist;
 	double outer_dist;
-	Vector3f vpoint(point[0],point[1],point[2]);
+	Vector3d vpoint(point[0],point[1],point[2]);
 	Face *inner_face,*outer_face;
 	inner_face = inner->nearest_face(vpoint,&inner_dist);
 	outer_face = outer->nearest_face(vpoint,&outer_dist);
 	if(inner_dist < outer_dist)
 		return inner_face;
 	return outer_face;
+}
+
+//has_escaped
+//returns id of nearest_exit
+//or -1 if it has not escaped.
+//This makes me unhappy, we would like 0 if not escaped so we can say
+//if(has_escaped), but since the id can be zero we can't do it that way.
+//the alternative would involve antoher call to nearest_exit, 
+//which also makes me unhappy.
+template<>
+int Mesh<kdtree,2>::has_escaped(Particles *p_data, 	
+				int part_id)
+{
+	//double *particles = p_data->pos;
+	int dim = 2; //Macro
+
+	if(outer->contains(p_data->pos+2*dim*part_id))
+	{
+		//If outer contains the point
+		//since the inner doesn't we're still inside
+		//Problematic because we might have some generalized version
+		
+		//Then go check to make sure we aren't in the inner thingy
+//		if(!(inner->contains(p_data->pos+2*dim*part_id)))
+			return -1;
+	}
+	//Check if nearest_exit is reflecting boundary
+	int nearest_exit = find_point_id(p_data->pos+2*dim*part_id);
+	//TODO: Implement is_reflecting and uncomment the following code
+	//if(is_reflecting[nearest_exit])
+	//{
+	//	reflect(poly,p_data,part_id);
+	//	return has_escaped(poly,p_data,part_id,mesh);
+	//}
+	return nearest_exit;
+}
+
+//has_escaped
+//returns id of nearest_exit
+//or -1 if it has not escaped.
+//This makes me unhappy, we would like 0 if not escaped so we can say
+//if(has_escaped), but since the id can be zero we can't do it that way.
+//the alternative would involve antoher call to nearest_exit, 
+//which also makes me unhappy.
+template<>
+int Mesh<kdtree3,3>::has_escaped(Particles *p_data, 	
+				int part_id)
+{
+	//double *particles = p_data->pos;
+	int dim = 3; //Macro
+	
+	//Check if inner is null, if not, check it
+	//If it contains the thing, we ARE outside
+	//otherwise continue on
+	if(inner != NULL) {
+		if(inner->contains(p_data->pos+2*dim*part_id))
+			return -1;
+	}
+
+	//If outer contains the point
+	//since the inner doesn't we're still inside
+	//Problematic because we might have some generalized version
+	if(outer->contains(p_data->pos+2*dim*part_id))
+		return -1;
+	//Check if nearest_exit is reflecting boundary
+	int nearest_exit = find_point_id(p_data->pos+2*dim*part_id);
+	//TODO: Implement is_reflecting and uncomment the following code
+	//if(is_reflecting[nearest_exit])
+	//{
+	//	reflect(poly,p_data,part_id);
+	//	return has_escaped(poly,p_data,part_id,mesh);
+	//}
+	return nearest_exit;
 }

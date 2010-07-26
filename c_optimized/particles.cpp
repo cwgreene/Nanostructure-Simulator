@@ -14,7 +14,6 @@ extern "C" Particles *init_particles(double *positions, int *p_id,
 				       list<int> *p_dead,
 				       int dim)
 {
-	cout << "Critical!!!!!!!!!!!!!"<<endl;
 	cout << "dimension: "<<dim<<endl;
 	return new Particles(positions,
 			     p_id,p_charge,p_mass,p_live,p_dead,
@@ -28,8 +27,10 @@ extern "C" int create_particleC(int mpos_id,Particles *p_data,int *density,
 		return create_particle(mpos_id,p_data,density,charge,mass,
 				(Mesh<kdtree3,3> *)mesh);
 	if(p_data->dim == 2)
+	{
 		return create_particle(mpos_id,p_data,density,charge,mass,
 				(Mesh<kdtree,2> *)mesh);
+	}
 	printf("Invalid dimension: %d\n",p_data->dim);
 	exit(-3);
 	return -3;
