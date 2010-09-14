@@ -5,6 +5,10 @@ import qhull
 
 global mesh
 
+#3D
+def project_down(point):
+	return np.array((point[0],point[1]))#throw away z
+
 #2D
 #point: np array
 #polygon: np array of 2 vecs
@@ -23,31 +27,38 @@ def point_in_polygon(point,polygon):
 			return False
 	return True
 
+
 def polygon(n,r=1,center=np.array([0,0])):
 	degree = 2*np.pi/n
 	points = []
 	for i in range(n):
-		points.append(np.array([r*np.cos(degree*i+np.pi/2),
-		                       r*np.sin(degree*i+np.pi/2)])
+		points.append(np.array([r*np.sin(degree*i),
+		                       r*np.cos(degree*i)])
 		              +center)
 	x,y = qhull.transpose(points)
 	return points
+
+def rotate_polygon(polygon,angle):
+	res = []
+	for x in polygon:
+		res.append(x[0]*np.cos(angle)-x[1]*np.sin(angle),	
+			   x[0]*np.sin(angle)+x[0]*np.sin(angle))
 
 def mesh_median(mesh):
 	points = mesh.coordinates()
 	median = sum(points)/len(points)
 	return median
 
-class HexagonMesh(mc.ParticleMesh):
+class Triangle3D(mc.ParticleMesh):
 	def __init__(self,options,n_material,p_material):
 		global mesh
-		mesh = Mesh("meshes/hexagon/Hexagon.xml")
+		mesh = Mesh("meshes/triangle3D/triangleprism.xml")
 		mesh.order() #why?
 
 		#create geometric shadows
-		median = mesh_median(mesh)
-		hexagon = polygon(5,1,median) #shadows mesh
-		innerhex = polygon(5,.75,median)
+		midpoint = np.array((.5,np.sqrt(3.)/4.))
+		triangle = polygon(3,sqrt(3.)/4.,midpoint) #shadows mesh
+		innertri = polygon(3,sqrt(3.)/8,midpoint)
 
 		#add points if necessary
 		for x in range(options.size):
@@ -58,7 +69,8 @@ class HexagonMesh(mc.ParticleMesh):
 		
 		#mark points as ntype or ptype
 		#or reflecting
-		self.populate_regions(lambda x: point_in_polygon(x,innerhex),
+		self.populate_regions(
+			lambda x: point_in_polygon(project_down(x),innertri),
 			0,0,
 			n_material,
 			p_material) 
@@ -67,9 +79,10 @@ class HexagonMesh(mc.ParticleMesh):
 		self.InnerBoundary = InnerHexagon()
 		#why is this here, why don't I make it
 		#associated with this object?
+		#the reason I believe is... no, that's not right
 		mesh = self 
 	def __del__(self):
-		print "Hexagon Mesh Destroyed"
+		print "Triangle3D Mesh Destroyed"
 			
 
 class InnerHexagon(SubDomain):
@@ -79,14 +92,14 @@ class InnerHexagon(SubDomain):
 			#print "repeat:",(x[0],x[1])
 		#repeated[(x[0],x[1])] = 0
 		if mesh.in_p_region(x):
-			print "inner:",x[0],x[1]
+			#print "inner:",x[0],x[1],x[2]
 			return True
 	return False
 class OuterHexagon(SubDomain):
     def inside(self, x, on_boundary):
 	if on_boundary:
 		if not mesh.in_p_region(x):
-			print "outer",x[0],x[1]
+			#print "outer",x[0],x[1]
 			return True
 	return False
 

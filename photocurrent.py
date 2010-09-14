@@ -1,9 +1,11 @@
 #import driftscatter as ds
+import move_particles_c as mpc
 import montecarlo_mockup as mc
 import dolfin_util as du
 import kdtree_c
 import time
-import numpy
+import numpy as np
+import ctypes
 
 #import bandstructure as bs
 
@@ -19,7 +21,7 @@ def reap_list(full,remove_ids):
 
 def random_list(list,num):
 	sublist = []
-	for index in numpy.random.random_integers(0,len(list),num):
+	for index in np.random.random_integers(0,len(list),num):
 		sublist = list[index]
 	return sublist
 
@@ -51,16 +53,37 @@ def init_photo_pair(mesh,pos,energy):
 	#create electron, and corresponding hole.
 	momentum = mesh.bandstructure.random_momentum(mesh,pos,energy)
 	
+def new_particle(mesh_pos,particles,problem,charge_sign,mesh):
+	coord = tuple(mesh.coordinates()[mesh_pos])
+	material = mesh.material[coord]
+	if charge_sign < 0:
+		mass = material.electron_mass
+	if charge_sign > 0:
+		mass = material.hole_mass
+	dim = mesh.geometry().dim()
+	nextDensity = problem.density_funcs.combined_density.vector().array().astype('int')
+	index =  mpc.lib.create_particleC(ctypes.c_int(mesh_pos),
+					 particles.ptr,
+					 nextDensity.ctypes.data,
+					 ctypes.c_int(charge_sign),
+					 ctypes.c_double(mass),
+					 mesh.c_mesh)
+	particles.pos[index][dim:2*dim]= [0.]*dim #bottom of gap
 
-def generate_photo_current(mesh,e_field):
+def generate_photo_current(mesh,e_field,problem):
 	current = 0
-	e_field = e_field.func
 	tot = 0.
-	for point in random_list(mesh.coordinates(),100):
-		clean_mesh(mesh)
-		mc.init_electrons(100,[point],-10,mesh)
-		start = time.time()
-		for x in xrange(100):
-			current += run_simulation(mesh,e_field)
-		print "run",time.time()-start
-	print "current:",current
+	particles = mpc.CParticles(2000,mesh.c_mesh,mesh.geometry().dim())
+	e_field = np.array(mc.pre_compute_field(mesh,e_field))
+	nextDensity = problem.density_funcs.combined_density.vector().array().astype('int')
+	for point in xrange(len(mesh.coordinates())):
+		new_particle(point,particles,problem,-1,mesh)
+		new_particle(point,particles,problem,+1,mesh)
+	for rep in xrange(300):
+		tot+=mpc.lib.photocurrentC(particles.ptr,
+				nextDensity.ctypes.data,
+				e_field.ctypes.data,
+				mesh.c_mesh,
+				ctypes.c_double(mesh.dt),
+				ctypes.c_double(mesh.length_scale))
+	return tot
