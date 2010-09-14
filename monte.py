@@ -16,7 +16,6 @@ __date__ = "2009-08-18"
 __copyright__ = "Copyright (C) 2007-2008 Anders Logg"
 __license__  = "GNU LGPL Version 2.1"
 
-import rpy2.robjects
 from dolfin import *
 import montecarlo_mockup as mc
 import move_particles_c as c_interface
@@ -51,6 +50,7 @@ def custom_func(mesh,V):
 def init_problem(mesh,V,V2,options):
 	print "Initializing Probleming"
 	problem = Problem()
+	problem.space = V
 	# Define boundary condition
 	#for reasons I don't know, pBoundary needs to be 
 	#kept globally
@@ -63,6 +63,7 @@ def init_problem(mesh,V,V2,options):
 	mesh.V = options.V
 	problem.bcs = [bc0,bc1]#prevent bad garbage?
 	problem.boundaryFuncs = [pBoundary,nBoundary]
+	problem.V = V
 	problem.V2 = V2
 
 	#init particles
@@ -124,14 +125,14 @@ def new_file(name):
 	return results_file
 		
 
-def PoissonSolve(mesh,density,bcs):
+def PoissonSolve(mesh,density,bcs,V):
 	print "Solving Poisson Equation"
 	lengthr = Constant(mesh,1./mesh.length_scale)
 	length = Constant(mesh,mesh.length_scale)
 	u = TrialFunction(V)
 	v = TestFunction(V)
 	a = dot(grad(v), grad(u))*lengthr*dx
-	L = v*(density)*length*dx
+	L = v*(density)*dx
 	# Compute solution
 	problem = VariationalProblem(a, L, bcs)
 	sol = problem.solve()
@@ -149,8 +150,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		#print problem.density_funcs.poisson_density.vector().array()
 		sol = PoissonSolve(mesh,
 				problem.density_funcs.scaled_density,
-				problem.bcs)
-		print "scale_density",problem.density_funcs.scaled_density
+				problem.bcs,problem.space)
 		#handle Monte Carlo
 		print "Starting Step ",x
 		electric_field = (mc.negGradient(mesh,sol,problem.V2))
@@ -175,7 +175,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		print "Monte Took: ",end2-start2
 		print "Loop Took:",end-start1
 		#del electric_field
-	#pc.generate_photo_current(mesh,problem.avg_dens)
+	print pc.generate_photo_current(mesh,electric_field,problem)
 	df.file << sol
 	df.dfile << problem.density_funcs.combined_density
 	#dump average
@@ -185,7 +185,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 	df.adfile << problem.density_funcs.combined_density
 	avgE=mc.negGradient(mesh,PoissonSolve(mesh,
 					problem.density_funcs.combined_density,
-					problem.bcs),
+					problem.bcs,problem.V),
 				problem.V2)
 	df.avggradfile << avgE
 	avg_length = 0
@@ -194,26 +194,36 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		#rf.trajectory.write(str(mesh.trajectories[particle]))
 		#rf.trajectory.write("\n")
 	print current_values
-	rpy2.robjects.r.plot(range(len(current_values)),current_values)
+	#rpy2.robjects.r.plot(range(len(current_values)),current_values)
 #	avg_length /= 1.*len(mesh.trajectories)
 	print "Average trajectory length:",avg_length
 
-mesh = meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon())
-#mesh = meshes.PlanarMesh(options,materials.Silicon(),materials.Silicon())
-#these seem to need to be global
-V = FunctionSpace(mesh, "CG", 1)
-V2 = VectorFunctionSpace(mesh,"CG",1,2)
-problem = init_problem(mesh,V,V2,options)
-system = c_interface.init_system(mesh,
-			problem.density_funcs.poisson_density.vector().array(),
-			options.gen_num)
+#main
+def main():
+	#init mesh
+	mesh = (# meshes.triangle3D.Triangle3D(options,
+					    #materials.Silicon,	
+					    #materials.Silicon())
+	#meshes.hexagon.HexagonMesh(options,materials.Silicon,materials.Silicon())
+	meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon()))
+	#mesh = meshes.PlanarMesh(options,materials.Silicon(),materials.Silicon())
+	#these seem to need to be global
+	V = FunctionSpace(mesh, "CG", 1)
+	V2 = VectorFunctionSpace(mesh,"CG",1,2)
+	problem = init_problem(mesh,V,V2,options)
+	system = c_interface.init_system(mesh,
+				problem.density_funcs.poisson_density.vector().array(),
+				options.gen_num, options.length)
 
-dolfinFiles = init_dolfin_files()
-rf = ResultsFile()
-rf.current = new_file("current")
-rf.density = new_file("density")
-rf.trajectory = new_file("trajectory")
-mainloop(mesh,system,problem,dolfinFiles,rf,options.scale)
-# Hold plot
-#plot(avgE)
-#interactive()
+	#init Files
+	dolfinFiles = init_dolfin_files()
+	rf = ResultsFile()
+	rf.current = new_file("current")
+	rf.density = new_file("density")
+	rf.trajectory = new_file("trajectory")
+
+	#mainloop
+	mainloop(mesh,system,problem,dolfinFiles,rf,options.scale)
+
+if __name__=="__main__":
+	main()

@@ -14,5 +14,6 @@ public:
 		double *_random_momentum,
 		int max_n,int dim);
 };
-void material_random_momentum(Material *material,double *momentum);
+void material_random_momentum(Material *material,double *momentum,
+				double weight);
 #endif

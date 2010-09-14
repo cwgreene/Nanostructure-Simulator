@@ -23,6 +23,7 @@ lib.update_densityC.argtype = [ctypes.POINTER(ctypes.c_int),
 lib.update_densityC.restype = ctypes.c_double
 lib.replenishC.restype = ctypes.c_double
 lib.create_particleC.restype = ctypes.c_int
+lib.photocurrentC.restype = ctypes.c_double
 
 def print_list(string,list):
 	print string,list,len(list)
@@ -60,7 +61,7 @@ class System():
 class CParticles():
 	def __init__(self,nparticles,c_mesh,dim):#particles,p_mass,p_charge,p_id,p_live):
 		print "Creating CParticles:",nparticles,c_mesh,dim
-		self.pos = np.zeros((nparticles,2*dim))
+		self.pos = np.zeros((nparticles,2*dim)) #should be pk_array
 		self.p_id = np.zeros((nparticles,1),'int')
 		self.p_charge = np.zeros((nparticles,1),'int')
 		self.p_mass = np.zeros((nparticles,1))
@@ -86,7 +87,7 @@ def replenish(system,nextDensity):
 #the below is WAY too big.
 #should be broken into multiple functions
 #in fact, I should make a system.py file
-def init_system(mesh,nextDensity,particles_point):
+def init_system(mesh,nextDensity,particles_point,length_scale):
 	print "Creating system"
 	dim = mesh.geometry().dim()
 	system = System()
@@ -127,39 +128,51 @@ def init_system(mesh,nextDensity,particles_point):
 	ntype_ids = np.array(ntype_ids)
 	boundary_ids = np.array(boundary_ids)
 
-	#get inner and outer bounding arrays
-	#at the moment, boundaries must be convex.
-	bm = dolfin.BoundaryMesh(mesh);
-	bmc = bm.coordinates().copy()
-	inner,outer = 	map(np.array,
-			 qhull.inner_outer(bmc))
-	print "inner",inner
-	print "outer",outer
 	#Construct polytope from points
-	if mesh.geometry().dim()==2:
+	if dim==2:
+		#get inner and outer bounding arrays
+		#at the moment, boundaries must be convex.
+		bm = dolfin.BoundaryMesh(mesh);
+		bmc = bm.coordinates().copy()
+		inner,outer = 	map(np.array,
+				 qhull.inner_outer(bmc))
+		print "inner",inner
+		print "outer",outer
 		inner_p = lib.create_polytope2(inner.ctypes.data,len(inner))
 		outer_p = lib.create_polytope2(outer.ctypes.data,len(outer))
-	elif mesh.geometry().dim()==3:
-		inner_p = lib.create_polytope3(inner.ctypes.data,len(inner))
-		outer_p = lib.create_polytope3(outer.ctypes.data,len(outer))
+	elif dim==3:
+		qfaces = qhull.qhull_faces(mesh.coordinates())
+		faces = []
+		for face in qfaces:
+			face = np.array(face)
+			print face
+			faces.append(lib.create_face(face.ctypes.data,
+							len(face),3))
+		raw_input()
+		faces_p = (ctypes.void_p*len(faces))(*faces)
+		inner_p = 0 #should be NULL
+		outer_p = lib.create_polytope3(faces_p,len(faces))
 	else:
 		raise("Invalid dimension.")
 	print "Polytopes",inner_p,outer_p
+
+	super_particles_count = ntypepy.doping*(length_scale**dim)/mesh.numCells()
+					    
 	system.c_mesh = lib.create_mesh(mesh_coord.ctypes.data,
-				    len(mesh_coord),
-				    dim,
-				    system.materials,
-				    boundary_ids.ctypes.data,
-				    len(boundary_ids),
-				    ptype_ids.ctypes.data,
-				    len(ptype_ids),
-				    ntype_ids.ctypes.data,
-				    len(ntype_ids),
+			    len(mesh_coord),
+			    dim,
+			    system.materials,
+			    boundary_ids.ctypes.data,
+			    len(boundary_ids),
+			    ptype_ids.ctypes.data,
+			    len(ptype_ids),
+			    ntype_ids.ctypes.data,
+			    len(ntype_ids),
 				    mesh.kdt,
-				    100,
-				    ctypes.c_double(1.*10**18),
-				    outer_p,inner_p)
-				    
+			    mesh.gen_num,
+			    ctypes.c_double(super_particles_count),
+			    outer_p,inner_p)
+	mesh.c_mesh = system.c_mesh
 	#create bounding polygon
 	convex_hull = list(convexhull.convexHull(map(tuple,list(mesh.bd))))
 	convex_hull.reverse() 

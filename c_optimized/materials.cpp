@@ -18,21 +18,21 @@ Material::Material(double _electron_mass, double *_random_momentum,
 	}
 }
 
-void material_random_momentum(Material *material,double *momentum)
+void material_random_momentum(	Material *material,double *momentum,
+				double weight)
 {
 	int dim = material->dim;
 	int max_n = material->max_n;
 	int i = rand()%max_n;
-	for(int component = 0; component < material->dim;component++)
+	for(int c = 0; c< material->dim;c++)
 	{
-		momentum[component] = material->random_momentum[dim*i];
-		momentum[component] = material->random_momentum[dim*i+1];
+		momentum[c] = material->random_momentum[dim*i+c]*weight;
 	}
 }
 
 extern "C" Material *new_material(double electron_mass,
 				  double *random_momentum,
-				  int max_n,int dim)
+				  int max_n, int dim)
 {
 	return new Material(electron_mass,
 				  random_momentum,max_n,dim);

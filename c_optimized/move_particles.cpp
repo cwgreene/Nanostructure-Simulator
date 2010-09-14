@@ -7,12 +7,13 @@
 #include <iostream>
 
 //HPP Includes
-#include "particles.hpp"
 #include "mesh.hpp"
+#include "particles.hpp"
 #include "statistics.hpp"
 #include "move_particles.hpp"
 #include "Polytope.hpp"
 #include "debug.hpp"
+#include "myrand.hpp"
 
 extern "C" {
 #include "kdtree.h"
@@ -57,34 +58,40 @@ void randomElectronMovement(double *particles,
 				int dim)
 {
 	double dx[3] = {0.,0.,0.};
-	//Move
-	for(int c = 0; c < dim; c++)	
-	{
-		if(i % 1000 == 0)
-			//debug::dbg<<"x_"<<c<<": "<< pnx(i,c) << endl;
-		dx[c] = pknx(i,c)*dt/(length_scale*p_mass[i]*particle_weight);
-		pnx(i,c) += dx[c];
-		if(i % 1000 ==0)
-		{
-			//debug::dbg<< "dx_"<<c<<": "<<dx[c]<<endl;
-			//debug::dbg<< "x_"<<c<<": "<<pnx(i,c) << endl;
-		}
-	}
+
 	//Drift
 	for(int c = 0; c < dim; c++)
 	{
 		pknx(i,c) += (efield[dim*p_id[i]]*p_charge[i]*dt)
 				*EC*particle_weight;
-		if(i %1000 == 0)
-		{
-		//debug::dbg << "dir: "<<c<<" force: "<<
-		 //	((efield[dim*p_id[i]]*p_charge[i]*dt)
-			//*EC*particle_weight)<<endl;
-		}
+	
 	}
+	//Move
+	for(int c = 0; c < dim; c++)	
+	{
+#ifdef TRACK
+		if(i == grabbed)
+		{
+			cerr<<"x_"<<c<<": "<< pnx(i,c) << endl;
+			cerr<<"particle weight: "<< particle_weight<<endl;
+		}
+#endif 
+		dx[c] = pknx(i,c)*dt/(length_scale*p_mass[i]*particle_weight);
+		pnx(i,c) += dx[c];
+#ifdef TRACK
+		if(i==grabbed)
+		{
+			cerr << "dx_"<<c<<": "<<dx[c]<<endl;
+			//debug::dbg<< "x_"<<c<<": "<<pnx(i,c) << endl;
+		}
+#endif
+	}
+	
 	//Scatter... ugh... this is going to be complicated.
 	//we're going to need to seperate drift and diffusion
 	//we already knew that... but damn.
+	if(rand() %2)
+	{
 	double theta = rand()*(3.1415192)/RAND_MAX-3.141592/2;
 
 	//handle x and y cooridinates.
@@ -93,25 +100,26 @@ void randomElectronMovement(double *particles,
 	double _pkny = pknx(i,1);
 	pknx(i,0) = _pknx*cos(theta)-_pkny*sin(theta);
 	pknx(i,1) = _pknx*sin(theta)+_pkny*cos(theta);
+	}
 }
 
-extern "C" void move_particlesC(Particles *pdata,
+extern "C" void move_particlesC(Particles *p_data,
 			double *efield,
 			int *nextDensity,
 			double dt,
 			double length_scale,
 			void *mesh)
 {
-	if(pdata->dim == 3)
+	if(p_data->dim == 3)
 	{
-		move_particles(pdata,efield,
+		move_particles(p_data,efield,
 				nextDensity,dt,length_scale,
 				(Mesh<kdtree3,3> *)mesh);
 		return;
 	}
-	if(pdata->dim == 2)
+	if(p_data->dim == 2)
 	{
-		move_particles(pdata,efield,
+		move_particles(p_data,efield,
 				nextDensity,dt,length_scale,
 				(Mesh<kdtree,2> *)mesh);
 		return;
@@ -121,7 +129,7 @@ extern "C" void move_particlesC(Particles *pdata,
 }
 
 template<class KD,int dim>
-void move_particles(Particles *pdata,
+void move_particles(Particles *p_data,
 			double *efield,
 			int *nextDensity,
 			double dt,
@@ -129,18 +137,24 @@ void move_particles(Particles *pdata,
 			Mesh<KD,dim> *mesh)
 {
 	int i;
-	list<int>::iterator end = pdata->p_live->end();
+	list<int>::iterator end = p_data->p_live->end();
 	printf("moving particles now\n");
 
 	//avg_momentum_grid(pdata,mesh); //Stats
-	for(list<int>::iterator it = pdata->p_live->begin();
+	for(list<int>::iterator it = p_data->p_live->begin();
 				it!= end;++it)
 	{
 		i = *it;
+#ifdef TRACK
+		if(grabbed == -1)
+			grabbed = i;
+		if(i==grabbed)
+			cerr << "x:"<<p_data->pos[2*dim*i]<<" y:"<<p_data->pos[2*dim*i+1]<<endl;
+#endif
 		//double *particles = pdata->pos;
-		pick_up_particle<KD>(i,pdata,nextDensity,mesh); //Lift particle
-		randomElectronMovement(pdata->pos,pdata->p_mass,
-					pdata->p_id,pdata->p_charge,i,
+		pick_up_particle<KD>(i,p_data,nextDensity,mesh); //Lift particle
+		randomElectronMovement(p_data->pos,p_data->p_mass,
+					p_data->p_id,p_data->p_charge,i,
 					efield,dt,length_scale,
 					mesh->particle_weight,
 					dim);
@@ -262,6 +276,7 @@ double update_density(Particles *p_data,
 	}
 	//debug::dbg << "Update current: " << current << endl;
 	//debug::dbg << "Density Updated" << endl;
+	cerr << current << endl;
 	return current;
 }
 
@@ -445,25 +460,43 @@ double recombinate(Particles *p_data, int *nextDensity, Mesh<KD,dim> *mesh)
 	//remember to remove both charge types from their position
 	//Should be same
 	for(int mesh_pos = 0; mesh_pos < mesh->npoints;mesh_pos++)
-	{
-		while(mesh->electrons_pos[mesh_pos].size() > 0 && 
-		      mesh->holes_pos[mesh_pos].size() > 0)
+	{	
+		int destroy_count = 0;
+//		list<int> *electrons = &(mesh->electrons_pos[mesh_pos]);
+//		list<int> *holes = &(mesh->holes_pos[mesh_pos]);
+		for(list<int>::iterator it = mesh->electrons_pos[mesh_pos].begin();
+		    it != mesh->electrons_pos[mesh_pos].end();
+		    ++it)
 		{
-			//debug::dbg << mesh_pos << endl;
-			//int x;
-			//debug::dbg << "size:"<<mesh->electrons_pos[mesh_pos].size()<<endl;
-			//debug::dbg << "size:"<<mesh->holes_pos[mesh_pos].size()<<endl;
-			//For now, obliterate the first two.
-			int e_id = *(mesh->electrons_pos[mesh_pos].begin());
-			int h_id = *(mesh->holes_pos[mesh_pos].begin());
+			if(mesh->holes_pos[mesh_pos].size() == 0)
+				break;
+			if(chance_recombinate(mesh->holes_pos[mesh_pos].size()))
+			{
+				destroy_count++;
+			}
+		}
+		while(mesh->electrons_pos[mesh_pos].size() >0 && 
+		      mesh->holes_pos[mesh_pos].size() > 0 && 
+		      destroy_count > 0)
+		{		
+				//debug::dbg << mesh_pos << endl;
+				//int x;
+				//debug::dbg << "size:"<<mesh->electrons_pos[mesh_pos].size()<<endl;
+				//debug::dbg << "size:"<<mesh->holes_pos[mesh_pos].size()<<endl;
+				//For now, obliterate the last two.
+				int e_id = *(mesh->electrons_pos[mesh_pos].begin());
+				int h_id = *(mesh->holes_pos[mesh_pos].begin());
 			
-			//electron
-			pick_up_particle<KD>(e_id,p_data,nextDensity,mesh);
-			destroy_particle(p_data,e_id,p_data->live_id[e_id]);
-		
-			//hole
-			pick_up_particle<KD>(h_id,p_data,nextDensity,mesh);
-			destroy_particle(p_data,h_id,p_data->live_id[h_id]);
+				//electron
+				pick_up_particle<KD>(e_id,p_data,nextDensity,mesh);
+				destroy_particle(p_data,e_id,p_data->live_id[e_id]);
+			
+				//hole
+				pick_up_particle<KD>(h_id,p_data,nextDensity,mesh);
+				destroy_particle(p_data,h_id,p_data->live_id[h_id]);
+			
+				//decrease needed destroys
+				destroy_count--;
 		}
 	}
 
@@ -487,4 +520,121 @@ extern "C" double recombinateC(Particles *p_data, int *nextDensity, void *mesh)
 	printf("Invalid Dimension: %d\n",p_data->dim);
 	exit(-7);
 	return -7;
+}
+
+bool chance_recombinate(int other_type)
+{
+	if(randint(1,100)> 80)
+		return true;
+	return false;
+}
+
+template <class KD,int dim>
+double photorecombinate(Particles *p_data, int *nextDensity, Mesh<KD,dim> *mesh)
+{
+	list<int>::iterator end = p_data->p_live->end();
+	vector<list<int>::iterator> doomed;
+	for(list<int>::iterator it = p_data->p_live->begin();
+		it !=end;++it)
+	{
+		int p_id = *it;
+		int i = p_id; //for uniformity of offset calc
+		int m_id = mesh->find_point_id(p_data->pos+2*dim*i);
+
+		if(p_data->p_charge[p_id] < 0)
+		{
+			if(chance_recombinate(mesh->holes_pos[m_id].size()))
+			{
+				doomed.push_back(it);
+			}
+		}
+		else if (p_data->p_charge[p_id] > 0)
+		{
+			if(chance_recombinate(mesh->electrons_pos[m_id].size()))
+			{
+				doomed.push_back(it);
+			}
+		}
+	}
+	for(unsigned int i = 0; i < doomed.size();i++)
+	{
+		destroy_particle(p_data,i,doomed[i]);
+	}
+	return 0;
+}
+template<class KD,int dim>
+void photo_move_particles(Particles *p_data,
+			double *efield,
+			int *nextDensity,
+			double dt,
+			double length_scale,
+			Mesh<KD,dim> *mesh)
+{
+	int i;
+	list<int>::iterator end = p_data->p_live->end();
+
+	//avg_momentum_grid(pdata,mesh); //Stats
+	for(list<int>::iterator it = p_data->p_live->begin();
+				it!= end;++it)
+	{
+		i = *it;
+		//only difference, don't deal with pick_up_put_down
+		randomElectronMovement(p_data->pos,p_data->p_mass,
+					p_data->p_id,p_data->p_charge,i,
+					efield,dt,length_scale,
+					mesh->particle_weight,
+					dim);
+	}
+}
+
+template<class KD, int dim>
+double photo_exit_current(Particles *p_data, Mesh<KD,dim> *mesh)
+{
+	double total = 0;
+	list<int>::iterator end = p_data->p_live->end();
+	vector<list<int>::iterator > doomed;
+	for(list<int>::iterator it = p_data->p_live->begin();
+		it != end;++it)
+	{
+		if(mesh->has_escaped(p_data,*it))
+		{
+			doomed.push_back(it);
+			total += EC*mesh->particle_weight;
+		}
+	}
+	for(unsigned int i = 0; i < doomed.size();i++)
+		destroy_particle(p_data,*(doomed[i]),doomed[i]);
+	return total;
+}
+
+template<class KD,int dim>
+double photocurrent(Particles *p_data,int *density, double *efield, Mesh<KD,dim> *mesh,
+			double dt, double length_scale)
+{
+	//Mostly carbon copies of original
+	//except none of that (pick up/put down) nonsense
+	photo_move_particles(p_data,efield,density,dt,length_scale,mesh);
+	photorecombinate(p_data,density,mesh);
+	photo_exit_current(p_data,mesh);
+	
+	return 0;
+}
+
+/*Photocurrent
+takes electric field, density, and electric field, and mesh
+*/
+extern "C" double photocurrentC(Particles *p_data, int *density, double *efield,void *mesh, double dt,
+				double length_scale)
+{
+	cout << "Photocurrent"<<endl;
+	if(p_data->dim == 3)
+	{
+		//Move, check for recombination, check for exit.
+		return photocurrent(p_data,density,efield,(Mesh<kdtree3,3> *)mesh,dt,length_scale);
+	}
+	if(p_data->dim == 2)
+	{
+		return photocurrent(p_data,density,efield,(Mesh<kdtree,2> *)mesh,dt,length_scale);
+	}
+	return 0;
 }

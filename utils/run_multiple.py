@@ -2,11 +2,11 @@ import os,time,sys
 import run_options
 
 options = run_options.create_options(sys.argv)
-start = 0.31
+start = -1.00
 end   = 1.0
-max   = 7
+max   = 11
 total_time = time.time()
-tag = "C++_400_triangle_3"
+tag = "ReducedDrift"
 
 for x in range(0,max):
 	start_time = time.time()
@@ -17,14 +17,16 @@ for x in range(0,max):
 	print "running",voltage,"/",x+1,"out of",max
 	data_dir = str(voltage)[:5].replace(".","_").replace("-","_n")
 	os.system("python monte.py "
-		+"-c 40"       + " "
+		+"-c 200"       + " "
 		+"--size=1"     + " "
 		+"--scale=1.0"  + " "
 		+"--particles=100"+ " "
 		+"-V " +str(voltage) +" "
 		+"--tag="+tag +" "
 		+"-d data"+data_dir+" "
+		+"--dt 1e-13"
 		)
 	elapse = time.time()-start_time
 	print "finished",elapse
 print "total:",time.time()-total_time
+

@@ -1,13 +1,14 @@
 #define PARTICLES_CPP
 #include <iostream>
-#include "materials.hpp"
 #include "particles.hpp"
+#include "materials.hpp"
+#include "mesh.hpp"
 extern "C" {
 #include "kdtree.h"
 #include "kdtree3.h"
 }
 using namespace std;
-extern "C" Particles *init_particles(double *positions, int *p_id, 
+extern "C" Particles *init_particles(double *pk_array, int *p_id, 
 				       int *p_charge,
 				       double *p_mass,
 				       list<int> *p_live,
@@ -15,7 +16,7 @@ extern "C" Particles *init_particles(double *positions, int *p_id,
 				       int dim)
 {
 	cout << "dimension: "<<dim<<endl;
-	return new Particles(positions,
+	return new Particles(pk_array,
 			     p_id,p_charge,p_mass,p_live,p_dead,
 			     dim);
 }

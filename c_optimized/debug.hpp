@@ -7,4 +7,8 @@ class DebugOut : public std::ostream
 };
 DebugOut dbg;
 }
+#define TRACK //debug tracking code
+#ifdef TRACK
+static int grabbed = -1;
+#endif 
 #endif 

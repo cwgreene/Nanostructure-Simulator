@@ -24,9 +24,9 @@ class ParticleMesh(Mesh):
 	n_carrier_charge = -10
 	p_carrier_charge = 10
 	carrier_charge = 10
-	def __init__(self,mesh,scale,length,time,gen_num):
+	def __init__(self,mesh,scale,length,time,gen_num,c_mesh=None):
 		print "Hello!"
-		Mesh.__init__(self,mesh)
+		Mesh.__init__(self,mesh) #this is why we needed to use it I think
 		self.bd = du.boundary_dict(mesh)
 		self.ibd = du.boundary_id_dict(mesh,self.bd)
 		self.point_index = {}
@@ -36,7 +36,11 @@ class ParticleMesh(Mesh):
 		self.particles = []
 		self.trajectories = {}
 		self.scale = scale
-		self.kdt = kdtree_c.new_kdtree(mesh.coordinates())
+		self.c_mesh = None
+		if mesh.topology().dim() == 2:
+			self.kdt = kdtree_c.new_kdtree(mesh.coordinates())
+		else:
+			self.kdt = kdtree_c.new_kdtree3(mesh.coordinates())
 		#self.bandstructure = bandstructure.ParabolicBand(self) #should be part of the material
 		self.material = {}
 		self.length_scale = length
@@ -190,7 +194,7 @@ def calculate_scaled_density(mesh,nextDensity):
 		material = mesh.material[tuple(point)]
 		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
 		id = mesh.point_index[tuple(point)]
-		scaled_density[id] = (nextDensity[id]*
+		scaled_density[id] = 10**11*(nextDensity[id]*
 				  constants.eC/mesh.gen_num*
 				  (material.doping3d\
 					*((mesh.length_scale)**3)
@@ -242,15 +246,11 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 
 	#update current values
 	current_values.append(current*constants.eC/
-				(mesh.dt*mesh.gen_num*mesh.numCells()))
+				(mesh.dt*mesh.gen_num*mesh.numVertices()))
 
 	#update avg_dens
 	scaled_density = calculate_scaled_density(mesh,nextDensity)
 	avg_dens.inc(scaled_density)
-	#for pos,x in zip(range(len(mesh.coordinates())),nextDensity):
-		#print x,
-		#`if pos in mesh.ibd:
-		#	print ""
 	density_funcs.combined_density.vector().set(
 			nextDensity.astype('double'))
 	density_funcs.scaled_density.vector().set(scaled_density)

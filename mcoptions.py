@@ -8,7 +8,7 @@ def get_options():
 	parser.add_option("--numsteps",type="int",dest="steps",default=1)
 	parser.add_option("--scale",type="float",dest="scale",default=1)
 	parser.add_option("--size",type="int",dest="size",default=1)
-	parser.add_option("--particles",type="int",dest="gen_num",default=1)
+	parser.add_option("--particles",type="int",dest="gen_num",default=100)
 	parser.add_option("--length",type="float",dest="length",default=10**-6)
 	parser.add_option("--doping",type="float",dest="doping",default=10**-24)
 	parser.add_option("--tag",type="string",dest="tag",default="None")

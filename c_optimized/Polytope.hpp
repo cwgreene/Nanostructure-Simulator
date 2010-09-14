@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdlib.h>
 
+#include <Eigen/Core>
 #include <Eigen/Geometry>
 
 #include "Face.hpp"
@@ -59,7 +60,7 @@ Polytope<3>::Polytope(vector<Face> _faces)
 bool Polytope<3>::contains(double p[3])
 {
 	int dim =3;
-	Vector3d ray_vector;
+	Vector3d ray_vector(1.,0.,0.);
 	Vector3d intersect;	
 	Vector3d point = Vector3d(p[0],p[1],p[2]);
 	
@@ -72,8 +73,14 @@ bool Polytope<3>::contains(double p[3])
 	vector<Face >::iterator end = faces.end();
 	for(;face != end;++face)
 	{
+			/*((face->points)[0])<< "#\n"<<
+			(face->points[1]) << "#\n"<<
+			(face->points[2]) << "#\n"<<
+			(face->points[3]) << "#\n";*/
 			if(face->line_intersects(point,ray_vector,intersect))
+			{
 				intersection_count++;
+			}
 	}
 	if(intersection_count >0 && intersection_count % 2 ==0) //enter in, enter out.
 		return true;
@@ -178,7 +185,10 @@ extern "C" Polytope<2> *create_polytope2(double *points, int num_points)
 
 extern "C" Polytope<3> *create_polytope3(Face *faces, int num_faces)
 {
-	vector<Face> vfaces(faces,faces+num_faces);
+	vector<Face> vfaces;
+	for(int i = 0; i < num_faces;i++)
+		vfaces.push_back(faces[i]);
+	cout << "doom before fail" <<endl;
 	return new Polytope<3>(vfaces);
 }
 

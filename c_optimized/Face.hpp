@@ -15,10 +15,11 @@ class Plane
 public:	
 	Vector3d v1;
 	Vector3d v2;
+	Vector3d point;
 	Matrix3d projection;
 	
 	Vector3d Plane::project(const Vector3d &vec);
-	Plane(Vector3d _v1,Vector3d _v2);
+	Plane(Vector3d _v1,Vector3d _v2,Vector3d point);
 };
 
 /*Face is polygon in 3d*/
@@ -31,7 +32,7 @@ public:
 	Face(double *_points,int num_points,int dim);
 
 	//Fields, need to be initialized
-	vector<Vector3d> *points; //needs to be inited
+	vector<Vector3d> points; //needs to be inited
 	Vector3d normal; //Can be copied into
 	Plane *plane; //Array which points to two vectors;
 
@@ -50,10 +51,11 @@ public:
 	double Face::distance(const Vector3d &point);
 };
 
-Plane::Plane(Vector3d _v1, Vector3d _v2)
+Plane::Plane(Vector3d _v1, Vector3d _v2,Vector3d _p)
 {
 	v1 = _v1/_v1.norm();
 	v2 = _v2/_v2.norm();
+	point = _p;
 	projection << 	v1[0],v2[0],0,
 			v1[1],v2[1],0,
 			v1[2],v2[2],0;
@@ -70,7 +72,6 @@ void check_failure(bool test, string msg)
 
 Face::Face(double *_points, int num_points, int dim)
 {
-	list<Vector3d> alist;
 	check_failure(dim!=3,"Serious error. Faces are three dimensional");
 	check_failure(num_points <= 2, "Insufficient points in Face construction");
 
@@ -79,25 +80,27 @@ Face::Face(double *_points, int num_points, int dim)
 			Vector3d p(_points[i*dim],
 				_points[i*dim+1],
 				_points[i*dim+2]);
-			alist.push_back(p);
+			points.push_back(p);
 	}
-	points = new vector<Vector3d>(alist.begin(),alist.end());
 
 	//Get Normal
-	Vector3d v1((*points)[1]-(*points)[0]); //First vec
+	Vector3d v1((points)[1]-(points)[0]); //First vec
 	int i =2;
-	while(((*points)[i]-(*points)[i-1]).dot(v1) == 0 && i < num_points)
+	while(((points)[i]-(points)[i-1]).dot(v1) != 0 && i < num_points)
+	{
+		cout << points[i] << endl << points[i-1] << endl;
 		i++;
+	}
 	check_failure(i == num_points, "All points of face are collinear. Exiting");
-	Vector3d v2((*points)[i]-(*points)[i-1]);
+	Vector3d v2((points)[i]-(points)[i-1]);
 	normal = v1.cross(v2);
-	plane = new Plane(v1,v2);
+	plane = new Plane(v1,v2,points[0]);
 }
 
 bool Face::contains(const Vector3d &point)
 {
-	vector<Vector3d>::iterator bound= points->begin();
-	vector<Vector3d>::iterator last = --(points->end());
+	vector<Vector3d>::iterator bound= points.begin();
+	vector<Vector3d>::iterator last = --(points.end());
 
 	Vector3d vec1 = *bound-point;
 	Vector3d vec2 = *(bound+1)-point;
@@ -121,7 +124,7 @@ bool Face::line_intersects(const Vector3d &point,
 			   Vector3d &intersect)
 {
 	if(line_intersects_plane(point,line,intersect))
-		if(contains(point))
+		if(contains(intersect))
 			return true;
 	return false;
 }
@@ -132,12 +135,14 @@ bool Face::line_intersects_plane(const Vector3d &point,
 				 Vector3d &intersect)
 {
 	Matrix3d left;
-	left <<	plane->v1[0],plane->v2[0],line[0],
-		plane->v1[1],plane->v2[1],line[1],
-		plane->v1[2],plane->v2[2],line[2];
+	left <<	plane->v1[0],plane->v2[0],-line[0],
+		plane->v1[1],plane->v2[1],-line[1],
+		plane->v1[2],plane->v2[2],-line[2];
 	if(left.determinant() == 0)
+	{
 		return false;
-	intersect = left.inverse()*point;
+	}
+	intersect = (left.inverse()*point)[2]*line+(point+plane->point);
 	return true;
 }
 

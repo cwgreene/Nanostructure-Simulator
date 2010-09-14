@@ -18,7 +18,7 @@ def filter_dir(dir,afilter):
 
 def filter_tags(tags,options):
 	if options.tag == "None":
-		return tags.keys()
+		return tags.keys() #return all
 	return filter(lambda x: x.find("tag:"+options.tag)>0,tags.keys())
 
 def current_values(options):

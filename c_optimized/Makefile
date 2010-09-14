@@ -9,7 +9,7 @@ Face: Face.hpp
 testGeometry: 
 	 g++ -g -O2 -Wall -x c++ -I $(EIGEN) testGeometry.cpp -o testGeometry
 
-testPolytope: testPolytope.cpp Polytope.hpp
+testPolytope: testPolytope.cpp Polytope.hpp Face.hpp
 	 g++ -g -O2 -Wall -x c++ -I $(EIGEN) testPolytope.cpp -o testPolytope
 
 move_particles.so: move_particles.cpp kdtree.o materials.cpp particles.cpp\

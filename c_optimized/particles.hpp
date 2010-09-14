@@ -7,12 +7,10 @@ extern "C"{
 #include "kdtree3.h"
 }
 //Types for headers
-class Particles;
 template<class KD,int dim> class Mesh;
 
 //Headers
 #include "materials.hpp"
-
 
 //Macros
 #define POSITIONSTART(i) ((2*dim)*i)
@@ -163,7 +161,8 @@ int create_particle(int mpos_id, Particles *p_data,int *density,
 		pnx(i,c) = mesh->mpos[dim*mpos_id+c];
 	}
 	material_random_momentum(mesh->materials[mpos_id],
-				 p_data->pos+MOMENTUMSTART(i)); //init pkx,pky
+				 p_data->pos+MOMENTUMSTART(i),
+				 mesh->particle_weight); //init pkx,pky
 	p_data->p_charge[i] = charge;
 	p_data->p_mass[i] = mass;	
 	p_data->p_id[i] = mpos_id;

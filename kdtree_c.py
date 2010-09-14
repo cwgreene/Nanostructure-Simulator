@@ -2,11 +2,15 @@ import ctypes
 import time #test only
 #init
 kdtree = ctypes.cdll.LoadLibrary("c_optimized/kdtree.so")
+kdtree3 = ctypes.cdll.LoadLibrary("c_optimized/kdtree3.so")
 kdtree.call_this()
 
 #types
 vector2 = ctypes.c_double*2
 vector2p = ctypes.c_double*3
+
+vector3 = ctypes.c_double*3
+vector3p = ctypes.c_double*4
 kdtree_p = ctypes.pointer
 
 #functions
@@ -30,6 +34,22 @@ def new_kdtree(points):
 		vecs.append(vector2p(*point))
 	vec_points = vec_points(*vecs)
 	kd_p = kdtree.new_kdtree(vec_points,len(points),0)
+	#print type(kd_p)
+	return kd_p
+
+def new_kdtree3(points):
+	points_copy = []
+	for point in points:
+		points_copy.append(list(point))
+	for id in xrange(len(points_copy)):
+		points_copy[id].append(id*1.)
+	vec_points = vector3p*len(points_copy)
+	vecs = []
+	for point in points_copy:
+		#print point
+		vecs.append(vector3p(*point))
+	vec_points = vec_points(*vecs)
+	kd_p = kdtree3.new_kdtree3(vec_points,len(points),0)
 	#print type(kd_p)
 	return kd_p
 acc = 0.
@@ -58,6 +78,19 @@ def find_point_id(kd,point):
 	id = kdtree.kdtree_find_point_id(kd,x)
 	#print type(res)
 	return id
+
+def find_point3_id(kd3,point):
+	global acc
+	best = vector3(100000,1000000,1000000)
+	x = vector3(*point)
+	bdist = ctypes.pointer(ctypes.c_double(1000000))
+	
+	#res =  kdtree.kdtree_find_point(kd,x)
+	#res = kdtree.find_point_r(x,kd,best,bdist)
+	id = kdtree3.kdtree_find_point3_id(kd,x)
+	#print type(res)
+	return id
+
 
 def test():
 	import time
