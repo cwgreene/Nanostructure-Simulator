@@ -599,7 +599,7 @@ double photo_exit_current(Particles *p_data, Mesh<KD,dim> *mesh)
 		if(mesh->has_escaped(p_data,*it))
 		{
 			doomed.push_back(it);
-			total += EC;
+			total += 1;
 		}
 	}
 	for(unsigned int i = 0; i < doomed.size();i++)
