@@ -175,7 +175,10 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		print "Monte Took: ",end2-start2
 		print "Loop Took:",end-start1
 		#del electric_field
-	print pc.generate_photo_current(mesh,electric_field,problem)
+	#photocurrent
+	current= pc.generate_photo_current(mesh,electric_field,problem)
+	rf.current.write("pc: "+str(current)+"\n")
+	
 	df.file << sol
 	df.dfile << problem.density_funcs.combined_density
 	#dump average

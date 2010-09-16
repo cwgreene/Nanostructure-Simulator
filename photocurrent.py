@@ -70,9 +70,14 @@ def new_particle(mesh_pos,particles,problem,charge_sign,mesh):
 					 mesh.c_mesh)
 	particles.pos[index][dim:2*dim]= [0.]*dim #bottom of gap
 
+def photons_per_watt(wavelength_nm):
+	#1 photon per X number of joules
+	return 1/(constants.h*constants.c/wavelength_nm)
+
 def generate_photo_current(mesh,e_field,problem):
 	current = 0
-	tot = 0.
+	accumulated_charge = 0.
+	total_photons = len(mesh.coordinates())
 	particles = mpc.CParticles(2000,mesh.c_mesh,mesh.geometry().dim())
 	e_field = np.array(mc.pre_compute_field(mesh,e_field))
 	nextDensity = problem.density_funcs.combined_density.vector().array().astype('int')
@@ -80,10 +85,13 @@ def generate_photo_current(mesh,e_field,problem):
 		new_particle(point,particles,problem,-1,mesh)
 		new_particle(point,particles,problem,+1,mesh)
 	for rep in xrange(300):
-		tot+=mpc.lib.photocurrentC(particles.ptr,
+		accumulated_charge+=mpc.lib.photocurrentC(particles.ptr,
 				nextDensity.ctypes.data,
 				e_field.ctypes.data,
 				mesh.c_mesh,
 				ctypes.c_double(mesh.dt),
 				ctypes.c_double(mesh.length_scale))
-	return tot
+	power = 1000 #per meter squared
+	photons_sec = power*photons_per_watt
+	current = accumulated_charge*photons_sec
+	return current
