@@ -626,7 +626,6 @@ takes electric field, density, and electric field, and mesh
 extern "C" double photocurrentC(Particles *p_data, int *density, double *efield,void *mesh, double dt,
 				double length_scale)
 {
-	cout << "Photocurrent"<<endl;
 	if(p_data->dim == 3)
 	{
 		//Move, check for recombination, check for exit.

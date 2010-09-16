@@ -6,6 +6,7 @@ import kdtree_c
 import time
 import numpy as np
 import ctypes
+import constants
 
 #import bandstructure as bs
 
@@ -72,7 +73,7 @@ def new_particle(mesh_pos,particles,problem,charge_sign,mesh):
 
 def photons_per_watt(wavelength_nm):
 	#1 photon per X number of joules
-	return 1/(constants.h*constants.c/wavelength_nm)
+	return 1./(constants.h*constants.c/wavelength_nm)
 
 def generate_photo_current(mesh,e_field,problem):
 	current = 0
@@ -91,7 +92,9 @@ def generate_photo_current(mesh,e_field,problem):
 				mesh.c_mesh,
 				ctypes.c_double(mesh.dt),
 				ctypes.c_double(mesh.length_scale))
-	power = 1000 #per meter squared
-	photons_sec = power*photons_per_watt
+	print "accumulated_charge",accumulated_charge
+	power = 1000. #per meter squared
+	photons_sec = power*photons_per_watt(400*10**-9)
 	current = accumulated_charge*photons_sec
+	print "photocurrent:",current
 	return current
