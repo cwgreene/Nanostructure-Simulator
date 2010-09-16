@@ -599,7 +599,7 @@ double photo_exit_current(Particles *p_data, Mesh<KD,dim> *mesh)
 		if(mesh->has_escaped(p_data,*it))
 		{
 			doomed.push_back(it);
-			total += EC*mesh->particle_weight;
+			total += EC;
 		}
 	}
 	for(unsigned int i = 0; i < doomed.size();i++)
@@ -615,9 +615,7 @@ double photocurrent(Particles *p_data,int *density, double *efield, Mesh<KD,dim>
 	//except none of that (pick up/put down) nonsense
 	photo_move_particles(p_data,efield,density,dt,length_scale,mesh);
 	photorecombinate(p_data,density,mesh);
-	photo_exit_current(p_data,mesh);
-	
-	return 0;
+	return photo_exit_current(p_data,mesh);
 }
 
 /*Photocurrent
