@@ -132,7 +132,7 @@ def PoissonSolve(mesh,density,bcs,V):
 	u = TrialFunction(V)
 	v = TestFunction(V)
 	a = dot(grad(v), grad(u))*lengthr*dx
-	L = v*(density)*dx
+	L = v*(density)*length*dx
 	# Compute solution
 	problem = VariationalProblem(a, L, bcs)
 	sol = problem.solve()
@@ -197,16 +197,15 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		#rf.trajectory.write(str(mesh.trajectories[particle]))
 		#rf.trajectory.write("\n")
 	print current_values
-	#rpy2.robjects.r.plot(range(len(current_values)),current_values)
 #	avg_length /= 1.*len(mesh.trajectories)
 	print "Average trajectory length:",avg_length
 
 #main
 def main():
 	#init mesh
-	mesh = (# meshes.triangle3D.Triangle3D(options,
-					    #materials.Silicon,	
-					    #materials.Silicon())
+	mesh = ( #meshes.triangle3D.Triangle3D(options,
+		#			    materials.Silicon,	
+		#			    materials.Silicon()))
 	#meshes.hexagon.HexagonMesh(options,materials.Silicon,materials.Silicon())
 	meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon()))
 	#mesh = meshes.PlanarMesh(options,materials.Silicon(),materials.Silicon())

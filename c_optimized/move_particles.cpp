@@ -46,6 +46,18 @@ extern "C" list<int> *init_dead_list(int start,int n)
 	return particle_list;
 }
 
+void scatter(double *particles, int dim,int i)
+{
+	double theta = rand()*(3.1415192)/RAND_MAX-3.141592/2;
+
+	//handle x and y cooridinates.
+	//this should be a bandstructure lookup
+	double _pknx = pknx(i,0);
+	double _pkny = pknx(i,1);
+	pknx(i,0) = _pknx*cos(theta)-_pkny*sin(theta);
+	pknx(i,1) = _pknx*sin(theta)+_pkny*cos(theta);
+}
+
 void randomElectronMovement(double *particles,
 				double *p_mass,
 				int *p_id,
@@ -90,16 +102,9 @@ void randomElectronMovement(double *particles,
 	//Scatter... ugh... this is going to be complicated.
 	//we're going to need to seperate drift and diffusion
 	//we already knew that... but damn.
-	if(rand() %2)
+	if(chance_scatter())
 	{
-	double theta = rand()*(3.1415192)/RAND_MAX-3.141592/2;
-
-	//handle x and y cooridinates.
-	//this should be a bandstructure lookup
-	double _pknx = pknx(i,0);
-	double _pkny = pknx(i,1);
-	pknx(i,0) = _pknx*cos(theta)-_pkny*sin(theta);
-	pknx(i,1) = _pknx*sin(theta)+_pkny*cos(theta);
+		scatter(particles,dim,i);
 	}
 }
 
@@ -252,18 +257,18 @@ double update_density(Particles *p_data,
 			//Nearest exit to determine which side 
 			//int nearest_exit = kdtree_find_point_id(kdt,&pos);
 			//Check if nearest_exit is reflecting boundary
- 			/*Ntype is assumed to be high voltage, 
+ 			/*Ntype is assumed to be pos voltage, 
 			so particles leaving it should have opposite their*/
-			//current value
+			//charge value
 			//Ntype is assumed high voltage, so particles move
 			int nearest_exit = mesh->find_point_id(p_data->pos+2*dim*i);
 			if(mesh->is_n_type[nearest_exit])	
 				current -= (mesh->current_exit(p_data,	
-						i))
+						i))*EC
 						*p_data->p_charge[i];
 			else
 				current += (mesh->current_exit(p_data,
-						i))
+						i))*EC
 						*p_data->p_charge[i];
 			it = destroy_particle(p_data,i,it);
 			--it;
@@ -525,6 +530,13 @@ extern "C" double recombinateC(Particles *p_data, int *nextDensity, void *mesh)
 bool chance_recombinate(int other_type)
 {
 	if(randint(1,100)> 80)
+		return true;
+	return false;
+}
+
+bool chance_scatter()
+{
+	if(randint(1,100)>10)
 		return true;
 	return false;
 }

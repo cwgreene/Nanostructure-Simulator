@@ -88,6 +88,7 @@ Face::Face(double *_points, int num_points, int dim)
 	int i =2;
 	while(((points)[i]-(points)[i-1]).dot(v1) != 0 && i < num_points)
 	{
+		cout << "Point: "<< i << endl;
 		cout << points[i] << endl << points[i-1] << endl;
 		i++;
 	}

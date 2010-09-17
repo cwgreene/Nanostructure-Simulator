@@ -2,11 +2,11 @@ import os,time,sys
 import run_options
 
 options = run_options.create_options(sys.argv)
-start = -1.00
+start = 0.00
 end   = 1.0
 max   = 11
 total_time = time.time()
-tag = "ReducedDrift"
+tag = "photocurrent5"
 
 for x in range(0,max):
 	start_time = time.time()

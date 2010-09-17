@@ -4,8 +4,11 @@ import optparse
 def read_current_output(afile):
 	V = float(afile.readline().strip())
 	misc = afile.readline().strip()
-	cur_vals = afile.read().split("\n")[:-1]
-	return V,misc,cur_vals
+	#cur_vals = afile.read().split("\n")[:-1]
+	lines = afile.readlines()
+	cur_vals = lines[:-1]
+	photocurrent=float(cur_vals[-1])
+	return V,misc,cur_vals,photocurrent
 
 def mean(x):
 	sum = 0.0
@@ -28,28 +31,41 @@ def current_values(options):
 	for name in filter_dir("results","current"):
 		try: #assume well formatted
 			afile = open("results/"+name)
-			V,misc,cur_vals = read_current_output(afile)
+			V,misc,cur_vals,pc = read_current_output(afile)
 			tags[misc]=0
 			if V in vals.keys():
-				vals[(V,misc)]+=[mean(cur_vals)]
+				vals[(V,misc)]+=[(mean(cur_vals),pc)]
 			else:
-				vals[(V,misc)] = [mean(cur_vals)]
-		except: #not well formmatted
+				vals[(V,misc)] = [(mean(cur_vals),pc)]
+		except Exception,e: #not well formmatted
+			print e
 			if options.verbose == True:
 				print "bad input:",name
 	all_voltages = sorted(vals.keys())
 	selected_tags = filter_tags(tags,options)
 	for tag in selected_tags:
+		offset_current = None
 		voltages = filter(lambda x:x[1]==tag,all_voltages)
-		vlist,ilist = [],[]
+		vlist,ilist,pcurs,dcurs = [],[],[],[]
 		print "\n"+tag
 		for v in voltages:
+			if v[0] == 0.0:
+				offset_current=mean(map(lambda x: x[0],vals[v]))
+				print offset_current
+		for v in voltages:
 			vlist+= map(str,[v[0]]*len(vals[v]))
-			ilist+=map(str,vals[v])
+			print vals[v]
+			curs = map(lambda x: x[1]-x[0]+offset_current,vals[v])
+			pcurs += map(lambda x: str(x[1]),vals[v])
+			dcurs += map(lambda x: str(x[0]),vals[v])
+			ilist+=map(str,curs)
 			print "V",v[0],"I",vals[v]
 		print "c("+",".join(vlist)+")"
 		print "c("+",".join(ilist)+")"
-
+		print "photocurrent"
+		print "c("+",".join(pcurs)+")"
+		print "darkcurrent"
+		print "c("+",".join(dcurs)+")"
 if __name__=="__main__":
 	parser = optparse.OptionParser()
 	parser.add_option("-c",type="int",dest="count",default=-1)

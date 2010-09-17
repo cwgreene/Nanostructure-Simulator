@@ -24,4 +24,8 @@ double update_density(Particles *p_data,
 			int *nextDensity,
 			//Polytope<_dim> *boundary,
 			KD *kdt);
+
+//forward declarations
+bool chance_recombinate(int other);
+bool chance_scatter();
 #endif

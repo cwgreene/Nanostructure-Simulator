@@ -189,10 +189,10 @@ template <>
 double Mesh<kdtree,2>::current_exit(Particles *p_data, int part_id)
 {
 	double *particles = p_data->pos;
-	int dim = 2;
-	double v_x = pknx(part_id,0)/(particle_weight*p_data->p_mass[part_id]);
-	double v_y = pknx(part_id,1)/(particle_weight*p_data->p_mass[part_id]);
-	return sqrt(v_x*v_x+v_y*v_y);
+//	int dim = 2;
+//	double v_x = pknx(part_id,0)/(particle_weight*p_data->p_mass[part_id]);
+//	double v_y = pknx(part_id,1)/(particle_weight*p_data->p_mass[part_id]);
+	return particle_weight;
 }
 
 template <>
