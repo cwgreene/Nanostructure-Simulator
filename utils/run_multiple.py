@@ -6,7 +6,7 @@ start = 0.00
 end   = 1.0
 max   = 11
 total_time = time.time()
-tag = "photocurrent5"
+tag = "photocurrent6"
 
 for x in range(0,max):
 	start_time = time.time()

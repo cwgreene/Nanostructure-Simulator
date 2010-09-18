@@ -38,7 +38,7 @@ def current_values(options):
 			else:
 				vals[(V,misc)] = [(mean(cur_vals),pc)]
 		except Exception,e: #not well formmatted
-			print e
+			print name+":",e
 			if options.verbose == True:
 				print "bad input:",name
 	all_voltages = sorted(vals.keys())

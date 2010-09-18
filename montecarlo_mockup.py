@@ -37,7 +37,9 @@ class ParticleMesh(Mesh):
 		self.trajectories = {}
 		self.scale = scale
 		self.c_mesh = None
-		if mesh.topology().dim() == 2:
+		self.super_particles_count = 0
+		self.dim=self.topology().dim()
+		if self.dim == 2:
 			self.kdt = kdtree_c.new_kdtree(mesh.coordinates())
 		else:
 			self.kdt = kdtree_c.new_kdtree3(mesh.coordinates())
@@ -59,6 +61,9 @@ class ParticleMesh(Mesh):
 			return not p_region_func
 		self.in_n_region = n_region_func
 		count = 0
+		self.super_particles_count = (n_material.doping*
+					     (self.length_scale**self.dim)/
+						self.numCells())
 		for x in self.coordinates():
 			if(p_region_func(x)):
 				self.material[tuple(x)] = n_material
@@ -185,6 +190,7 @@ def pre_compute_field(mesh,field):
 		vec = du.get_vec(mesh,field,pos)/mesh.length_scale
 		c_efield.append(vec)
 	print "Forces Calculated:",time.time()-start
+	print max(c_efield,key=lambda x: x[0]**2+x[1]**2)
 	return c_efield
 
 def calculate_scaled_density(mesh,nextDensity):
@@ -194,7 +200,8 @@ def calculate_scaled_density(mesh,nextDensity):
 		material = mesh.material[tuple(point)]
 		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
 		id = mesh.point_index[tuple(point)]
-		scaled_density[id] = 10**11*(nextDensity[id]*
+		spc = mesh.super_particles_count
+		scaled_density[id] = spc*(nextDensity[id]*
 				  constants.eC/mesh.gen_num*
 				  (material.doping3d\
 					*((mesh.length_scale)**3)

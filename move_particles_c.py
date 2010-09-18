@@ -148,7 +148,6 @@ def init_system(mesh,nextDensity,particles_point,length_scale):
 			print face
 			faces.append(lib.create_face(face.ctypes.data,
 							len(face),3))
-		raw_input()
 		faces_p = (ctypes.void_p*len(faces))(*faces)
 		inner_p = 0 #should be NULL
 		outer_p = lib.create_polytope3(faces_p,len(faces))
@@ -156,7 +155,6 @@ def init_system(mesh,nextDensity,particles_point,length_scale):
 		raise("Invalid dimension.")
 	print "Polytopes",inner_p,outer_p
 
-	super_particles_count = ntypepy.doping*(length_scale**dim)/mesh.numCells()
 					    
 	system.c_mesh = lib.create_mesh(mesh_coord.ctypes.data,
 			    len(mesh_coord),
@@ -168,9 +166,9 @@ def init_system(mesh,nextDensity,particles_point,length_scale):
 			    len(ptype_ids),
 			    ntype_ids.ctypes.data,
 			    len(ntype_ids),
-				    mesh.kdt,
+			    mesh.kdt,
 			    mesh.gen_num,
-			    ctypes.c_double(super_particles_count),
+			    ctypes.c_double(mesh.super_particles_count),
 			    outer_p,inner_p)
 	mesh.c_mesh = system.c_mesh
 	#create bounding polygon
