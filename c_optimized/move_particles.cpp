@@ -158,6 +158,7 @@ void move_particles(Particles *p_data,
 #endif
 		//double *particles = pdata->pos;
 		pick_up_particle<KD>(i,p_data,nextDensity,mesh); //Lift particle
+		mesh->find_point_id(p_data->pos+2*dim*i);
 		randomElectronMovement(p_data->pos,p_data->p_mass,
 					p_data->p_id,p_data->p_charge,i,
 					efield,dt,length_scale,

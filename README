@@ -1,0 +1,10 @@
+Nanostructure Simulator
+=======================
+
+To run the Monte Carlo simulator execute
+
+$ python monte.py [-V (desired voltage)]
+
+To run more than one voltage, run the file
+
+$ python utils/run_multiple.py

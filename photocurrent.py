@@ -79,9 +79,10 @@ def generate_photo_current(mesh,e_field,problem):
 	current = 0
 	accumulated_charge = 0.
 	total_photons = len(mesh.coordinates())
-	particles = mpc.CParticles(2000,mesh.c_mesh,mesh.geometry().dim())
+	particles = mpc.CParticles(2000,mesh.c_mesh,mesh.dim)
 	e_field = np.array(mc.pre_compute_field(mesh,e_field))
 	nextDensity = problem.density_funcs.combined_density.vector().array().astype('int')
+
 	for point in xrange(len(mesh.coordinates())):
 		new_particle(point,particles,problem,-1,mesh)
 		new_particle(point,particles,problem,+1,mesh)
@@ -92,7 +93,9 @@ def generate_photo_current(mesh,e_field,problem):
 				mesh.c_mesh,
 				ctypes.c_double(mesh.dt),
 				ctypes.c_double(mesh.length_scale))
+
 	print "accumulated_charge",accumulated_charge,total_photons
+	raw_input()
 	charge_per_photon = constants.eC*accumulated_charge/total_photons
 	power = 1000. #per meter squared
 	photons_sec = power*photons_per_watt(400*10**-9)
