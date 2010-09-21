@@ -27,7 +27,7 @@ How to destroy particles: #we REALLY should wrap this into a function.
 	1. If the particle is not free, subtract it's charge from density.
 	2. Remove the particle id from the live list.
 	3. Add the particle id to the dead list.
-	3. Remove the particle from the [particles at mesh point] list.
+	4. Remove the particle from the [particles at mesh point] list.
 
 So Summary of todo:
 1. Write destroy particle function. (replace exisiting)?
