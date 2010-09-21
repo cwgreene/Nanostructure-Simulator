@@ -8,3 +8,7 @@ $ python monte.py [-V (desired voltage)]
 To run more than one voltage, run the file
 
 $ python utils/run_multiple.py
+
+To view the results of the simulation, run
+
+$ python utils/read_output.py
