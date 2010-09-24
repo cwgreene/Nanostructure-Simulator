@@ -10,6 +10,7 @@ template<class KD,int _dim> class Mesh;
 #include "particles.hpp"
 #include "mesh.hpp"
 #include "materials.hpp"
+
 extern "C"{
 #include "kdtree.h"
 #include "kdtree3.h"
@@ -54,6 +55,7 @@ public:
 	int *is_boundary;
 	int *is_n_type;
 	int *is_p_type;
+	int *is_reflect; //TODO
 	Material **materials;//There should be only be two materials,
 			     //each point will be associated with one
 
@@ -188,7 +190,7 @@ int Mesh<kdtree,2>::find_point_id(double *pos)
 template <>
 double Mesh<kdtree,2>::current_exit(Particles *p_data, int part_id)
 {
-	double *particles = p_data->pos;
+	//double *particles = p_data->pos;
 //	int dim = 2;
 //	double v_x = pknx(part_id,0)/(particle_weight*p_data->p_mass[part_id]);
 //	double v_y = pknx(part_id,1)/(particle_weight*p_data->p_mass[part_id]);
@@ -277,6 +279,23 @@ int Mesh<kdtree,2>::has_escaped(Particles *p_data,
 	//	return has_escaped(poly,p_data,part_id,mesh);
 	//}
 	return nearest_exit;
+}
+
+//reflect
+//takes the old position, it's current positoin
+//and reflects it across the boundary.
+template <>
+void Mesh<kdtree,2> reflect(Particles *p_data,int id, double *old_pos)
+{
+	Vec2d pos = p_data[2*dim*id];
+	Vec2d old_pos = old_pos;
+
+	Vec2d travel = pos-old_pos;
+	//Calculate intersection point with line
+	//using tangent list
+	Vec2d tangent = tangents[p_data->mpos[id]];
+	Vec2d normal = normals[p_data->mpos[id]];
+ 
 }
 
 //has_escaped

@@ -49,6 +49,7 @@ def current_values(options):
 		vlist,ilist,pcurs,dcurs = [],[],[],[]
 		print "\n"+tag
 		for v in voltages:
+			print v
 			if v[0] == 0.0:
 				offset_current=mean(map(lambda x: x[0],vals[v]))
 				print offset_current

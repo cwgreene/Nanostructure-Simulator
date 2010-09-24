@@ -95,7 +95,6 @@ def generate_photo_current(mesh,e_field,problem):
 				ctypes.c_double(mesh.length_scale))
 
 	print "accumulated_charge",accumulated_charge,total_photons
-	raw_input()
 	charge_per_photon = constants.eC*accumulated_charge/total_photons
 	power = 1000. #per meter squared
 	photons_sec = power*photons_per_watt(400*10**-9)

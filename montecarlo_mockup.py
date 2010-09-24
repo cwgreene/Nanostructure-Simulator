@@ -229,6 +229,7 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	start = time.time()
 	print "computing field"
 	c_efield = pre_compute_field(mesh,electric_field)	#Evaluates field at each mesh point
+	print "nextDensity max:",max(nextDensity)
 	start =time.time()
 	print "About to move particles"
 	c_efield = array(c_efield)
@@ -243,7 +244,7 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 						  nextDensity,
 						  mesh.kdt)
 	print "Recombination"
-	move_particles_c.recombinate(system,nextDensity,mesh.kdt)
+	#move_particles_c.recombinate(system,nextDensity,mesh.kdt)
 	print current
 	print "time:",time.time()-start
 	start = time.time()

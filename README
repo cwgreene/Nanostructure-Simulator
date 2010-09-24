@@ -1,6 +1,12 @@
 Nanostructure Simulator
 =======================
 
+3rd Party Libraries:
+python:
+	Dolfin
+c++:
+	Eigen
+
 To run the Monte Carlo simulator execute
 
 $ python monte.py [-V (desired voltage)]

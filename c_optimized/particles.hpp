@@ -63,6 +63,13 @@ public:
 	}
 };
 
+class Particle
+{
+public:
+	int id;
+	Particles *particles;
+};
+
 extern "C" int create_particleC(int mpos_id, Particles *p_data,int *density,
 		        int charge, double mass,void *mesh);
 
@@ -79,6 +86,8 @@ void put_down_particle(int part_id,
 list<int>::iterator destroy_particle(Particles *p_data, int part_id, list<int>::iterator pos);
 
 /*templates*/
+//TODO: This function should be made part of mesh
+//Merge first two arguments into Particle &
 template <class KD,int dim> 
 void pick_up_particle(int part_id, Particles *p_data, 
 			int *density, Mesh<KD,dim> *mesh)
@@ -97,13 +106,6 @@ void pick_up_particle(int part_id, Particles *p_data,
 	}
 	density[mesh_pos_id] -= p_data->p_charge[part_id];  //Pick particle up from density
 }
-/**
-template <>
-void put_down_particle<kdtree3>(int part_id, Particles *p_data, int *density,Mesh<kdtree3> *mesh)
-{
-	cout << "Oh noes! 3D put down not implemented" << endl;
-	exit(-1);
-}*/
 
 /*put down particle assumes that point is valid? If so, why do we bother with the kdtree_find_point_id call?*/
 template <class KD,int dim>

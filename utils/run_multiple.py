@@ -2,11 +2,11 @@ import os,time,sys
 import run_options
 
 options = run_options.create_options(sys.argv)
-start = 0.00
+start = -1.0
 end   = 1.0
-max   = 11
+max   = 21 
 total_time = time.time()
-tag = "photocurrent6"
+tag = "photocurrent_reduce_collision"
 
 for x in range(0,max):
 	start_time = time.time()

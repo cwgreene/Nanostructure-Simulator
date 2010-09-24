@@ -6,6 +6,9 @@
 #include <list>
 #include <iostream>
 
+//3rd Party
+#include <Eigen/Core>
+
 //HPP Includes
 #include "mesh.hpp"
 #include "particles.hpp"
@@ -14,6 +17,7 @@
 #include "Polytope.hpp"
 #include "debug.hpp"
 #include "myrand.hpp"
+
 
 extern "C" {
 #include "kdtree.h"
@@ -58,10 +62,7 @@ void scatter(double *particles, int dim,int i)
 	pknx(i,1) = _pknx*sin(theta)+_pkny*cos(theta);
 }
 
-void randomElectronMovement(double *particles,
-				double *p_mass,
-				int *p_id,
-				int *p_charge,
+void randomElectronMovement(Particles *p_data,
 				int i,
 				double *efield,
 				double dt,
@@ -69,6 +70,11 @@ void randomElectronMovement(double *particles,
 				double particle_weight,
 				int dim)
 {
+	double *particles = p_data->pos;
+	double *p_mass = p_data->p_mass;
+	int *p_id = p_data->p_id;
+	int *p_charge = p_data->p_charge;
+
 	double dx[3] = {0.,0.,0.};
 
 	//Drift
@@ -149,21 +155,25 @@ void move_particles(Particles *p_data,
 	for(list<int>::iterator it = p_data->p_live->begin();
 				it!= end;++it)
 	{
+		double old_pos[dim];
 		i = *it;
-#ifdef TRACK
-		if(grabbed == -1)
-			grabbed = i;
-		if(i==grabbed)
-			cerr << "x:"<<p_data->pos[2*dim*i]<<" y:"<<p_data->pos[2*dim*i+1]<<endl;
-#endif
+
+		for(int c = 0; c < dim;c++)
+			old_pos[c] = p_data->pos[2*dim*i];
+
 		//double *particles = pdata->pos;
 		pick_up_particle<KD>(i,p_data,nextDensity,mesh); //Lift particle
-		mesh->find_point_id(p_data->pos+2*dim*i);
-		randomElectronMovement(p_data->pos,p_data->p_mass,
-					p_data->p_id,p_data->p_charge,i,
+		randomElectronMovement(p_data,i,
 					efield,dt,length_scale,
 					mesh->particle_weight,
 					dim);
+		//After random movement, check to see if the nearest point
+		//Is a reflecting boundary. If it is, we reflect
+		int loc = mesh->find_point_id(p_data->pos+2*dim*i);
+		if(mesh->is_reflect[loc])
+		{
+			mesh->reflect(p_data,i,old_pos);
+		}
 	}
 	printf("Particles Moved\n");
 }
@@ -352,11 +362,15 @@ double handle_region(int mpos_id, Mesh<kdtree3,3> *mesh,
 	return current;
 }
 
+//This is so bloody wrong it's not even funny
 template<>
 double handle_region(int mpos_id, Mesh<kdtree,2> *mesh, 
 			Particles *p_data, int *density, int sign)
 {
 	double current = 0;
+
+	//IF THE DENSITY IS NON-ZERO THEN 
+	//YOU HAVE TOO_MANY CARRIERS YOU MORON!
 	//If we have too few carriers, inject them
 	while (density[mpos_id]*sign < 0) //not charge netural, need more 
 	{	
@@ -378,26 +392,15 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 			current += mesh->current_exit(p_data,i)*sign; 
 		}
 	}
-	//Not handling excess of charges, need to. 
-	//Should probably figure out what failing to do this will result in.
-/*
-	while (density[mpos_id]*sign > 0) 
+	//Too many?
+	while (density[mpos_id]*sign > mesh->gen_num) 
 	{
 		//Need Less, suck or inject opposite?
 		//Pretty sure I'm supposed to suck...
 		//or does it depend on which side we're on?
 		//check bluebook
-		if(sign < 0) //too many electrons
-		{
-			int i = mesh->electrons_pos[mpos_id];
-			
-		}
-		if(sign > 0) //too many holes
-		{
-			int i = mesh->holes_pos[mpos_id];
-			
-		}
-	}*/
+		
+	}
 	return current;
 }
 
@@ -537,7 +540,7 @@ bool chance_recombinate(int other_type)
 
 bool chance_scatter()
 {
-	if(randint(1,100)>10)
+	if(randint(1,100)>90)
 		return true;
 	return false;
 }
@@ -592,8 +595,7 @@ void photo_move_particles(Particles *p_data,
 	{
 		i = *it;
 		//only difference, don't deal with pick_up_put_down
-		randomElectronMovement(p_data->pos,p_data->p_mass,
-					p_data->p_id,p_data->p_charge,i,
+		randomElectronMovement(p_data,i,
 					efield,dt,length_scale,
 					mesh->particle_weight,
 					dim);
