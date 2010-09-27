@@ -169,11 +169,11 @@ void move_particles(Particles *p_data,
 					dim);
 		//After random movement, check to see if the nearest point
 		//Is a reflecting boundary. If it is, we reflect
-		int loc = mesh->find_point_id(p_data->pos+2*dim*i);
-		if(mesh->is_reflect[loc])
+//		int loc = mesh->find_point_id(p_data->pos+2*dim*i);
+/*		if(mesh->is_reflect[loc])
 		{
 			mesh->reflect(p_data,i,old_pos);
-		}
+		}*/
 	}
 	printf("Particles Moved\n");
 }
@@ -199,20 +199,6 @@ extern "C" Polygon *new_polygon(double *points,int n)
 	}
 	return polygon;
 }
-/*
-template<class KD>
-double update_density(Particles *p_data,
-			Mesh<KD> *mesh,
-			int *nextDensity,
-			Polygon *boundary,
-			KD *kdt)
-{
-	cout << "update_density:"<<endl;
-	cout << "Dimension ("<<p_data->dim<<") not supported"<<endl;
-	exit(0);
-	return 0;
-}*/
-
 
 //has_escaped
 //returns id of nearest_exit
@@ -293,6 +279,8 @@ double update_density(Particles *p_data,
 	//debug::dbg << "Update current: " << current << endl;
 	//debug::dbg << "Density Updated" << endl;
 	cerr << current << endl;
+
+	test_mesh_failure(mesh,nextDensity);
 	return current;
 }
 
@@ -338,7 +326,7 @@ double handle_region(int mpos_id, Mesh<kdtree3,3> *mesh,
 	while (density[mpos_id]*sign < 0) //not charge netural, need more 
 	{	
 		int i;
-		i = create_particle(mpos_id,p_data,density,sign,
+		i = create_particle(mpos_id,p_data,density,-sign,
 				    mesh->materials[mpos_id]->electron_mass,
 				    mesh); 
 		//ntype is higher voltage, so incoming particles
@@ -361,45 +349,119 @@ double handle_region(int mpos_id, Mesh<kdtree3,3> *mesh,
 	}
 	return current;
 }
+template<class KD,int dim>
+void test_mesh_failure(Mesh<KD,dim> *mesh, int *density)
+{
+	for(int mpos_id = 0; mpos_id < mesh->npoints;mpos_id++)
+	{
+		if(mesh->is_n_type[mpos_id])
+			test_sum_failure(mpos_id,mesh,density,1);
+		else if(mesh->is_p_type[mpos_id])
+			test_sum_failure(mpos_id,mesh,density,-1);
+		else
+		{
+			cout << "POINT IS NEITHER NTYPE OR PTYPE"<<endl;
+			exit(-1);
+		}
+	}
+}
+
+template<class KD,int dim>
+void test_sum_failure(int mpos_id, Mesh<KD,dim> *mesh, int *density, 
+			int empty_sign)
+{
+	cout << "holes, electrons, sign, density: "<<endl;
+	cout << "h:" << mesh->holes_pos[mpos_id].size()<< " " ;
+	cout << "e:" << mesh->electrons_pos[mpos_id].size() << " ";
+	cout << "s:" <<empty_sign << " ";
+	cout << "d:"<< density[mpos_id] << endl;
+	int holes = mesh->holes_pos[mpos_id].size();
+	int electrons = mesh->electrons_pos[mpos_id].size();
+	if((mesh->gen_num*empty_sign+(holes-electrons)) != density[mpos_id])
+	{
+		cout << "INSUFFICIENT DENSITY"<<endl;
+		exit(-1);
+	}
+}
 
 //This is so bloody wrong it's not even funny
 template<>
 double handle_region(int mpos_id, Mesh<kdtree,2> *mesh, 
-			Particles *p_data, int *density, int sign)
+			Particles *p_data, int *density, int empty_sign)
 {
 	double current = 0;
 
-	//IF THE DENSITY IS NON-ZERO THEN 
-	//YOU HAVE TOO_MANY CARRIERS YOU MORON!
-	//If we have too few carriers, inject them
-	while (density[mpos_id]*sign < 0) //not charge netural, need more 
-	{	
-		int i;
-		i = create_particle(mpos_id,p_data,density,sign,
+	//Things that can cause an imbalance
+	//Too many carriers of one type
+	//too few carriers of another
+
+	//If the empty_sign of the region is the same as
+	//sign as the density, then we're empty, and we need more particles
+	while (density[mpos_id]*empty_sign > 0) //not charge netural, need more
+	{
+		int i = create_particle(mpos_id,p_data,density,-empty_sign,
 				    mesh->materials[mpos_id]->electron_mass,
 				    mesh); 
+	
 		//ntype is higher voltage, so incoming particles
 		//are going the 'right way'
 		if(mesh->is_n_type[i])
 		{
-			//If you are leaving from ntype side
-			current -= mesh->current_exit(p_data,i)*sign; 
+			//Currently positive
+			current -= mesh->current_exit(p_data,i)*empty_sign; 
 		}
 		//Incoming particles on p side are going the 'wrong' way.
 		if(mesh->is_p_type[i])
 		{ 
 			//leaving from ptype side
-			current += mesh->current_exit(p_data,i)*sign; 
+			current += mesh->current_exit(p_data,i)*empty_sign; 
 		}
 	}
-	//Too many?
-	while (density[mpos_id]*sign > mesh->gen_num) 
-	{
+	//If the sign of the density is different than the empty_sign
+	//of the region that means we have an excess of minority
+	//carriers
+	//In a p_region (empty means -100), this means we have
+	while (density[mpos_id]*empty_sign < 0) 
+	{	
+		cout << "Hola!"<<endl;
+		cout << "holes, electrons, sign, density: "<<endl;
+		cout << "h:" << mesh->holes_pos[mpos_id].size()<< " " ;
+		cout << "e:" << mesh->electrons_pos[mpos_id].size() << " ";
+		cout << "s:" <<empty_sign << " ";
+		cout << "d:"<< density[mpos_id] << endl;
 		//Need Less, suck or inject opposite?
 		//Pretty sure I'm supposed to suck...
 		//or does it depend on which side we're on?
 		//check bluebook
-		
+		list<int>::iterator doomed;
+		if(empty_sign == 1) //in n_region, excess implies excess holes
+		{
+			cout << "destroying holes"<<endl;
+			doomed = mesh->holes_pos[mpos_id].begin();
+		}
+		else if(empty_sign == -1)
+		{
+			cout << "destroying electrons"<<endl;
+			doomed = mesh->electrons_pos[mpos_id].begin();
+		}
+
+		int i = *doomed;
+		//ntype is higher voltage, so incoming particles
+		//are going the 'right way'
+		if(mesh->is_n_type[i])//currently negative
+		{
+			//hole is effectively injected
+			current -= mesh->current_exit(p_data,i)*empty_sign; 
+			density[mpos_id] += 1;
+		}
+		//Incoming particles on p side are going the 'wrong' way.
+		if(mesh->is_p_type[i])//currently positive,excess holes
+		{ 
+			//electron is effectively injected
+			current -= mesh->current_exit(p_data,i)*empty_sign;
+			density[mpos_id] += -1;
+		}
+		destroy_particle(p_data,i,doomed);
 	}
 	return current;
 }
@@ -416,13 +478,15 @@ template<class KD,int dim>double replenish_boundary(Particles *p_data,
 		int id = (*it);
 		if(mesh->is_p_type[id])
 		{
-			sign = 1;//Holes get injected
+			sign = -1; //empty is negative
+			cout << "in p_type"<<endl;
 			current += handle_region(id,mesh,p_data,
 						 nextDensity,sign);
 		}
 		else if(mesh->is_n_type[id])
 		{
-			sign = -1;//Electrons get injected
+			cout << "in n_type"<<endl;
+			sign = 1;//empty is positive
 			current += handle_region(id,mesh,p_data,
 						nextDensity,sign);
 		}else
@@ -430,6 +494,7 @@ template<class KD,int dim>double replenish_boundary(Particles *p_data,
 			//debug::dbg << id << "Danger will robinson!" << endl;
 		}
 	}
+	
 	return current;
 }
 

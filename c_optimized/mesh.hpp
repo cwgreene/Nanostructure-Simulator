@@ -284,7 +284,7 @@ int Mesh<kdtree,2>::has_escaped(Particles *p_data,
 //reflect
 //takes the old position, it's current positoin
 //and reflects it across the boundary.
-template <>
+/*template <>
 void Mesh<kdtree,2> reflect(Particles *p_data,int id, double *old_pos)
 {
 	Vec2d pos = p_data[2*dim*id];
@@ -295,8 +295,7 @@ void Mesh<kdtree,2> reflect(Particles *p_data,int id, double *old_pos)
 	//using tangent list
 	Vec2d tangent = tangents[p_data->mpos[id]];
 	Vec2d normal = normals[p_data->mpos[id]];
- 
-}
+}*/
 
 //has_escaped
 //returns id of nearest_exit

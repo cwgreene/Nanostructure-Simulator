@@ -244,11 +244,11 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 						  nextDensity,
 						  mesh.kdt)
 	print "Recombination"
-	#move_particles_c.recombinate(system,nextDensity,mesh.kdt)
+#	move_particles_c.recombinate(system,nextDensity,mesh.kdt)
 	print current
 	print "time:",time.time()-start
 	start = time.time()
-	current += move_particles_c.replenish(system,nextDensity)
+#	current += move_particles_c.replenish(system,nextDensity)
 	print "replenish",time.time()-start
 	reap_list(mesh.particles,reaper)
 
