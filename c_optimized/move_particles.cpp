@@ -446,12 +446,9 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 	//In a p_region (empty means -100), this means we have
 	while (density[mpos_id]*empty_sign < 0) 
 	{	
-		cout << "Hola!"<<endl;
-		cout << "holes, electrons, sign, density: "<<endl;
-		cout << "h:" << mesh->holes_pos[mpos_id].size()<< " " ;
-		cout << "e:" << mesh->electrons_pos[mpos_id].size() << " ";
-		cout << "s:" <<empty_sign << " ";
-		cout << "d:"<< density[mpos_id] << endl;
+		int i = create_particle(mpos_id,p_data,density,empty_sign,
+				    mesh->materials[mpos_id]->electron_mass,
+				    mesh); 
 		//Need Less, suck or inject opposite?
 		//Pretty sure I'm supposed to suck...
 		//or does it depend on which side we're on?
@@ -459,18 +456,18 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 		list<int>::iterator doomed;
 		if(density[mpos_id] > 0) //Too many holes
 		{
-			cout << "destroying holes"<<endl;
-			doomed = mesh->holes_pos[mpos_id].begin();
+			//doomed = mesh->holes_pos[mpos_id].begin();
+			current -= mesh->current_exit(p_data,i)*empty_sign; 
 		}
 		else if(density[mpos_id] < 0) //Too many electrons
 		{
-			cout << "destroying electrons"<<endl;
-			doomed = mesh->electrons_pos[mpos_id].begin();
+			//doomed = mesh->electrons_pos[mpos_id].begin();
+			current += mesh->current_exit(p_data,i)*empty_sign; 
 		}
 
-		int i = *doomed;
-		pick_up_particle<kdtree>(i,p_data,density,mesh);
-		destroy_particle(p_data,i,doomed);
+//		int i = *doomed;
+//		pick_up_particle<kdtree>(i,p_data,density,mesh);
+//		destroy_particle(p_data,i,doomed);
 	}
 	return current;
 }
