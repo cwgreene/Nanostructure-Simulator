@@ -113,7 +113,6 @@ void put_down_particle(int part_id, Particles *p_data,
 			int *density,Mesh<KD,dim> *mesh)
 {	
 	
-	int mesh_pos_id = p_data->p_id[part_id];
 	//double *particles = p_data->pos; //alias for macro,not needed now
 	//int dim = p_data->dim;
 
@@ -122,6 +121,7 @@ void put_down_particle(int part_id, Particles *p_data,
 	//int dim =p_data->dim;
 	//cout << "put_down_particle: entering kd_tree"<<endl;
 	p_data->p_id[part_id] = mesh->find_point_id(p_data->pos + 2*dim*part_id); //find nearest spot
+	int mesh_pos_id = p_data->p_id[part_id];
 	//cout << "put_down_particle: exiting kd_tree"<<endl;
 	density[mesh_pos_id] += p_data->p_charge[part_id];  //Put particle back down
 
@@ -135,6 +135,14 @@ void put_down_particle(int part_id, Particles *p_data,
 		mesh->holes_pos[mesh_pos_id].push_back(part_id); //add particle from local list
 		p_data->local_id[part_id] = --(mesh->holes_pos[mesh_pos_id].end()); //grab iterator position
 	}
+	/*int holes = mesh->holes_pos[mpos_id].size();
+	int electrons = mesh->electrons_pos[mpos_id].size();
+
+	if((mesh->gen_num*empty_sign+(holes-electrons)) != density[mesh_pos_id])
+	{	
+		cout<<"INSUFFICIENT DENSITY"<<endl;
+		exit(-1);	
+	}*/
 }
 
 template<class KD,int dim> 

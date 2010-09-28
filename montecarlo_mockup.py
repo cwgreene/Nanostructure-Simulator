@@ -249,8 +249,8 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	print "time:",time.time()-start
 	start = time.time()
 #	current += move_particles_c.replenish(system,nextDensity)
-	print "replenish",time.time()-start
-	reap_list(mesh.particles,reaper)
+	print "replenish:",time.time()-start
+	#reap_list(mesh.particles,reaper)
 
 	#update current values
 	current_values.append(current*constants.eC/

@@ -148,6 +148,9 @@ void move_particles(Particles *p_data,
 			Mesh<KD,dim> *mesh)
 {
 	int i;
+//	test_mesh_failure(mesh,nextDensity);
+	mesh_point_info(0,mesh,nextDensity);
+	cout << "Move Particles Enter: Test Passed"<<endl;
 	list<int>::iterator end = p_data->p_live->end();
 	printf("moving particles now\n");
 
@@ -175,6 +178,8 @@ void move_particles(Particles *p_data,
 			mesh->reflect(p_data,i,old_pos);
 		}*/
 	}
+	cout << "Particles Exit Passed"<<endl;
+	test_mesh_failure(mesh,nextDensity);
 	printf("Particles Moved\n");
 }
 
@@ -280,7 +285,9 @@ double update_density(Particles *p_data,
 	//debug::dbg << "Density Updated" << endl;
 	cerr << current << endl;
 
+	//Invariants should be satisfied.
 	test_mesh_failure(mesh,nextDensity);
+	cout << "Update Density Exit Passed"<<endl;
 	return current;
 }
 
@@ -366,20 +373,43 @@ void test_mesh_failure(Mesh<KD,dim> *mesh, int *density)
 	}
 }
 
+template<class KD, int dim>
+void mesh_point_info(int mpos_id, Mesh<KD,dim> *mesh, int *density)
+{
+	int empty_sign;
+	if(mesh->is_n_type[mpos_id])
+	{
+		empty_sign = 1;
+	}else
+	{
+		empty_sign = -1;
+	}
+	
+	cout << "holes, electrons, sign, density: "<<endl;
+	cout << "h:" << mesh->holes_pos[mpos_id].size()<< " " ;
+	cout << "e:" << mesh->electrons_pos[mpos_id].size() << " ";
+	cout << "s:" << empty_sign << " ";
+	cout << "d:"<< density[mpos_id] << endl;
+}
+
 template<class KD,int dim>
 void test_sum_failure(int mpos_id, Mesh<KD,dim> *mesh, int *density, 
 			int empty_sign)
 {
-	cout << "holes, electrons, sign, density: "<<endl;
-	cout << "h:" << mesh->holes_pos[mpos_id].size()<< " " ;
-	cout << "e:" << mesh->electrons_pos[mpos_id].size() << " ";
-	cout << "s:" <<empty_sign << " ";
-	cout << "d:"<< density[mpos_id] << endl;
+	mesh_point_info(mpos_id,mesh,density);
 	int holes = mesh->holes_pos[mpos_id].size();
 	int electrons = mesh->electrons_pos[mpos_id].size();
 	if((mesh->gen_num*empty_sign+(holes-electrons)) != density[mpos_id])
 	{
+		
 		cout << "INSUFFICIENT DENSITY"<<endl;
+		int x = mpos_id;
+		do
+		{
+			mesh_point_info(x,mesh,density);
+			cout << "Query Point"<<endl;
+			cin >> x;
+		}while(x >= 0 && x < mesh->npoints);
 		exit(-1);
 	}
 }
