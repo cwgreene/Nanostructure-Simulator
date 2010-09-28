@@ -148,9 +148,6 @@ void move_particles(Particles *p_data,
 			Mesh<KD,dim> *mesh)
 {
 	int i;
-//	test_mesh_failure(mesh,nextDensity);
-	mesh_point_info(0,mesh,nextDensity);
-	cout << "Move Particles Enter: Test Passed"<<endl;
 	list<int>::iterator end = p_data->p_live->end();
 	printf("moving particles now\n");
 
@@ -178,8 +175,6 @@ void move_particles(Particles *p_data,
 			mesh->reflect(p_data,i,old_pos);
 		}*/
 	}
-	cout << "Particles Exit Passed"<<endl;
-	test_mesh_failure(mesh,nextDensity);
 	printf("Particles Moved\n");
 }
 
@@ -286,8 +281,6 @@ double update_density(Particles *p_data,
 	cerr << current << endl;
 
 	//Invariants should be satisfied.
-	test_mesh_failure(mesh,nextDensity);
-	cout << "Update Density Exit Passed"<<endl;
 	return current;
 }
 
@@ -495,13 +488,11 @@ template<class KD,int dim>double replenish_boundary(Particles *p_data,
 		if(mesh->is_p_type[id])
 		{
 			sign = -1; //empty is negative
-			cout << "in p_type"<<endl;
 			current += handle_region(id,mesh,p_data,
 						 nextDensity,sign);
 		}
 		else if(mesh->is_n_type[id])
 		{
-			cout << "in n_type"<<endl;
 			sign = 1;//empty is positive
 			current += handle_region(id,mesh,p_data,
 						nextDensity,sign);
