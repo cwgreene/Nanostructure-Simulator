@@ -476,21 +476,7 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 		}
 
 		int i = *doomed;
-		//ntype is higher voltage, so incoming particles
-		//are going the 'right way'
-		if(mesh->is_n_type[i])//currently negative
-		{
-			//hole is effectively injected
-			current -= mesh->current_exit(p_data,i)*empty_sign; 
-			density[mpos_id] += 1;
-		}
-		//Incoming particles on p side are going the 'wrong' way.
-		if(mesh->is_p_type[i])//currently positive,excess holes
-		{ 
-			//electron is effectively injected
-			current -= mesh->current_exit(p_data,i)*empty_sign;
-			density[mpos_id] += -1;
-		}
+		pick_up_particle<kdtree>(i,p_data,density,mesh);
 		destroy_particle(p_data,i,doomed);
 	}
 	return current;
