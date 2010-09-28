@@ -272,12 +272,6 @@ int Mesh<kdtree,2>::has_escaped(Particles *p_data,
 	}
 	//Check if nearest_exit is reflecting boundary
 	int nearest_exit = find_point_id(p_data->pos+2*dim*part_id);
-	//TODO: Implement is_reflecting and uncomment the following code
-	//if(is_reflecting[nearest_exit])
-	//{
-	//	reflect(poly,p_data,part_id);
-	//	return has_escaped(poly,p_data,part_id,mesh);
-	//}
 	return nearest_exit;
 }
 
