@@ -457,12 +457,12 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 		//or does it depend on which side we're on?
 		//check bluebook
 		list<int>::iterator doomed;
-		if(empty_sign == 1) //in n_region, excess implies excess holes
+		if(density[mpos_id] > 0) //Too many holes
 		{
 			cout << "destroying holes"<<endl;
 			doomed = mesh->holes_pos[mpos_id].begin();
 		}
-		else if(empty_sign == -1)
+		else if(density[mpos_id] < 0) //Too many electrons
 		{
 			cout << "destroying electrons"<<endl;
 			doomed = mesh->electrons_pos[mpos_id].begin();
