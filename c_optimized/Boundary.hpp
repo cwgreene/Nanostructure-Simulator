@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <iostream>
+#include <string>
 
 template<int dim>
 struct Vector
@@ -16,25 +17,28 @@ template<int dim>
 class Line
 {
 public:
-	typename Vector<dim>::Type start;
-	typename Vector<dim>::Type end;
+	typedef typename Vector<dim>::Type VectorD;
+	VectorD start;
+	VectorD end;
 
 	double left;
 	double right;
 	double bottom;
 	double top;
-	Line(typename Vector<dim>::Type start,typename Vector<dim>::Type end);
+	Line(VectorD start,VectorD end);
 
 	bool intersects(Line &line2);
-	typename Vector<dim>::Type intersection_point(Line<dim> &other_line);
-	typename Vector<dim>::Type normal;
+	VectorD intersection_point(Line<dim> &other_line);
+	VectorD normal;
+
+	std::string toString();
 };
 
 inline double min(double x,double y) { return x<y? x:y; }
 inline double max(double x,double y) { return x>y? x:y; }
 
 template<int dim>
-Line<dim>::Line(typename Vector<dim>::Type start,typename Vector<dim>::Type end)
+Line<dim>::Line(VectorD start,VectorD end)
 {
 	this->start = start;
 	this->end = end;
@@ -49,6 +53,34 @@ Line<dim>::Line(typename Vector<dim>::Type start,typename Vector<dim>::Type end)
 
 }
 
+template<int dim>
+std::string Line<dim>::toString()
+{
+	std::string res = "";
+	//start
+	res += "(";
+	for(int i= 0; i < dim;i++)
+	{
+		std::ostringstream num;
+		num << start[i];
+		res += num.str();
+		res += ", ";
+	}
+	res = res.substr(0,res.length()-2);
+	res += ") -> ";
+	res += "(";
+	for(int i= 0; i < dim;i++)
+	{
+		std::ostringstream num;
+		num << end[i];
+		res += num.str();
+		res += ", ";
+	}
+	res = res.substr(0,res.length()-2);
+	res += ")";
+	return res;
+}
+
 //Intersection point
 //Returns position of intersection
 //Already have determined that the lines intersect
@@ -57,8 +89,10 @@ Line<dim>::Line(typename Vector<dim>::Type start,typename Vector<dim>::Type end)
 //Oh, right, the reason we probably DON'T do it that way is because
 //we need start and end to be going in the right... no that's wrong
 //No idea. Should probaby think about it more.
+//
+//Test status: Tested
 template<>
-Vector<2>::Type Line<2>::instersection_point(Line<2> &other)
+Vector<2>::Type Line<2>::intersection_point(Line<2> &other)
 {
 	//Comments solve intersection equation
 	//
@@ -78,26 +112,37 @@ Vector<2>::Type Line<2>::instersection_point(Line<2> &other)
 	//0=x1_y+(x2_y-x1_y)*t1-s1_y-(s2_t-s1)*t2
 	//
 	//  k1           a           b
-	//s1_x-x1_x=(x2_x-x1_x)*t1-(s2_x-s1_x)*t2
-	//s1_y-x1_y=(x2_y-x1_y)*t1-(s2_y-s1_y)*t2
+	//s1_x-x1_x=(x2_x-x1_x)*t1+-(s2_x-s1_x)*t2
+	//s1_y-x1_y=(x2_y-x1_y)*t1+-(s2_y-s1_y)*t2
 	// k2            c           d
 	//
 	//k1 = a*t1+b*t2
 	//k2 = c*t1+d*t2
 	//
 	//t1 = (k1-b*t2)/a
-	//k2 = d*(k1-b*t2)/a+t2
-	//k2 -d*k1/a=c*b*t2/a+d*t2=(d-b/a)*t2
-	//t2 = (k2-d*k1/a)/(dkb*/a)=(a*k2-d*k1)/(a*d-b*c) 
+	//k2 = c*(k1-b*t2)/a+d*t2
+	//k2 -c*k1/a=-c*b*t2/a+d*t2=(d-c*b/a)*t2
+	//t2 = (k2-c*k1/a)/(d-c*b*/a)=(a*k2-c*k1)/(a*d-b*c) 
+	//plug t2 back into t1
+	//otherwise a=0 creates issues (which vanish when we plug back in, easiest way to think of this
+	//is by thinking that t2(a) and we take the limit as a->0)
+	//Cramer's proof will probably be better way to think so we need to look that back up.
 	double a = end[0]-start[0];
-	double b = other.end[0] - other.start[0]
+	double b = -(other.end[0] - other.start[0]);
 	double c = end[1]-start[1];
-	double d = other.start[1] - other.end[1];
+	double d = -(other.end[1] - other.start[1]);
 
 	double k1 = other.start[0] - start[0];
 	double k2 = other.start[1] - start[1];
 
-	double t2 = (a*k2-d*k1)/(a*d-b*c)
+	//This is where the magic happens!
+	double t2 = (a*k2-c*k1)/(a*d-b*c);
+	double t1 = (d*k1-b*k2)/(a*d-b*c);
+
+#ifdef DEBUG
+	std::cout << start[0] <<"/"<< start[0] << std::endl;
+	std::cout << "times:"<<t1 << "/"<<t2<<std::endl;
+#endif
 
 	return (other.start+(other.end-other.start)*t2);
 }
@@ -105,9 +150,10 @@ Vector<2>::Type Line<2>::instersection_point(Line<2> &other)
 template<int dim>
 class Boundary
 {
+public:
 	std::vector<typename Vector<dim>::Type> *adjacent;//adjacent normals
 	std::vector<Line<dim> > boundary_lines;//
-public:
+
 	Boundary(double *points,int n);
 
 	bool reflect_trajectory(double *pos,typename Vector<dim>::Type old_pos);
@@ -198,7 +244,7 @@ bool Boundary<dim>::is_inward_facing(typename Vector<dim>::Type trajectory,int p
 template<int dim>
 bool Boundary<dim>::intersects_boundary(Line<dim> &line, int *id)
 {
-	for(int i =0;i < boundary_lines.size();i++)
+	for(unsigned int i =0;i < boundary_lines.size();i++)
 	{
 		if(line.intersects(boundary_lines[i]))//2D only it seems
 		{
