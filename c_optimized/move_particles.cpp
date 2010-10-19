@@ -167,6 +167,7 @@ void move_particles(Particles *p_data,
 					efield,dt,length_scale,
 					mesh->particle_weight,
 					dim);
+		p_data->p_id[i] = mesh->find_point_id(p_data->pos + 2*dim*i); //find nearest spot
 		//After random movement, check to see if the nearest point
 		//Is a reflecting boundary. If it is, we reflect
 //		int loc = mesh->find_point_id(p_data->pos+2*dim*i);
@@ -220,7 +221,7 @@ int has_escaped(Polytope<_dim> *poly,
 	if(poly->contains(p_data+2*dim*part_id,0))
 		return -1;
 	//Check if nearest_exit is reflecting boundary
-	int nearest_exit = mesh->find_point_id(p_data->pos+2*dim*part_id);
+	int nearest_exit = p_data->p_id[part_id];
 	//TODO: Implement is_reflecting and uncomment the following code
 	//if(is_reflecting[nearest_exit])
 	//{
@@ -349,6 +350,7 @@ double handle_region(int mpos_id, Mesh<kdtree3,3> *mesh,
 	}
 	return current;
 }
+
 template<class KD,int dim>
 void test_mesh_failure(Mesh<KD,dim> *mesh, int *density)
 {
@@ -407,7 +409,6 @@ void test_sum_failure(int mpos_id, Mesh<KD,dim> *mesh, int *density,
 	}
 }
 
-//This is so bloody wrong it's not even funny
 template<>
 double handle_region(int mpos_id, Mesh<kdtree,2> *mesh, 
 			Particles *p_data, int *density, int empty_sign)
@@ -501,7 +502,6 @@ template<class KD,int dim>double replenish_boundary(Particles *p_data,
 	
 	return current;
 }
-
 
 extern "C" double replenishC(Particles *p_data, 
 			int *nextDensity, 

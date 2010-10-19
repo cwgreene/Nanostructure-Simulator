@@ -39,7 +39,7 @@ class Particles
 public:
 	double *pos; //Array of particle's positions, and momentums, TODO: RENAME
 	int *p_charge; //array of particle's charges
-	int *p_id; //array of particle's mesh Position ids
+	int *p_id; //array of particle's _Mesh_ Position ids, probaly worst possible name
 	list<int>::iterator *local_id; //array of local_ids, which point into the mesh local list
 	list<int>::iterator *live_id; //array of live_ids, which point into the p_live list
 	double *p_mass; //array Particle masses, scaled to real units
@@ -113,14 +113,8 @@ void put_down_particle(int part_id, Particles *p_data,
 			int *density,Mesh<KD,dim> *mesh)
 {	
 	
-	//double *particles = p_data->pos; //alias for macro,not needed now
-	//int dim = p_data->dim;
-
-	//todo: make next line mesh dependent function
-	//double *particles = p_data->pos;
-	//int dim =p_data->dim;
-	//cout << "put_down_particle: entering kd_tree"<<endl;
-	p_data->p_id[part_id] = mesh->find_point_id(p_data->pos + 2*dim*part_id); //find nearest spot
+	//Okay, this is now valid since 
+	//We update immediately after move_particles
 	int mesh_pos_id = p_data->p_id[part_id];
 	//cout << "put_down_particle: exiting kd_tree"<<endl;
 	density[mesh_pos_id] += p_data->p_charge[part_id];  //Put particle back down

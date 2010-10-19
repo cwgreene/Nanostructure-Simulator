@@ -6,6 +6,9 @@ EIGEN = /opt/local/include/eigen2
 Face: Face.hpp
 	 g++ -g -fPIC -O2 -c -Wall -x c++ -I $(EIGEN) Face.hpp
 
+tests: Boundary.hpp Boundary_Test.cpp
+	g++ -g -Wall -x c++ -I $(EIGEN) Boundary_Test.cpp -o tests/boundarytest
+
 testGeometry: 
 	 g++ -g -O2 -Wall -x c++ -I $(EIGEN) testGeometry.cpp -o testGeometry
 
