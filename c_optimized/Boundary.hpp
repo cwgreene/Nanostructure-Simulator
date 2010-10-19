@@ -24,7 +24,9 @@ public:
 	double bottom;
 	double top;
 	Line(typename Vector<dim>::Type start,typename Vector<dim>::Type end);
+
 	bool intersects(Line &line2);
+	typename Vector<dim>::Type intersection_point(Line<dim> &other_line);
 	typename Vector<dim>::Type normal;
 };
 
@@ -45,6 +47,59 @@ Line<dim>::Line(typename Vector<dim>::Type start,typename Vector<dim>::Type end)
 	this->left = min(start[0],end[0]);
 	this->right = min(start[0],end[0]);
 
+}
+
+//Intersection point
+//Returns position of intersection
+//Already have determined that the lines intersect
+//Might be faster to just use this function and check t1 and t2 values
+//
+//Oh, right, the reason we probably DON'T do it that way is because
+//we need start and end to be going in the right... no that's wrong
+//No idea. Should probaby think about it more.
+template<>
+Vector<2>::Type Line<2>::instersection_point(Line<2> &other)
+{
+	//Comments solve intersection equation
+	//
+	//To be honest, it'd probably just be faster to compute this
+	//and then check that t2 and t1 are both inside [0,1], after checking that 
+	//
+	//
+	//l1 = x1+(x2-x1)*t1
+	//l2 = s1+(s2-s1)*t2
+	//find t1,t2 such that l1=l2
+	//return s1+(s2-s1)*t2
+	//To solve for t1,t2
+	//we note
+	//l1-l2=0=x1+(x2-x1)*t1-s1-(s2-s1)*t2
+	//resulting in
+	//0=x1_x+(x2_x-x1_x)*t1-s1_x-(s2_x-s1_x)*t2
+	//0=x1_y+(x2_y-x1_y)*t1-s1_y-(s2_t-s1)*t2
+	//
+	//  k1           a           b
+	//s1_x-x1_x=(x2_x-x1_x)*t1-(s2_x-s1_x)*t2
+	//s1_y-x1_y=(x2_y-x1_y)*t1-(s2_y-s1_y)*t2
+	// k2            c           d
+	//
+	//k1 = a*t1+b*t2
+	//k2 = c*t1+d*t2
+	//
+	//t1 = (k1-b*t2)/a
+	//k2 = d*(k1-b*t2)/a+t2
+	//k2 -d*k1/a=c*b*t2/a+d*t2=(d-b/a)*t2
+	//t2 = (k2-d*k1/a)/(dkb*/a)=(a*k2-d*k1)/(a*d-b*c) 
+	double a = end[0]-start[0];
+	double b = other.end[0] - other.start[0]
+	double c = end[1]-start[1];
+	double d = other.start[1] - other.end[1];
+
+	double k1 = other.start[0] - start[0];
+	double k2 = other.start[1] - start[1];
+
+	double t2 = (a*k2-d*k1)/(a*d-b*c)
+
+	return (other.start+(other.end-other.start)*t2);
 }
 
 template<int dim>
