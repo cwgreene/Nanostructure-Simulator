@@ -3,15 +3,10 @@
 
 #include <Eigen/Core>
 #include <vector>
+#include "Utils.hpp"
 
 #include <iostream>
 #include <string>
-
-template<int dim>
-struct Vector
-{
-	typedef Eigen::Matrix<double,dim,1> Type;
-};
 
 template<int dim>
 class Line
@@ -27,9 +22,11 @@ public:
 	double top;
 	Line(VectorD start,VectorD end);
 
+	double distance_to(const VectorD &point);
 	bool intersects(Line &line2);
 	VectorD intersection_point(Line<dim> &other_line);
-	VectorD normal;
+	VectorD normal; //Is normalized
+	Eigen::Matrix<double,dim,dim>;
 
 	std::string toString();
 };
@@ -51,6 +48,12 @@ Line<dim>::Line(VectorD start,VectorD end)
 	this->left = min(start[0],end[0]);
 	this->right = min(start[0],end[0]);
 
+}
+
+template<int dim>
+double Line<dim>::distance_to(const VectorD &point)
+{
+	return normal.dot(point);
 }
 
 template<int dim>
@@ -137,7 +140,7 @@ Vector<2>::Type Line<2>::intersection_point(Line<2> &other)
 
 	//This is where the magic happens!
 	double t2 = (a*k2-c*k1)/(a*d-b*c);
-	double t1 = (d*k1-b*k2)/(a*d-b*c);
+	//double t1 = (d*k1-b*k2)/(a*d-b*c);
 
 #ifdef DEBUG
 	std::cout << start[0] <<"/"<< start[0] << std::endl;
@@ -151,17 +154,70 @@ template<int dim>
 class Boundary
 {
 public:
-	std::vector<typename Vector<dim>::Type> *adjacent;//adjacent normals
-	std::vector<Line<dim> > boundary_lines;//
+	typedef typename Vector<dim>::Type VectorD;
 
-	Boundary(double *points,int n);
+	std::vector<std::vector<Line<dim> > > adjacent;//adjacent normals
+	std::vector<Line<dim> > boundary_lines;//lines
+	std::vector<VectorD > boundary_points;//Points.
+	std::vector<typename Vector<dim>::Type> normals;
+	
+	Boundary(double *points,int n,VectorD interior_point);
 
-	bool reflect_trajectory(double *pos,typename Vector<dim>::Type old_pos);
-	bool is_inward_facing(typename Vector<dim>::Type trajectory,int point);
+	Line<dim> nearest_line(VectorD p);
+	VectorD nearest_point(VectorD p);
+
+	bool reflect_trajectory(double *pos,VectorD old_pos);
+	bool is_inward_facing(VectorD trajectory,VectorD point);
 	bool intersects_boundary(Line<dim> &line, int *id);
 
+	void construct_normals(typename Vector<dim>::Type point);
+
 	void print_lines();
+	void print_adjacent();
+	void print_points();
 };
+
+//strictly speaking the following code is only correct in 2 dimensions.
+template<int dim>
+void Boundary<dim>::construct_normals(typename Vector<dim>::Type point)
+{
+	for(unsigned int i = 0;i < boundary_lines.size();i++)
+	{
+		typename Vector<dim>::Type vec = boundary_lines[i].end-boundary_lines[i].start;
+		double projection = vec.dot(point);
+		typename Vector<dim>::Type normal = point -projection*vec;
+
+		normal.normalize();//Probably want it normalized.
+		
+		normals.push_back(normal);//lines up with boundary_lines 
+	}
+}
+
+template <int dim>
+void Boundary<dim>::print_points()
+{
+	for(unsigned int i = 0 ; i < boundary_points.size();i++)
+	{
+		std::cout<<"Point "<<i<<": ";
+		std::cout<<(std::string)vec_str<dim>(boundary_points[i]);
+		std::cout<<std::endl;
+	}
+}
+
+template <int dim>
+void Boundary<dim>::print_adjacent()
+{
+	for(unsigned int i = 0 ; i < boundary_points.size();i++)
+	{
+		std::cout<<"Point "<<i<<": ";
+		//print lines
+		std::cout<<"[("
+			   <<vec_str<dim>(adjacent[i][0].start)<< ") - ("
+			   <<vec_str<dim>(adjacent[i][0].end)<<")], ["
+			   <<vec_str<dim>(adjacent[i][0].start)<< ") - ("
+			   <<vec_str<dim>(adjacent[i][0].end)<<")]"<<std::endl;
+	}
+}
 
 template<int dim>
 void Boundary<dim>::print_lines()
@@ -183,14 +239,38 @@ void Boundary<dim>::print_lines()
 }
 
 template<int dim>
-Boundary<dim>::Boundary(double *points,int n)
+void Boundary<dim>::construct_reflection_matrices(VectorD interior_point)
 {
+	for(unsigned int i = 0; i < boundary_lines.size();i++)
+	{
+		
+	}
+}
+
+template<int dim>
+Boundary<dim>::Boundary(double *points,int n, VectorD interior_point)
+{
+	//Init adjacent to right size
+	for(int i = 0; i < n;i++)
+	{
+		std::vector< Line<dim> > empty;
+		adjacent.push_back(empty);
+	}
+
+	//Init each point and associated lines
  	for(int i = 0 ;i < n;i++)
 	{
+		if(i != 0)
+			adjacent[i].push_back(boundary_lines[i-1]);//Previous line is adjacent to this point
+		boundary_points.push_back(VectorD(points+i*dim));
 		boundary_lines.push_back(Line<dim>
-			  (typename Vector<dim>::Type(points+i*dim),
-			   typename Vector<dim>::Type(points+((i*dim+dim)%(dim*n)))));
+			  (VectorD(points+i*dim),
+			   VectorD(points+((i*dim+dim)%(dim*n)))));
+		adjacent[i].push_back(boundary_lines[i]);//add latest to this point
 	}
+	adjacent[0].insert(adjacent[0].begin(),boundary_lines[n-1]);//First is adjacent to last
+	construct_normals(interior_point);
+	construct_reflect_matrices(interior_point);
 }
 
 /**/
@@ -223,19 +303,62 @@ bool Line<dim>::intersects(Line &line2)
 }
 /*end I n t e r s e c t i o n*/
 
-//is_inward_facing
-//Takes a trajectory, and the nearest point,
-//verifies that the two adjacent edges 
 template<int dim>
-bool Boundary<dim>::is_inward_facing(typename Vector<dim>::Type trajectory,int point)
+inline typename Vector<dim>::Type FarthestPoint()
 {
+	typename Vector<dim>::type point;
+	for(int i = 0; i < dim;i++)
+		point[i] = HUGE_VAL;//Perhaps bigger.
+	return point;
+}
+
+
+
+template<int dim>
+Line<dim> Boundary<dim>::nearest_line(VectorD point)
+{
+	double dist = HUGE_VAL;//Big. Ideally should be infinity
+	Line<dim> nearest;
+	for(unsigned int i = 0 ; i < boundary_lines.size();i++)
+	{
+		if(boundary_lines[i].distance_to(point) < dist)
+		{
+			dist = boundary_lines[i].distance_to(point);
+			nearest = boundary_lines[i];
+		}
+	}
+
+	return nearest;
+}
+
+template<int dim>
+typename Vector<dim>::Type Boundary<dim>::nearest_point(VectorD point)
+{
+	double dist = HUGE_VAL;//Big. Ideally should be infinity
+	VectorD nearest;
+	for(unsigned int i = 0 ; i < boundary_points.size();i++)
+	{
+		if(boundary_points.distance_to(point) < dist)
+		{
+			dist = boundary_points.distance_to(point);
+			nearest = boundary_lines[i];
+		}
+	}
+
+	return nearest;
+}
+//is_inward_facing
+//Takes a trajectory, and a point,
+//verifies that the trajectory is between the two lines
+template<int dim>
+bool Boundary<dim>::is_inward_facing(VectorD trajectory,VectorD point)
+{
+	//Want point, since that's where we generate at
+	//points.
+	VectorD nearest_point = boundary_nearest_point(point);
+							 
 	for(int i = 0 ; i < adjacent[point].size();i++)
 	{
-		double dot = 0;
-		for(int d = 0; d < dim;d++)
-			dot += adjacent[point][i][d]*trajectory[d]; //Dot with adjacent normals
-		if(dot < 0)
-			return false;
 	}
 	return true;
 }
@@ -259,7 +382,7 @@ bool Boundary<dim>::intersects_boundary(Line<dim> &line, int *id)
 template<int dim>
 bool Boundary<dim>::reflect_trajectory(double *pos, typename Vector<dim>::Type oldpos)
 {
-	typename Vector<dim>::Type vpos(pos);
+	VectorD vpos(pos);
 	Line<dim> trajectory(typename Vector<dim>::Type(pos), oldpos);
 	int line_id;
 
@@ -271,11 +394,12 @@ bool Boundary<dim>::reflect_trajectory(double *pos, typename Vector<dim>::Type o
 	Line<dim> intersection_line = boundary_lines[line_id];
 
 	//get intersection point
-	typename Vector<dim>::Type ip = trajectory.intersection_point(intersection_line);
-	typename Vector<dim>::Type remainder = vpos-ip;
+	VectorD ip = trajectory.intersection_point(intersection_line);
+	std::cout << "intersection Point: "<<vec_str<dim>(ip)<<"\n";
+	VectorD remainder = vpos-ip;
 
-	//Reflect "outside" line
-	vpos = reflect_matrix(vpos);//Reflect remainder
+	//Reflect "outside" line //Yes Chris, if you don't actually uncomment the next line, this ain't going to work.
+	vpos = boundary_lines[line_id].reflect_matrix*vpos;//Reflect remainder
 	for(int i = 0; i < dim;i++)//Copy
 		pos[i] = vpos[i];
 	return true;

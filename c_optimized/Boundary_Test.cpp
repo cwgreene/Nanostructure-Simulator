@@ -17,21 +17,38 @@ bool test_Line()
 
 bool test_Boundary()
 {
+	using namespace Eigen;
 	double bounds[]={0.0,0.0, //>v
 		         0.0,1.0, //^<
 		         1.0,1.0,
 		         1.0,0.0};
-	Boundary<2> boundary(bounds,4);
 
+	//Test Construction
+	std::cout<< "\nTesting Construction of Boundary\n";
+	Boundary<2> boundary(bounds,4,Vector2d(.1,.7));
+	std::cout<< "\n Lines:\n";
 	boundary.print_lines();
+	std::cout<< "\n points:\n";
+	boundary.print_points();
+	std::cout<< "\n adjacents:\n";
+	boundary.print_adjacent();
 
+	//Test Reflection
+	std::cout<< "\nTesting Reflection\n";
 	double cur_pos[]={0.75,-0.25};
 	Vector<2>::Type old_pos(.25,.25);
-	//boundary.reflect_trajectory(cur_pos,old_pos);
-	std::cout << "cur_pos[0]: "<<cur_pos[0]<< "cur_pos[1]: "<<cur_pos[1]<<std::endl;
+	std::cout << " cur_pos[0]: " <<cur_pos[0]<< " cur_pos[1]: "<<cur_pos[1]<<std::endl;
+	std::cout << " old_pos[0]: " <<old_pos[0]<< " old_pos[1]: "<<old_pos[1]<<std::endl;
+	if(boundary.reflect_trajectory(cur_pos,old_pos))
+	{
+		std::cout<<" After Reflection:\n";
+		std::cout << " cur_pos[0]: " <<cur_pos[0]<< " cur_pos[1]: "<<cur_pos[1]<<std::endl;
+	}else
+		std::cout<< " Error! Not Reflected!"<<std::cout;
 
+	//Test Intersection	
+	std::cout<< "\nTesting Intersection\n";
 	Line<2> line1(Vector<2>::Type(.5,.5),Vector<2>::Type(1.5,.5));
-
 	int id;
 	if(boundary.intersects_boundary(line1,&id))
 	{
@@ -41,6 +58,13 @@ bool test_Boundary()
 		std::cout << point[0] << "," << point[1] << std::endl;
 	}
 
+	//Test Line Normals
+	std::cout<< "\nTesting Normals\n";
+	for(unsigned int i = 0 ; i < boundary.normals.size();i++)
+	{
+		std::cout<< "Normal "<<i<<": "<< boundary.normals[i][0] << " " <<
+			 boundary.normals[i][1] << std::endl;
+	}
 	return true;
 }
 

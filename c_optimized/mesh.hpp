@@ -288,6 +288,7 @@ int Mesh<kdtree,2>::has_escaped(Particles *p_data,
 template <>
 void Mesh<kdtree,2> reflect(Particles *p_data,int id, double *old_pos)
 {
+	int dim = 2;
 	Vector2d pos = p_data[2*dim*id];
 	Vector2d old_pos = old_pos;
 
