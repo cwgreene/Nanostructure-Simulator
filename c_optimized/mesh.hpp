@@ -6,6 +6,7 @@
 template<class KD,int _dim> class Mesh;
 
 //Headers
+#include "Boundary.hpp"
 #include "Polytope.hpp"
 #include "particles.hpp"
 #include "mesh.hpp"
@@ -40,10 +41,12 @@ template<class KD,int dim> class Mesh
 public:
 	Polytope<dim> *outer;
 	Polytope<dim> *inner;
+
+	Boundary<dim> *rboundary;//For reflections
 	//These are for ordered transversal, store mesh_pos_id's
-	list<int> boundary;
-	list<int> n_type;
-	list<int> p_type;
+	vector<int> boundary;
+	vector<int> n_type;
+	vector<int> p_type;
 
 	//Local list of particles
 	//Inverse hole and electron count lookup, indexed by mesh_pos_id
@@ -75,6 +78,7 @@ public:
 	double current_exit(Particles *p_data,int part_id);
 	double current_exit(Particles *p_data,int part_id, Face *exit_face);
 	int has_escaped(Particles *p_data,int i);
+	bool reflect(Particles *p_data,int i,double *old_pos);
 
 	//Constructors
 	Mesh(double *points, int n_points,
@@ -171,6 +175,21 @@ Mesh<KD,dim>::Mesh(double *points,
 	}
 	//Attach kdtree.
 	this->kdt = _kdt;
+	double *boundaries_a = new double[nboundary];
+	Eigen::Matrix<double,dim,1> interior_p;
+	for(int i = 0; i < nboundary;i++)
+	{
+		int offset = i*dim;
+		for(int k = 0; k < dim;k++)
+		{
+			int boffset = boundary[i]*dim;
+			boundaries_a[offset+k] = points[boffset+dim];
+			interior_p[k] += points[boffset+dim];
+			interior_p[k] /= nboundary;
+		}
+	}
+	rboundary= new Boundary<dim>(boundaries_a,nboundary,interior_p);
+			         
 }
 
 
@@ -285,18 +304,11 @@ int Mesh<kdtree,2>::has_escaped(Particles *p_data,
 //reflect
 //takes the old position, it's current positoin
 //and reflects it across the boundary.
-template <>
-void Mesh<kdtree,2> reflect(Particles *p_data,int id, double *old_pos)
+template <class KD,int dim>
+bool Mesh<KD,dim>::reflect(Particles *p_data,int id, double *old_pos)
 {
-	int dim = 2;
-	Vector2d pos = p_data[2*dim*id];
-	Vector2d old_pos = old_pos;
-
-	Vector2d travel = pos-old_pos;
-	//Calculate intersection point with line
-	//using tangent list
-	Vector2d tangent = tangents[p_data->mpos[id]];
-	Vector2d normal = normals[p_data->mpos[id]];
+	typename Boundary<dim>::VectorD voldpos(old_pos);
+	return rboundary->reflect_trajectory(p_data->pos+id*dim*2,voldpos); //should be true
 }
 
 //has_escaped

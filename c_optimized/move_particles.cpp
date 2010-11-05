@@ -123,9 +123,11 @@ extern "C" void move_particlesC(Particles *p_data,
 {
 	if(p_data->dim == 3)
 	{
-		move_particles(p_data,efield,
+		/*move_particles(p_data,efield,
 				nextDensity,dt,length_scale,
-				(Mesh<kdtree3,3> *)mesh);
+				(Mesh<kdtree3,3> *)mesh);*/
+		std::cout << "Don't use 3 dimensions for now. Boundary code is stupid. Fix it.\n";
+		exit(-1);
 		return;
 	}
 	if(p_data->dim == 2)
@@ -170,11 +172,11 @@ void move_particles(Particles *p_data,
 		p_data->p_id[i] = mesh->find_point_id(p_data->pos + 2*dim*i); //find nearest spot
 		//After random movement, check to see if the nearest point
 		//Is a reflecting boundary. If it is, we reflect
-//		int loc = mesh->find_point_id(p_data->pos+2*dim*i);
-/*		if(mesh->is_reflect[loc])
+		int loc = mesh->find_point_id(p_data->pos+2*dim*i);
+		if(mesh->is_reflect[loc])
 		{
 			mesh->reflect(p_data,i,old_pos);
-		}*/
+		}
 	}
 	printf("Particles Moved\n");
 }
@@ -476,8 +478,8 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 template<class KD,int dim>double replenish_boundary(Particles *p_data,
 			  int *nextDensity, Mesh<KD,dim> *mesh)
 {
-	list<int>::iterator it = mesh->boundary.begin();
-	list<int>::iterator end = mesh->boundary.end();
+	vector<int>::iterator it = mesh->boundary.begin();
+	vector<int>::iterator end = mesh->boundary.end();
 	double current = 0;
 	int sign = 0;
 	for(;it != end;++it)

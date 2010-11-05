@@ -26,7 +26,7 @@ public:
 	bool intersects(Line &line2);
 	VectorD intersection_point(Line<dim> &other_line);
 	VectorD normal; //Is normalized
-	Eigen::Matrix<double,dim,dim>;
+	//Eigen::Matrix<double,dim,dim> reflect_matrix;//Don't need yet.
 
 	std::string toString();
 };
@@ -175,20 +175,28 @@ public:
 	void print_lines();
 	void print_adjacent();
 	void print_points();
+	void print_normals();
 };
 
 //strictly speaking the following code is only correct in 2 dimensions.
 template<int dim>
-void Boundary<dim>::construct_normals(typename Vector<dim>::Type point)
+void Boundary<dim>::construct_normals(VectorD point)
 {
 	for(unsigned int i = 0;i < boundary_lines.size();i++)
 	{
-		typename Vector<dim>::Type vec = boundary_lines[i].end-boundary_lines[i].start;
-		double projection = vec.dot(point);
-		typename Vector<dim>::Type normal = point -projection*vec;
-
-		normal.normalize();//Probably want it normalized.
+		//Send point to correct reference frame
+		VectorD frame_point = point - boundary_lines[i].start;
 		
+		//Construct vector going from start->end
+		typename Vector<dim>::Type vec = boundary_lines[i].end-boundary_lines[i].start;
+
+		//normalize and have point project onto it		
+		vec.normalize();
+		double projection = frame_point.dot(vec);
+		
+		//since: projection+normal = point ===> normal = point-projection
+		VectorD normal = frame_point - (projection*vec);
+		normal.normalize();
 		normals.push_back(normal);//lines up with boundary_lines 
 	}
 }
@@ -239,11 +247,11 @@ void Boundary<dim>::print_lines()
 }
 
 template<int dim>
-void Boundary<dim>::construct_reflection_matrices(VectorD interior_point)
+void Boundary<dim>::print_normals()
 {
-	for(unsigned int i = 0; i < boundary_lines.size();i++)
+	for(unsigned int i= 0; i < boundary_lines.size();i++)
 	{
-		
+		std::cout <<"Line "<<i<<":"<< vec_str<dim>(normals[i]) << "\n";
 	}
 }
 
@@ -270,7 +278,7 @@ Boundary<dim>::Boundary(double *points,int n, VectorD interior_point)
 	}
 	adjacent[0].insert(adjacent[0].begin(),boundary_lines[n-1]);//First is adjacent to last
 	construct_normals(interior_point);
-	construct_reflect_matrices(interior_point);
+	//construct_reflect_matrices(interior_point);//Don't need this now.
 }
 
 /**/
@@ -296,7 +304,7 @@ bool Line<dim>::intersects(Line &line2)
 	double d3 = direction(start,end,line2.start);
 	double d4 = direction(start,end,line2.end);
 	if (((d1>0 && d2<0) || (d1 < 0 && d2> 0)) &&
-		(d3>0 && d4 < 0) || (d3 < 0 && d4>0))
+		((d3>0 && d4 < 0) || (d3 < 0 && d4>0)))
 		return true;
 	//Going to ignore on segment concerns for now
 	return false;
@@ -371,6 +379,7 @@ bool Boundary<dim>::intersects_boundary(Line<dim> &line, int *id)
 	{
 		if(line.intersects(boundary_lines[i]))//2D only it seems
 		{
+			std::cout<<"howdy ho!"<<i<<"\n";
 			*id = i;
 			return true; //Ignores possibility of two intersections
 		}
@@ -387,21 +396,29 @@ bool Boundary<dim>::reflect_trajectory(double *pos, typename Vector<dim>::Type o
 	int line_id;
 
 	//Check for intersection
-	if(!intersects_boundary(trajectory,&line_id))
+	if(!intersects_boundary(trajectory,&line_id))//Line_id is zero.
 		return false;
 
 	//if intersects, get line	
 	Line<dim> intersection_line = boundary_lines[line_id];
+	std::cout<<intersection_line.toString()<<"\n";
 
 	//get intersection point
 	VectorD ip = trajectory.intersection_point(intersection_line);
 	std::cout << "intersection Point: "<<vec_str<dim>(ip)<<"\n";
 	VectorD remainder = vpos-ip;
+	std::cout << "remainder: "<<vec_str<dim>(remainder)<<"\n";
 
 	//Reflect "outside" line //Yes Chris, if you don't actually uncomment the next line, this ain't going to work.
-	vpos = boundary_lines[line_id].reflect_matrix*vpos;//Reflect remainder
+	double normal_projection = normals[line_id].dot(remainder);//Reflect remainder
+	std::cout << "Intersection_line: " << intersection_line.toString() << "\n";
+	std::cout << "Intersection_normal: " << vec_str<dim>(normals[line_id]) << "\n";
+	std::cout << "Projection Onto Normal: " << vec_str<dim>(normals[line_id]*normal_projection) << "\n";
+	remainder= remainder - (2*normal_projection*normals[line_id]);//go twice in the direction of the normal
+	remainder += ip; //Need to recover this component
+	std::cout<<vec_str<dim>(vpos)<<"\n";
 	for(int i = 0; i < dim;i++)//Copy
-		pos[i] = vpos[i];
+		pos[i] = remainder[i];
 	return true;
 }
 #endif

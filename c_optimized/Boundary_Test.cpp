@@ -1,7 +1,6 @@
 #include "Boundary.hpp"
 #include <Eigen/Core>
 
-
 bool test_Line()
 {
 	using namespace Eigen;
@@ -28,6 +27,8 @@ bool test_Boundary()
 	Boundary<2> boundary(bounds,4,Vector2d(.1,.7));
 	std::cout<< "\n Lines:\n";
 	boundary.print_lines();
+	std::cout<< "\n Line Normals:\n";
+	boundary.print_normals();
 	std::cout<< "\n points:\n";
 	boundary.print_points();
 	std::cout<< "\n adjacents:\n";
@@ -35,8 +36,8 @@ bool test_Boundary()
 
 	//Test Reflection
 	std::cout<< "\nTesting Reflection\n";
-	double cur_pos[]={0.75,-0.25};
-	Vector<2>::Type old_pos(.25,.25);
+	double cur_pos[]={.58,1.28};
+	Vector<2>::Type old_pos(.45,.83);
 	std::cout << " cur_pos[0]: " <<cur_pos[0]<< " cur_pos[1]: "<<cur_pos[1]<<std::endl;
 	std::cout << " old_pos[0]: " <<old_pos[0]<< " old_pos[1]: "<<old_pos[1]<<std::endl;
 	if(boundary.reflect_trajectory(cur_pos,old_pos))
