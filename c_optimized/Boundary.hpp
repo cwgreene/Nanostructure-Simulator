@@ -157,7 +157,7 @@ class Boundary
 public:
 	typedef typename Vector<dim>::Type VectorD;
 
-	std::vector<std::vector<Line<dim> > > adjacent;//adjacent normals
+	std::vector<std::vector<Line<dim> *> > adjacent;//adjacent normals
 	std::vector<Line<dim> > boundary_lines;//lines
 	std::vector<VectorD > boundary_points;//Points.
 	std::vector<typename Vector<dim>::Type> normals;
@@ -223,10 +223,10 @@ void Boundary<dim>::print_adjacent()
 		std::cout<<"Point "<<i<<": ";
 		//print lines
 		std::cout<<"[("
-			   <<vec_str<dim>(adjacent[i][0].start)<< ") - ("
-			   <<vec_str<dim>(adjacent[i][0].end)<<")], ["
-			   <<vec_str<dim>(adjacent[i][0].start)<< ") - ("
-			   <<vec_str<dim>(adjacent[i][0].end)<<")]"<<std::endl;
+			   <<vec_str<dim>(adjacent[i][0]->start)<< ") - ("
+			   <<vec_str<dim>(adjacent[i][0]->end)<<")], ["
+			   <<vec_str<dim>(adjacent[i][0]->start)<< ") - ("
+			   <<vec_str<dim>(adjacent[i][0]->end)<<")]"<<std::endl;
 	}
 }
 
@@ -265,22 +265,23 @@ Boundary<dim>::Boundary(double *points,int n, VectorD interior_point)
 	//Init adjacent to right size
 	for(int i = 0; i < n;i++)
 	{
-		std::vector< Line<dim> > empty;
+		std::vector< Line<dim>*> empty;
 		adjacent.push_back(empty);
 	}
 
 	//Init each point and associated lines
  	for(int i = 0 ;i < n;i++)
 	{
-		if(i != 0)
-			adjacent[i].push_back((boundary_lines[i-1]));//Previous line is adjacent to this point
 		boundary_points.push_back(VectorD(points+i*dim));
 		boundary_lines.push_back(Line<dim>
 			  (VectorD(points+i*dim),
 			   VectorD(points+((i*dim+dim)%(dim*n)))));
-		adjacent[i].push_back((boundary_lines[i]));//add latest to this point
 	}
-	adjacent[0].insert(adjacent[0].begin(),(boundary_lines[n-1]));//First is adjacent to last
+	for(int i = 0; i < n;i++)
+	{
+		adjacent[i].push_back(&(boundary_lines[(n+i-1)%n]));
+		adjacent[i].push_back(&(boundary_lines[i]));
+	}
 	construct_normals(interior_point);
 	//construct_reflect_matrices(interior_point);//Don't need this now.
 }
@@ -360,7 +361,7 @@ Boundary<dim>::nearest_mapped_point(VectorD point)
 			id = i;
 		}
 	}
-	std::cout << "\n Nearest Point: "<<vec_str<dim>(nearest)<<"\n";
+//	std::cout << "\n Nearest Point: "<<vec_str<dim>(nearest)<<"\n";
 
 	return std::pair<int,VectorD>(id,nearest);
 }
@@ -374,12 +375,12 @@ bool Boundary<dim>::is_inward_facing(VectorD trajectory,VectorD point)
 	//points.
 	std::pair<int,VectorD> res = nearest_mapped_point(point);
 	int id = res.first;
-	std::cout << id<<"\n";
+//	std::cout << id<<"\n";
 	for(unsigned int i = 0 ; i < adjacent[id].size();i++)
 	{
-		std::cout<<vec_str<dim>(adjacent[id][i].normal)<<" ";
-		std::cout<<"dot: "<<adjacent[id][i].normal.dot(trajectory)<<"\n";
-		if(adjacent[id][i].normal.dot(trajectory) < 0)
+	//	std::cout<<vec_str<dim>(adjacent[id][i]->normal)<<" ";
+	//	std::cout<<"dot: "<<adjacent[id][i]->normal.dot(trajectory)<<"\n";
+		if(adjacent[id][i]->normal.dot(trajectory) < 0)
 			return false;
 	}
 	return true;

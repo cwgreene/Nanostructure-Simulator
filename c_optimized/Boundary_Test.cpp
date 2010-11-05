@@ -16,7 +16,7 @@ bool test_Line()
 
 bool test_inward_facing(Eigen::Vector2d x, Eigen::Vector2d y, Boundary<2> &b)
 {
-	std::cout << "is_inward_facing: ["<<vec_str<2>(x)<<"] ["<<vec_str<2>(y)<<"]\n";
+	std::cout << "is_inward_facing: trajectory: ["<<vec_str<2>(x)<<"] point: ["<<vec_str<2>(y)<<"]\n";
 	std::cout<< b.is_inward_facing(x,y)<<"\n";
 	return true;
 }
