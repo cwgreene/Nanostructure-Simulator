@@ -62,6 +62,17 @@ void scatter(double *particles, int dim,int i)
 	pknx(i,1) = _pknx*sin(theta)+_pkny*cos(theta);
 }
 
+/**
+ * randomElectronMovement
+ *
+ * movement and mommentum change for a single particle.
+ * 
+ * note: 02 optimization hopefully removes the overhead
+ * of calling a function a few hundred thousand times
+ * but if not, we can see what happens if we expliciyly
+ * inline it. Possibly not a bad idea. As far as I know
+ * only one function actually calls this.
+ */
 void randomElectronMovement(Particles *p_data,
 				int i,
 				double *efield,
@@ -113,7 +124,12 @@ void randomElectronMovement(Particles *p_data,
 		scatter(particles,dim,i);
 	}
 }
-
+/**
+ * move_particles
+ * 
+ * External C Interface.
+ * This times steps the entire simulated system by dt
+ */
 extern "C" void move_particlesC(Particles *p_data,
 			double *efield,
 			int *nextDensity,

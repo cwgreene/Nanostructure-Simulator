@@ -394,7 +394,6 @@ bool Boundary<dim>::intersects_boundary(Line<dim> &line, int *id)
 	{
 		if(line.intersects(boundary_lines[i]))//2D only it seems
 		{
-			std::cout<<"howdy ho!"<<i<<"\n";
 			*id = i;
 			return true; //Ignores possibility of two intersections
 		}
@@ -416,22 +415,22 @@ bool Boundary<dim>::reflect_trajectory(double *pos, typename Vector<dim>::Type o
 
 	//if intersects, get line	
 	Line<dim> intersection_line = boundary_lines[line_id];
-	std::cout<<intersection_line.toString()<<"\n";
+//	std::cout<<intersection_line.toString()<<"\n";
 
 	//get intersection point
 	VectorD ip = trajectory.intersection_point(intersection_line);
-	std::cout << "intersection Point: "<<vec_str<dim>(ip)<<"\n";
+//	std::cout << "intersection Point: "<<vec_str<dim>(ip)<<"\n";
 	VectorD remainder = vpos-ip;
-	std::cout << "remainder: "<<vec_str<dim>(remainder)<<"\n";
+//	std::cout << "remainder: "<<vec_str<dim>(remainder)<<"\n";
 
 	//Reflect "outside" line //Yes Chris, if you don't actually uncomment the next line, this ain't going to work.
 	double normal_projection = normals[line_id].dot(remainder);//Reflect remainder
-	std::cout << "Intersection_line: " << intersection_line.toString() << "\n";
-	std::cout << "Intersection_normal: " << vec_str<dim>(normals[line_id]) << "\n";
-	std::cout << "Projection Onto Normal: " << vec_str<dim>(normals[line_id]*normal_projection) << "\n";
+//	std::cout << "Intersection_line: " << intersection_line.toString() << "\n";
+//	std::cout << "Intersection_normal: " << vec_str<dim>(normals[line_id]) << "\n";
+//	std::cout << "Projection Onto Normal: " << vec_str<dim>(normals[line_id]*normal_projection) << "\n";
 	remainder= remainder - (2*normal_projection*normals[line_id]);//go twice in the direction of the normal
 	remainder += ip; //Need to recover this component
-	std::cout<<vec_str<dim>(vpos)<<"\n";
+//	std::cout<<vec_str<dim>(vpos)<<"\n";
 	for(int i = 0; i < dim;i++)//Copy
 		pos[i] = remainder[i];
 	return true;
