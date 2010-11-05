@@ -164,9 +164,15 @@ int create_particle(int mpos_id, Particles *p_data,int *density,
 	{
 		pnx(i,c) = mesh->mpos[dim*mpos_id+c];
 	}
-	material_random_momentum(mesh->materials[mpos_id],
+	bool valid_trajectory = false;
+	while(valid_trajectory != true){
+		material_random_momentum(mesh->materials[mpos_id],
 				 p_data->pos+MOMENTUMSTART(i),
 				 mesh->particle_weight); //init pkx,pky
+		if(mesh->valid_momentum(p_data->pos+MOMENTUMSTART(i),
+					p_data->pos+POSITIONSTART(i)))
+			valid_trajectory = true;
+	}
 	p_data->p_charge[i] = charge;
 	p_data->p_mass[i] = mass;	
 	p_data->p_id[i] = mpos_id;

@@ -6,6 +6,7 @@
 template<class KD,int _dim> class Mesh;
 
 //Headers
+#include "Utils.hpp"
 #include "Boundary.hpp"
 #include "Polytope.hpp"
 #include "particles.hpp"
@@ -79,6 +80,7 @@ public:
 	double current_exit(Particles *p_data,int part_id, Face *exit_face);
 	int has_escaped(Particles *p_data,int i);
 	bool reflect(Particles *p_data,int i,double *old_pos);
+	bool valid_momentum(double *dmomentum, double *dpoint);
 
 	//Constructors
 	Mesh(double *points, int n_points,
@@ -90,6 +92,15 @@ public:
 		Polytope<dim> *outer, Polytope<dim> *inner);
 	Face *nearest_edge(double *point);
 };
+
+template <class KD,int dim>
+bool Mesh<KD,dim>::valid_momentum(double *dmomentum, double *dpoint)
+{
+	typename Vector<dim>::Type point(dpoint);
+	typename Vector<dim>::Type momentum(dmomentum);
+
+	return rboundary->is_inward_facing(momentum,point);
+}
 
 /*extern "C" Mesh *create_mesh(double *points, int n_points,
 			     int *boundary, int nboundary,

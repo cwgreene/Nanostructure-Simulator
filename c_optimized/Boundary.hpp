@@ -3,6 +3,7 @@
 
 #include <Eigen/Core>
 #include <vector>
+#include <utility>
 #include "Utils.hpp"
 
 #include <iostream>
@@ -23,7 +24,7 @@ public:
 	Line(VectorD start,VectorD end);
 
 	double distance_to(const VectorD &point);
-	bool intersects(Line &line2);
+	bool intersects(const Line &line2);
 	VectorD intersection_point(Line<dim> &other_line);
 	VectorD normal; //Is normalized
 	//Eigen::Matrix<double,dim,dim> reflect_matrix;//Don't need yet.
@@ -164,13 +165,14 @@ public:
 	Boundary(double *points,int n,VectorD interior_point);
 
 	Line<dim> nearest_line(VectorD p);
-	VectorD nearest_point(VectorD p);
+	std::pair<int,VectorD> nearest_mapped_point(VectorD p);//mapped point means it's
+						//in boundary_points
 
 	bool reflect_trajectory(double *pos,VectorD old_pos);
 	bool is_inward_facing(VectorD trajectory,VectorD point);
 	bool intersects_boundary(Line<dim> &line, int *id);
 
-	void construct_normals(typename Vector<dim>::Type point);
+	void construct_normals(const typename Vector<dim>::Type point);
 
 	void print_lines();
 	void print_adjacent();
@@ -180,7 +182,7 @@ public:
 
 //strictly speaking the following code is only correct in 2 dimensions.
 template<int dim>
-void Boundary<dim>::construct_normals(VectorD point)
+void Boundary<dim>::construct_normals(const VectorD point)
 {
 	for(unsigned int i = 0;i < boundary_lines.size();i++)
 	{
@@ -198,6 +200,7 @@ void Boundary<dim>::construct_normals(VectorD point)
 		VectorD normal = frame_point - (projection*vec);
 		normal.normalize();
 		normals.push_back(normal);//lines up with boundary_lines 
+		boundary_lines[i].normal=normal;
 	}
 }
 
@@ -252,6 +255,7 @@ void Boundary<dim>::print_normals()
 	for(unsigned int i= 0; i < boundary_lines.size();i++)
 	{
 		std::cout <<"Line "<<i<<":"<< vec_str<dim>(normals[i]) << "\n";
+		std::cout << "Internal Normal: "<<vec_str<dim>(boundary_lines[i].normal)<<"\n";
 	}
 }
 
@@ -269,14 +273,14 @@ Boundary<dim>::Boundary(double *points,int n, VectorD interior_point)
  	for(int i = 0 ;i < n;i++)
 	{
 		if(i != 0)
-			adjacent[i].push_back(boundary_lines[i-1]);//Previous line is adjacent to this point
+			adjacent[i].push_back((boundary_lines[i-1]));//Previous line is adjacent to this point
 		boundary_points.push_back(VectorD(points+i*dim));
 		boundary_lines.push_back(Line<dim>
 			  (VectorD(points+i*dim),
 			   VectorD(points+((i*dim+dim)%(dim*n)))));
-		adjacent[i].push_back(boundary_lines[i]);//add latest to this point
+		adjacent[i].push_back((boundary_lines[i]));//add latest to this point
 	}
-	adjacent[0].insert(adjacent[0].begin(),boundary_lines[n-1]);//First is adjacent to last
+	adjacent[0].insert(adjacent[0].begin(),(boundary_lines[n-1]));//First is adjacent to last
 	construct_normals(interior_point);
 	//construct_reflect_matrices(interior_point);//Don't need this now.
 }
@@ -287,7 +291,7 @@ Boundary<dim>::Boundary(double *points,int n, VectorD interior_point)
 /*From Cormen et al*/
 /**/
 
-inline double direction(Eigen::Vector2d p1, Eigen::Vector2d p2, Eigen::Vector2d p3)
+inline double direction(const Eigen::Vector2d p1, const Eigen::Vector2d p2, const Eigen::Vector2d p3)
 {
 //	return ((p3-p1).cross(p2-p1))[2];
 	Eigen::Vector2d a = p3-p1;
@@ -297,7 +301,7 @@ inline double direction(Eigen::Vector2d p1, Eigen::Vector2d p2, Eigen::Vector2d 
 }
 
 template<int dim>
-bool Line<dim>::intersects(Line &line2)
+bool Line<dim>::intersects(const Line &line2)
 {
 	double d1 = direction(line2.end,line2.start,start);
 	double d2 = direction(line2.end,line2.start,end);
@@ -340,20 +344,25 @@ Line<dim> Boundary<dim>::nearest_line(VectorD point)
 }
 
 template<int dim>
-typename Vector<dim>::Type Boundary<dim>::nearest_point(VectorD point)
+std::pair<int,typename Vector<dim>::Type> 
+Boundary<dim>::nearest_mapped_point(VectorD point)
 {
 	double dist = HUGE_VAL;//Big. Ideally should be infinity
 	VectorD nearest;
+	int id = -1;
 	for(unsigned int i = 0 ; i < boundary_points.size();i++)
 	{
-		if(boundary_points.distance_to(point) < dist)
+		double dsquared = (boundary_points[i]-point).squaredNorm();
+		if(dsquared < dist)
 		{
-			dist = boundary_points.distance_to(point);
-			nearest = boundary_lines[i];
+			dist = dsquared;
+			nearest = boundary_points[i];
+			id = i;
 		}
 	}
+	std::cout << "\n Nearest Point: "<<vec_str<dim>(nearest)<<"\n";
 
-	return nearest;
+	return std::pair<int,VectorD>(id,nearest);
 }
 //is_inward_facing
 //Takes a trajectory, and a point,
@@ -363,10 +372,15 @@ bool Boundary<dim>::is_inward_facing(VectorD trajectory,VectorD point)
 {
 	//Want point, since that's where we generate at
 	//points.
-	VectorD nearest_point = boundary_nearest_point(point);
-							 
-	for(int i = 0 ; i < adjacent[point].size();i++)
+	std::pair<int,VectorD> res = nearest_mapped_point(point);
+	int id = res.first;
+	std::cout << id<<"\n";
+	for(unsigned int i = 0 ; i < adjacent[id].size();i++)
 	{
+		std::cout<<vec_str<dim>(adjacent[id][i].normal)<<" ";
+		std::cout<<"dot: "<<adjacent[id][i].normal.dot(trajectory)<<"\n";
+		if(adjacent[id][i].normal.dot(trajectory) < 0)
+			return false;
 	}
 	return true;
 }

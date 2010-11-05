@@ -14,6 +14,13 @@ bool test_Line()
 	return true;
 }
 
+bool test_inward_facing(Eigen::Vector2d x, Eigen::Vector2d y, Boundary<2> &b)
+{
+	std::cout << "is_inward_facing: ["<<vec_str<2>(x)<<"] ["<<vec_str<2>(y)<<"]\n";
+	std::cout<< b.is_inward_facing(x,y)<<"\n";
+	return true;
+}
+
 bool test_Boundary()
 {
 	using namespace Eigen;
@@ -66,6 +73,15 @@ bool test_Boundary()
 		std::cout<< "Normal "<<i<<": "<< boundary.normals[i][0] << " " <<
 			 boundary.normals[i][1] << std::endl;
 	}
+
+	//Test is-inward-facing
+	std::cout<< "\nTesting Inward Facing\n";
+	test_inward_facing(Vector2d(1,1),Vector2d(0,0),boundary);
+	test_inward_facing(Vector2d(1,1),Vector2d(1,1),boundary);
+	test_inward_facing(Vector2d(-1,1),Vector2d(1,1),boundary);
+	test_inward_facing(Vector2d(-1,1),Vector2d(1,1),boundary);
+	test_inward_facing(Vector2d(1,-1),Vector2d(0,0),boundary);
+
 	return true;
 }
 
