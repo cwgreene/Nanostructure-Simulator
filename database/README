@@ -1,0 +1,100 @@
+Database
+========
+We use a database to store simulation run information. This can
+broadly be broken into two main categories.
+
+1. Run Information
+2. Frame Information
+
+Run Information is global across agiven run. Frame Information
+is associated with a single time step.
+
+Runs
+===
+(runs,runparamters)
+Information contained on a per-run basis:
+
+1. Run-id
+2. Checksums of files
+3. Which mesh was used
+4. Which material was used.
+5. Time step, characteristic length, etc
+
+There exists a Run table, which contains only
+
+(run-id,date)	type: (id,date)
+
+The limited information in the run table is so that it is easy to
+add relations involving the run, as what fully specifies a run may be deferred to a later date. Complete information of a run, so that it can be
+reproduced, will be performed by joining multiple tables together. This
+means that there exists the following relations (tables)
+
+-meshruns	(mesh_id,run_id)		type:(id,id)
+-materialruns	(material_id,which,run_id) 	type:(id,int,id)
+
+the which in materialruns is due to the fact that meshes can be 
+paramerterized by materials, and we need to know which slot they were
+put in.
+
+Information of type (5) is stored in the general "Run-Parameter" table, 
+where the entries are of the form
+
+(run-id,parameter-name,parameter-value,parameter-units) type:
+(varchar,varchar,int,varchar)
+
+Frame
+====
+(frames,framedata,framepointdata)
+Frame based information is broken down into two categories:
+
+1. Mesh-Global Information
+2. Point Information
+
+Mesh-Global information is stored in 
+
+(run-id,frame-id,*parameter)
+
+where *parameter is the three parameters as above. Point Information
+is stored in a mesh-specific table.
+
+Framepoint data is similar, except it also contains the mesh_point_Id
+(run_id,frame-id,mesh_point_id,*parameter)
+
+Mesh
+=====
+(meshes,meshruns,meshpoints)
+There exists a global mesh table, where the entries are of the form
+
+(mesh_id, mesh_name,dimension) type: (id,varchar,int)
+
+mesh_name is not unique. An important associated table is Mesh_Points
+
+(mesh_id,point_id,x,y,z)
+
+Finally meshruns contains
+
+(run_id,mesh_id)
+
+Materials
+======
+(materials,materialparameters)
+Straight forwardly
+
+table:materials
+(materials_id,material_name)
+
+table:materials_parameters
+(materials_id,*parameters)
+
+Checksums
+========
+The checksums table provides a way of allowing comparison between runs.
+It is critical to determine whether two runs, on the same material, the
+same mesh, the same parameters, can be considered equivalent. If the
+underlying simulation is not the same, they are not, and should not
+be used for parameter estimation. However, this also provides a convenient
+method of debugging, and also for determining if a parameter has been
+neglected. git-hash is used for all files, so it should be usable with
+the version control system to determine what changes were made between
+runs. See checksum.py for more info.
+
