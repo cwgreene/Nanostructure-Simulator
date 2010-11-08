@@ -52,7 +52,7 @@ Frame based information is broken down into two categories:
 
 Mesh-Global information is stored in 
 
-(run-id,frame-id,*parameter)
+(run-id,timestep,*parameter)
 
 where *parameter is the three parameters as above. Point Information
 is stored in a mesh-specific table.
