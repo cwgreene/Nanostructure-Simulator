@@ -24,7 +24,7 @@ public:
 	Line(VectorD start,VectorD end);
 
 	double distance_to(const VectorD &point);
-	bool intersects(const Line &line2);
+	bool intersects(const Line &line2) const;
 	VectorD intersection_point(Line<dim> &other_line);
 	VectorD normal; //Is normalized
 	//Eigen::Matrix<double,dim,dim> reflect_matrix;//Don't need yet.
@@ -162,15 +162,15 @@ public:
 	std::vector<VectorD > boundary_points;//Points.
 	std::vector<typename Vector<dim>::Type> normals;
 	
-	Boundary(double *points,int n,VectorD interior_point);
+	Boundary(double *points,int n,const VectorD &interior_point);
 
 	Line<dim> nearest_line(VectorD p);
 	std::pair<int,VectorD> nearest_mapped_point(VectorD p);//mapped point means it's
 						//in boundary_points
 
-	bool reflect_trajectory(double *pos,VectorD old_pos);
-	bool is_inward_facing(VectorD trajectory,VectorD point);
-	bool intersects_boundary(Line<dim> &line, int *id);
+	bool reflect_trajectory(double *pos,const VectorD old_pos);
+	bool is_inward_facing(const VectorD trajectory,const VectorD point);
+	bool intersects_boundary(const Line<dim> &line, int *id);
 
 	void construct_normals(const typename Vector<dim>::Type point);
 
@@ -260,7 +260,7 @@ void Boundary<dim>::print_normals()
 }
 
 template<int dim>
-Boundary<dim>::Boundary(double *points,int n, VectorD interior_point)
+Boundary<dim>::Boundary(double *points,int n, const VectorD &interior_point)
 {
 	//Init adjacent to right size
 	for(int i = 0; i < n;i++)
@@ -292,7 +292,7 @@ Boundary<dim>::Boundary(double *points,int n, VectorD interior_point)
 /*From Cormen et al*/
 /**/
 
-inline double direction(const Eigen::Vector2d p1, const Eigen::Vector2d p2, const Eigen::Vector2d p3)
+inline double direction(const Eigen::Vector2d &p1, const Eigen::Vector2d &p2, const Eigen::Vector2d &p3)
 {
 //	return ((p3-p1).cross(p2-p1))[2];
 	Eigen::Vector2d a = p3-p1;
@@ -302,7 +302,7 @@ inline double direction(const Eigen::Vector2d p1, const Eigen::Vector2d p2, cons
 }
 
 template<int dim>
-bool Line<dim>::intersects(const Line &line2)
+bool Line<dim>::intersects(const Line &line2) const
 {
 	double d1 = direction(line2.end,line2.start,start);
 	double d2 = direction(line2.end,line2.start,end);
@@ -388,7 +388,7 @@ bool Boundary<dim>::is_inward_facing(VectorD trajectory,VectorD point)
 
 //Below 
 template<int dim>
-bool Boundary<dim>::intersects_boundary(Line<dim> &line, int *id)
+bool Boundary<dim>::intersects_boundary(const Line<dim> &line, int *id)
 {
 	for(unsigned int i =0;i < boundary_lines.size();i++)
 	{

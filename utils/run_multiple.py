@@ -2,11 +2,11 @@ import os,time,sys
 import run_options
 
 options = run_options.create_options(sys.argv)
-start = -1.0
-end   = 1.0
-max   = 21 
+start =-1.0
+end   = 0.0
+max   = 11 
 total_time = time.time()
-tag = "fixed"
+tag = "SlowSlowSlow"
 
 for x in range(0,max):
 	start_time = time.time()
