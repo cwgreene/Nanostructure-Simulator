@@ -23,9 +23,6 @@ import numpy as np
 import dolfin_util as du
 import time
 import mcoptions,sys,os
-#import trianglemesh as tm
-#import triangle
-#import meshtest
 import re
 import photocurrent as pc
 
@@ -56,7 +53,7 @@ def init_problem(mesh,V,V2,options):
 	#kept globally
 	pBoundary = Constant(mesh, 0.0)
 	nBoundary = Constant(mesh, options.V) 
-	print mesh.InnerBoundary
+
 	bc0 = DirichletBC(V, pBoundary, mesh.InnerBoundary)
 	bc1 = DirichletBC(V, nBoundary, mesh.OuterBoundary)
 
@@ -150,7 +147,7 @@ def PoissonSolve(mesh,density,bcs,V):
 	sol = problem.solve()
 	return sol
 
-def write_results(df,rf,problem,sol):
+def write_results(df,rf,problem,sol,electric_field,current_values):
 	#Write Results
 	df.file << sol
 	df.dfile << problem.density_funcs.combined_density
@@ -161,7 +158,7 @@ def write_results(df,rf,problem,sol):
 	rf.current.write(str(current_values[-1]));
 	rf.current.write("\n");rf.current.flush()
 
-def final_record_files(df,sol,problem):
+def final_record_files(df,rf,sol,problem,mesh):
 	df.file << sol
 	df.dfile << problem.density_funcs.combined_density
 	#dump average
@@ -182,8 +179,6 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		start1 = time.time()
 
 		#Solve equation using avg_dens
-		#problem.density_funcs.poisson_density.vector().set(problem.density_funcs.scaled_density)
-		#print problem.density_funcs.poisson_density.vector().array()
 		sol = PoissonSolve(mesh,
 				problem.density_funcs.scaled_density,
 				problem.bcs,problem.space)
@@ -197,7 +192,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 				current_values)
 		end2 = time.time()
 		#Report
-		write_results(df,rf,problem,sol,electric_field)
+		write_results(df,rf,problem,sol,electric_field,current_values)
 		end = time.time()
 		print "Monte Took: ",end2-start2
 		print "Loop Took:",end-start1
@@ -206,7 +201,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 	current= pc.generate_photo_current(mesh,electric_field,problem)
 	rf.current.write("pc: "+str(current)+"\n")
 
-	final_record_files(df,sol,problem)
+	final_record_files(df,rf,sol,problem,mesh)
 	avg_length = 0
 	for particle in mesh.trajectories:
 		avg_length += len(mesh.trajectories[particle])
@@ -227,12 +222,9 @@ def init_files():
 #main
 def main():
 	#init mesh
-	mesh = ( #meshes.triangle3D.Triangle3D(options,
-		#			    materials.Silicon,	
-		#			    materials.Silicon()))
-	#meshes.hexagon.HexagonMesh(options,materials.Silicon,materials.Silicon())
-	meshes.TriangleMesh(options,materials.Silicon(),materials.Silicon()))
-	#mesh = meshes.PlanarMesh(options,materials.Silicon(),materials.Silicon())
+	mesh = options.mesh(options,
+			    options.materials[0],
+			    options.materials[1])
 	#these seem to need to be global
 	V = FunctionSpace(mesh, "CG", 1)
 	V2 = VectorFunctionSpace(mesh,"CG",1,2)
@@ -242,7 +234,7 @@ def main():
 				options.gen_num, options.length)
 
 	#init Files
-	init_files()
+	(dolfinFiles,rf)=init_files()
 	
 	#mainloop
 	mainloop(mesh,system,problem,dolfinFiles,rf,options.scale)

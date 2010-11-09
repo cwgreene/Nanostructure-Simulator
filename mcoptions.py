@@ -19,10 +19,11 @@ def get_options():
 	parser.add_option("--mesh",type="string",dest="mesh",
 				default="TriangleMesh")
 	parser.add_option("--materials",type="string",dest="materials",
-				default="silicon,silicon")
+				default="Silicon,Silicon")
 	options,args = parser.parse_args(sys.argv)
 	options.mesh = eval("meshes."+options.mesh)
 	options.materials_list = []
 	for x in options.materials.split(","):
 		options.materials_list.append(eval("materials."+x))
+	options.materials = options.materials_list
 	return options
