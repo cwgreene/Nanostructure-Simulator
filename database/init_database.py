@@ -1,4 +1,5 @@
 import database_schema as dbs
+import databasse_utils
 import sqlite3
 import optparse
 import sys
