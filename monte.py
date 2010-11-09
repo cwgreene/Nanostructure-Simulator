@@ -89,6 +89,8 @@ def init_problem(mesh,V,V2,options):
 	problem.avg_electrons = mc.AverageFunc(problem.density_funcs.combined_density.vector().array())
 	return problem
 
+#this will be replaced with 
+#database initialization and connection
 def init_dolfin_files():
 	#init Files
 	print "Initializing Files"
@@ -104,6 +106,7 @@ def init_dolfin_files():
 	df.gradfile = File(df.datadir+"/grad_force.pvd")
 	df.avggradfile = File(df.datadir+"/avg_force.pvd")
 	return df
+
 
 #other files
 def new_file(name):
@@ -123,6 +126,15 @@ def new_file(name):
 	results_file.write(" tag:"+str(options.tag))
 	results_file.write("\n")
 	return results_file
+
+def init_database():
+	#connect to local database
+	if os.path.exists("database/runs.db"):
+		raise IOError("database/runs.db does not exist. You'll need to initialize it")
+	runs = sqlite3.connect("database/runs.db")
+	if runs == None:
+		raise IOError("Failure to open database/runs.db")
+	return runs
 		
 
 def PoissonSolve(mesh,density,bcs,V):
@@ -138,6 +150,30 @@ def PoissonSolve(mesh,density,bcs,V):
 	sol = problem.solve()
 	return sol
 
+def write_results(df,rf,problem,sol):
+	#Write Results
+	df.file << sol
+	df.dfile << problem.density_funcs.combined_density
+	df.adfile << problem.density_funcs.poisson_density
+	df.gradfile << electric_field #moved, might have destabilized it.
+
+	#write current
+	rf.current.write(str(current_values[-1]));
+	rf.current.write("\n");rf.current.flush()
+
+def final_record_files(df,sol,problem):
+	df.file << sol
+	df.dfile << problem.density_funcs.combined_density
+	#dump average
+	problem.density_funcs.combined_density.vector().set(problem.avg_dens.func)
+	for x in problem.avg_dens.func:
+		rf.density.write(str(x)+" ")
+	df.adfile << problem.density_funcs.combined_density
+	avgE=mc.negGradient(mesh,PoissonSolve(mesh,
+					problem.density_funcs.combined_density,
+					problem.bcs,problem.V),
+				problem.V2)
+	df.avggradfile << avgE
 
 def mainloop(mesh,system,problem,df,rf,scale):
 	print "Beginning Simulation"
@@ -154,7 +190,6 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		#handle Monte Carlo
 		print "Starting Step ",x
 		electric_field = (mc.negGradient(mesh,sol,problem.V2))
-		df.gradfile << electric_field
 		start2 = time.time()
 		mc.MonteCarlo(mesh,system,sol,electric_field,
 				problem.density_funcs,problem.avg_dens,
@@ -162,35 +197,16 @@ def mainloop(mesh,system,problem,df,rf,scale):
 				current_values)
 		end2 = time.time()
 		#Report
-		#Write Results
-		df.file << sol
-		df.dfile << problem.density_funcs.combined_density
-		df.adfile << problem.density_funcs.poisson_density
-
-		#write current
-		rf.current.write(str(current_values[-1]));
-		rf.current.write("\n");rf.current.flush()
-
+		write_results(df,rf,problem,sol,electric_field)
 		end = time.time()
 		print "Monte Took: ",end2-start2
 		print "Loop Took:",end-start1
-		#del electric_field
+
 	#photocurrent
 	current= pc.generate_photo_current(mesh,electric_field,problem)
 	rf.current.write("pc: "+str(current)+"\n")
-	
-	df.file << sol
-	df.dfile << problem.density_funcs.combined_density
-	#dump average
-	problem.density_funcs.combined_density.vector().set(problem.avg_dens.func)
-	for x in problem.avg_dens.func:
-		rf.density.write(str(x)+" ")
-	df.adfile << problem.density_funcs.combined_density
-	avgE=mc.negGradient(mesh,PoissonSolve(mesh,
-					problem.density_funcs.combined_density,
-					problem.bcs,problem.V),
-				problem.V2)
-	df.avggradfile << avgE
+
+	final_record_files(df,sol,problem)
 	avg_length = 0
 	for particle in mesh.trajectories:
 		avg_length += len(mesh.trajectories[particle])
@@ -199,6 +215,14 @@ def mainloop(mesh,system,problem,df,rf,scale):
 	print current_values
 #	avg_length /= 1.*len(mesh.trajectories)
 	print "Average trajectory length:",avg_length
+
+def init_files():
+	dolfinFiles = init_dolfin_files() 
+	rf = ResultsFile()
+	rf.current = new_file("current")
+	rf.density = new_file("density")
+	rf.trajectory = new_file("trajectory")
+	return (dolfinFiles,rf)
 
 #main
 def main():
@@ -218,12 +242,8 @@ def main():
 				options.gen_num, options.length)
 
 	#init Files
-	dolfinFiles = init_dolfin_files()
-	rf = ResultsFile()
-	rf.current = new_file("current")
-	rf.density = new_file("density")
-	rf.trajectory = new_file("trajectory")
-
+	init_files()
+	
 	#mainloop
 	mainloop(mesh,system,problem,dolfinFiles,rf,options.scale)
 
