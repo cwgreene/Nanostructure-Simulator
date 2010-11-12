@@ -444,35 +444,26 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 
 	//If the empty_sign of the region is the same as
 	//sign as the density, then we're empty, and we need more particles
-	std::cout<<mpos_id << std::endl;
-	int x;
-	std::cout<<"enter number: ";std::cin>>x;
 	while (density[mpos_id]*empty_sign > 0) //not charge netural, need more
 	{
-		std::cout<<"not the problem"<<std::endl;
 		int i = create_particle(mpos_id,p_data,density,-empty_sign,
 				    mesh->materials[mpos_id]->electron_mass,
 				    mesh); 
 	
 		//ntype is higher voltage, so incoming particles
 		//are going the 'right way'
-		std::cout<<i<<std::endl;
-		std::cout<<"checking is_n_type"<<std::endl;
 		if(mesh->is_n_type[mpos_id])
 		{
 			//Currently positive
 			current -= mesh->current_exit(p_data,i)*empty_sign; 
 		}
 		//Incoming particles on p side are going the 'wrong' way.
-		std::cout<<i<<std::endl;
-		std::cout<<"checking is_p_type"<<std::endl;
 		if(mesh->is_p_type[mpos_id])
 		{ 
 			//leaving from ptype side
 			current += mesh->current_exit(p_data,i)*empty_sign; 
 		}
 	}
-	std::cout<<" dealt with excess"<<std::cout<<endl;
 	//If the sign of the density is different than the empty_sign
 	//of the region that means we have an excess of minority
 	//carriers
