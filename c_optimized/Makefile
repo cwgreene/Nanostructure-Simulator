@@ -20,9 +20,9 @@ move_particles.so: move_particles.cpp kdtree.o materials.cpp particles.cpp\
 		   mesh.cpp kdtree.o particles.hpp statistics.cpp\
 		   statistics.hpp mesh.hpp Face.hpp Polytope.hpp particles.hpp Boundary.hpp
 #	g++ -g -fPIC -O2 -c -Wall -I $(EIGEN) mesh.cpp
-	g++ -fPIC -O2 -c -Wall -I $(EIGEN) materials.cpp
+	g++ -fPIC -02 -c -Wall -I $(EIGEN) materials.cpp
 #	g++ -g -fPIC -O2 -c -Wall -I $(EIGEN) particles.cpp
-	g++ -fPIC -O2 -c -Wall -I $(EIGEN) move_particles.cpp
+	g++ -fPIC -02 -c -Wall -I $(EIGEN) move_particles.cpp
 #	g++ -g -fPIC -O2 -c -Wall statistics.cpp -I$(BOOST) #killing for now
 	ld -bundle -flat_namespace -undefined suppress \
 			-o move_particles.so move_particles.o \

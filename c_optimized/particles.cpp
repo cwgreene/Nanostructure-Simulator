@@ -11,13 +11,16 @@ using namespace std;
 extern "C" Particles *init_particles(double *pk_array, int *p_id, 
 				       int *p_charge,
 				       double *p_mass,
+				       double *p_dist,
 				       list<int> *p_live,
 				       list<int> *p_dead,
 				       int dim)
 {
 	cout << "dimension: "<<dim<<endl;
 	return new Particles(pk_array,
-			     p_id,p_charge,p_mass,p_live,p_dead,
+			     p_id,
+			     p_charge,p_mass,p_dist,
+			     p_live,p_dead,
 			     dim);
 }
 

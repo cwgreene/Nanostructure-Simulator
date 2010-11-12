@@ -43,10 +43,13 @@ public:
 	list<int>::iterator *local_id; //array of local_ids, which point into the mesh local list
 	list<int>::iterator *live_id; //array of live_ids, which point into the p_live list
 	double *p_mass; //array Particle masses, scaled to real units
+	double *p_dist;
+
 	list<int> *p_live; //list of living particles, particle id's
 	list<int> *p_dead; //List of available dead particles, particle ids
 	int dim;//Dimension of particles
-	Particles(double *_pos, int *_p_id, int *_p_charge,double *_p_mass,
+	Particles(double *_pos, int *_p_id, 
+			int *_p_charge,double *_p_mass, double *_p_dist,
 			list<int> *_p_live, list<int> *_p_dead,int _dim)
 	{
 		//Initialize pointer blocks
@@ -56,6 +59,7 @@ public:
 		p_live = _p_live; //should be empty
 		p_dead = _p_dead;
 		p_mass = _p_mass;
+		p_dist = _p_dist;
 		int num = p_dead->size();
 		this->local_id = new list<int>::iterator[num];
 		this->live_id = new list<int>::iterator[num];
@@ -175,7 +179,7 @@ int create_particle(int mpos_id, Particles *p_data,int *density,
 	}
 	p_data->p_charge[i] = charge;
 	p_data->p_mass[i] = mass;	
-	p_data->p_id[i] = mpos_id;
+	p_data->p_id[i] = mpos_id;//why the hell don't i call it p_mpos_id?
 	density[mpos_id] += charge;
 	
 	return i;

@@ -11,6 +11,10 @@ lib = ctypes.cdll.LoadLibrary("c_optimized/move_particles.so")
 
 lib.new_polygon.argtype = [ctypes.POINTER(ctypes.c_double),ctypes.c_int]
 lib.new_polygon.restype = ctypes.POINTER(ctypes.c_int)
+lib.new_material.argtype = [ctypes.c_double,
+			    ctypes.c_double,
+			    ctypes.POINTER(ctypes.c_double),
+		            ctypes.c_int, ctypes.c_int]
 lib.create_polytope2.restype = ctypes.POINTER(ctypes.c_int)
 lib.create_polytope3.restype = ctypes.POINTER(ctypes.c_int)
 lib.init_particle_list.argtype = [ctypes.c_int]
@@ -66,6 +70,7 @@ class CParticles():
 		self.p_charge = np.zeros((nparticles,1),'int')
 		self.p_mass = np.zeros((nparticles,1))
 		self.p_live = lib.init_particle_list(0)
+		self.p_dist = np.zeros((nparticles,1))
 		print "p_live",self.p_live
 		self.p_dead = lib.init_dead_list(0,nparticles)
 		print "p_dead",self.p_dead
@@ -73,6 +78,7 @@ class CParticles():
 					      self.p_id.ctypes.data,
 					      self.p_charge.ctypes.data,
 					      self.p_mass.ctypes.data,
+					      self.p_dist.ctypes.data,
 					      self.p_live,
 					      self.p_dead,
 					      dim)
@@ -98,12 +104,16 @@ def init_system(mesh,nextDensity,particles_point,length_scale):
 
 	#create materials
 	system.n_dist = ntypepy.random_momentum("ntype")
-	system.p_dist = ntypepy.random_momentum("ptype")
-	print system.n_dist
+	system.p_dist = ptypepy.random_momentum("ptype")
+	print system.n_dist,len(system.n_dist),system.n_dist[0]
+	print "Creating ntype"
 	ntype = lib.new_material(ctypes.c_double(ntypepy.electron_mass),
+				  ctypes.c_double(ntypepy.free_dist),
 				  system.n_dist.ctypes.data,
 				  len(system.n_dist),dim)
+	print "Creating ptype"
 	ptype = lib.new_material(ctypes.c_double(ptypepy.hole_mass),
+				ctypes.c_double(ptypepy.free_dist),
 				system.p_dist.ctypes.data,
 				len(system.p_dist),dim)
 	system.materials=lib.material_pair(ptype,ntype)
@@ -128,6 +138,10 @@ def init_system(mesh,nextDensity,particles_point,length_scale):
 	ntype_ids = np.array(ntype_ids)
 	boundary_ids = np.array(boundary_ids)
 
+	#make the arrays persistent
+	system.ntype_ids = ntype_ids
+	system.ptype_ids = ptype_ids
+	system.boundary_ids = boundary_ids
 	#Construct polytope from points
 	if dim==2:
 		#get inner and outer bounding arrays
@@ -151,11 +165,14 @@ def init_system(mesh,nextDensity,particles_point,length_scale):
 		faces_p = (ctypes.void_p*len(faces))(*faces)
 		inner_p = 0 #should be NULL
 		outer_p = lib.create_polytope3(faces_p,len(faces))
+		system.faces_p = faces_p
+		system.inner_p = inner_p
+		system.outer_p = outer_p
 	else:
 		raise("Invalid dimension.")
 	print "Polytopes",inner_p,outer_p
-
-					    
+		
+	print boundary_ids,len(boundary_ids)
 	system.c_mesh = lib.create_mesh(mesh_coord.ctypes.data,
 			    len(mesh_coord),
 			    dim,
@@ -172,12 +189,18 @@ def init_system(mesh,nextDensity,particles_point,length_scale):
 			    outer_p,inner_p)
 	mesh.c_mesh = system.c_mesh
 	#create bounding polygon
-	convex_hull = list(convexhull.convexHull(map(tuple,list(mesh.bd))))
+	print "Creating Bounding polygon"
+	print list(mesh.bd)
+	convexpoints_list = map(tuple,list(mesh.bd))
+	print convexpoints_list
+	raw_hull= convexhull.convexHull(map(tuple,list(mesh.bd)))
+	convex_hull = list(raw_hull)
 	convex_hull.reverse() 
 	convex_hull = np.array(convex_hull)
 	polygon = lib.new_polygon(convex_hull.ctypes.data,
 					ctypes.c_int(len(convex_hull)))
-	system.bounding_polygon = polygon
+	print "..done"
+	#system.bounding_polygon = polygon
 	print "Creating a ton of particles..."
 	#create particles
 	system.particles = CParticles(5*10**6,system.c_mesh,dim)
@@ -209,4 +232,4 @@ def recombinate(system,nextDensity,mesh):
 	lib.recombinateC(system.particles.ptr,
 			nextDensity.ctypes.data,
 			system.c_mesh)
-	print "don edoom"
+	print "done doom"

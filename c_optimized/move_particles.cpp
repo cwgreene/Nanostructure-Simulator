@@ -71,20 +71,21 @@ void scatter(double *particles, int dim,int i)
  * of calling a function a few hundred thousand times
  * but if not, we can see what happens if we expliciyly
  * inline it. Possibly not a bad idea. As far as I know
- * only one function actually calls this.
+ * only two functions actually call this.
  */
+template<class KD,int dim>
 void randomElectronMovement(Particles *p_data,
 				int i,
+				double dt,double length_scale,
 				double *efield,
-				double dt,
-				double length_scale,
-				double particle_weight,
-				int dim)
+				Mesh<KD,dim> *mesh)
 {
 	double *particles = p_data->pos;
 	double *p_mass = p_data->p_mass;
 	int *p_id = p_data->p_id;
 	int *p_charge = p_data->p_charge;
+	double particle_weight=mesh->particle_weight;
+	int mpos_id = p_data->p_id[i];
 
 	double dx[3] = {0.,0.,0.};
 
@@ -102,11 +103,15 @@ void randomElectronMovement(Particles *p_data,
 		if(i == grabbed)
 		{
 			cerr<<"x_"<<c<<": "<< pnx(i,c) << endl;
-			cerr<<"particle weight: "<< particle_weight<<endl;
+			cerr<<"particle weight: "<< mesh->particle_weight<<endl;
 		}
 #endif 
 		dx[c] = pknx(i,c)*dt/(length_scale*p_mass[i]*particle_weight);
 		pnx(i,c) += dx[c];
+		//update distance approximately
+		//since dx and dy are small
+		//If they aren't, probably dist > scattering length anyway
+		p_data->p_dist[i] += (dx[c])*length_scale;
 #ifdef TRACK
 		if(i==grabbed)
 		{
@@ -119,9 +124,9 @@ void randomElectronMovement(Particles *p_data,
 	//Scatter... ugh... this is going to be complicated.
 	//we're going to need to seperate drift and diffusion
 	//we already knew that... but damn.
-	if(chance_scatter())
+	if(p_data->p_dist[i] > mesh->materials[mpos_id]->free_dist)
 	{
-		scatter(particles,dim,i);
+		p_data->p_dist[i] = 0;
 	}
 }
 /**
@@ -181,18 +186,18 @@ void move_particles(Particles *p_data,
 
 		//double *particles = pdata->pos;
 		pick_up_particle<KD>(i,p_data,nextDensity,mesh); //Lift particle
-		randomElectronMovement(p_data,i,
-					efield,dt,length_scale,
-					mesh->particle_weight,
-					dim);
+		randomElectronMovement<KD,dim>(p_data,i,
+					dt,length_scale,
+					efield,
+					mesh);
 		p_data->p_id[i] = mesh->find_point_id(p_data->pos + 2*dim*i); //find nearest spot
 		//After random movement, check to see if the nearest point
 		//Is a reflecting boundary. If it is, we reflect
 		int loc = mesh->find_point_id(p_data->pos+2*dim*i);
-		if(mesh->is_reflect[loc])
-		{
-			mesh->reflect(p_data,i,old_pos);
-		}
+//		if(mesh->is_reflect[loc])
+//		{
+//			mesh->reflect(p_data,i,old_pos);
+//		}
 	}
 	printf("Particles Moved\n");
 }
@@ -439,26 +444,35 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 
 	//If the empty_sign of the region is the same as
 	//sign as the density, then we're empty, and we need more particles
+	std::cout<<mpos_id << std::endl;
+	int x;
+	std::cout<<"enter number: ";std::cin>>x;
 	while (density[mpos_id]*empty_sign > 0) //not charge netural, need more
 	{
+		std::cout<<"not the problem"<<std::endl;
 		int i = create_particle(mpos_id,p_data,density,-empty_sign,
 				    mesh->materials[mpos_id]->electron_mass,
 				    mesh); 
 	
 		//ntype is higher voltage, so incoming particles
 		//are going the 'right way'
-		if(mesh->is_n_type[i])
+		std::cout<<i<<std::endl;
+		std::cout<<"checking is_n_type"<<std::endl;
+		if(mesh->is_n_type[mpos_id])
 		{
 			//Currently positive
 			current -= mesh->current_exit(p_data,i)*empty_sign; 
 		}
 		//Incoming particles on p side are going the 'wrong' way.
-		if(mesh->is_p_type[i])
+		std::cout<<i<<std::endl;
+		std::cout<<"checking is_p_type"<<std::endl;
+		if(mesh->is_p_type[mpos_id])
 		{ 
 			//leaving from ptype side
 			current += mesh->current_exit(p_data,i)*empty_sign; 
 		}
 	}
+	std::cout<<" dealt with excess"<<std::cout<<endl;
 	//If the sign of the density is different than the empty_sign
 	//of the region that means we have an excess of minority
 	//carriers
@@ -683,9 +697,9 @@ void photo_move_particles(Particles *p_data,
 		i = *it;
 		//only difference, don't deal with pick_up_put_down
 		randomElectronMovement(p_data,i,
-					efield,dt,length_scale,
-					mesh->particle_weight,
-					dim);
+					dt,length_scale,
+					efield,
+					mesh);
 	}
 }
 

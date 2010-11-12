@@ -8,7 +8,8 @@ parameter ={"parameter_name":"string",
 tables = {
 	#runs
 	"runs": 			{"run_id":"id",
-		 			 "date":"date"},
+		 			 "date":"date",
+					 "tag":"string"},
 	"runparameters": 		{"run_id":"id",
 					 "_param":parameter},
 	#frames

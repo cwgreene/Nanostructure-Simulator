@@ -10,6 +10,7 @@ class Silicon:
 	eV = 1.60217646*10**-19
 	bandgap = 1.12 * eV
 	free_mass = ( 9.10938188 *10**-31)
+	free_dist = .01*10**-6
 
 	electron_mass = 1.08*free_mass
 #	hole_mass = 1.08*free_mass #test
@@ -21,9 +22,10 @@ class Silicon:
 	doping2d = 10.**22
 
 	def random_momentum(self,mtype):
-		filename="materials/momentum_tables/silicon_"+mtype+"array"
+		filename=("materials/momentum_tables/silicon_"+mtype+
+			 "array.npy")
 		if os.path.exists(filename):
-			retarray= np.fromfile(open(filename))
+			retarray= np.load(filename)
 			return retarray
 		print "Generating",mtype,"momentum table"
 		kbT = constants.kbT
@@ -42,7 +44,7 @@ class Silicon:
 				i = index.next()
 				retarray[i][0] = v*m*math.cos(theta)
 				retarray[i][1] = v*m*math.sin(theta)
-		retarray.tofile(open(filename,"w"))
+		np.save(filename,retarray)
 		print "generated"
 		return retarray
 	

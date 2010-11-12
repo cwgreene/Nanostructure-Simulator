@@ -9,9 +9,11 @@ public:
 	int max_n;
 	int dim;
 	double *random_momentum;
+	double free_dist;
 
-	Material(double _electron_mass, 
-		double *_random_momentum,
+	Material(double _electron_mass,
+		 double _free_dist,
+		 double *_random_momentum,
 		int max_n,int dim);
 };
 void material_random_momentum(Material *material,double *momentum,

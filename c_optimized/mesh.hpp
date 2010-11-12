@@ -66,7 +66,7 @@ public:
 	Vector2d *normals;
 	Vector2d *tangents;
 	
-	Material **materials;//There should be only be two materials,
+	Material **materials;//There should be only be two materials (for now),
 			     //each point will be associated with one
 
 	double *mpos;//coordinates of points
@@ -99,6 +99,7 @@ bool Mesh<KD,dim>::valid_momentum(double *dmomentum, double *dpoint)
 	typename Vector<dim>::Type point(dpoint);
 	typename Vector<dim>::Type momentum(dmomentum);
 
+	return true;
 	return rboundary->is_inward_facing(momentum,point);
 }
 
@@ -118,6 +119,17 @@ Mesh<KD,dim>::Mesh(double *points,
 	   	double particle_weight,
 		Polytope<dim> *outer, Polytope<dim> *inner)
 {
+	std::cout << "boundary location: "<<boundary<<std::endl;
+	std::cout << "boundary end: "<<boundary+n_points*sizeof(int)<<std::endl;
+	std::cout << "ntype location: "<<ntype<<std::endl;
+	std::cout << "ntype end: "<<ntype+n_points*sizeof(int)<<std::endl;
+	std::cout << "ptype location: "<<ptype<<std::endl;
+	std::cout << "ptype end: "<<ptype+n_points*sizeof(int)<<std::endl;
+	std::cout << "kd location: "<<_kdt<<std::endl;
+	std::cout << "outer location: "<<outer<<std::endl;
+	std::cout << "inner location: "<<inner<<std::endl;
+	std::cout << "this location: "<<this<<std::endl;
+	std::cout << "n_points: "<<n_points<<std::endl;
 	this->npoints = n_points;
 	this->mpos = new double[dim*n_points];
 	this->is_boundary = new int[n_points];
@@ -138,30 +150,36 @@ Mesh<KD,dim>::Mesh(double *points,
 	//Performance isn't all that important since this is
 	//just called once, and better abstractions would be nice	
 	//Note that i is incremented by dim, not 1
+	cout<<"Copying is_n_type"<<std::endl;
 	for(int i = 0; i < dim*n_points;i+=dim)
 	{
 		//copy points
-		for(int d = 0; d < dim;d++)
+		for(int d = 0; d < dim;d++){
 			this->mpos[i+d] = points[i+d];
+		}
 
 		is_n_type[i/dim] = 0;
 		is_p_type[i/dim] = 0;
 	}
+	cout<<"Copying nboundary"<<std::endl;
 	for(int i = 0; i < nboundary;i++)
 	{
 		this->is_boundary[boundary[i]] = 1;
 		this->boundary.push_back(boundary[i]);
 	}
+	cout<<"Copying n_ntype"<<std::endl;
 	for(int i = 0; i < n_ntype;i++)
 	{	
 		this->is_n_type[ntype[i]] = 1;
 		this->n_type.push_back(ntype[i]);
 	}
+	cout<<"Copying n_ptype"<<std::endl;
 	for(int i = 0; i < n_ptype;i++)
 	{
 		this->is_p_type[ptype[i]] = 1;
 		this->p_type.push_back(ptype[i]);
 	}
+	cout<<"Associating materials with points"<<std::endl;
 	for(int i = 0; i < n_points;i++)
 	{
 		if(is_p_type[i])
@@ -178,27 +196,32 @@ Mesh<KD,dim>::Mesh(double *points,
 			this->materials[i] = materials[0];
 		}
 	}
+	cout<<"Associating electron/hole lists with points"<<std::endl;
 	//Zero electron and hole count at each point
 	for(int i = 0; i< n_points;i++)
 	{
 		electrons_pos[i]= list<int>();
 		holes_pos[i] = list<int>();
 	}
+	cout<<"Attaching kdtree"<<std::endl;
 	//Attach kdtree.
 	this->kdt = _kdt;
-	double *boundaries_a = new double[nboundary];
+	cout<<"Attaching boundaries"<<std::endl;
+	double *boundaries_a = new double[nboundary*dim];
 	Eigen::Matrix<double,dim,1> interior_p;
 	for(int i = 0; i < nboundary;i++)
 	{
+		std::cout << i<<std::endl;
 		int offset = i*dim;
+		int boffset = boundary[i]*dim;
 		for(int k = 0; k < dim;k++)
 		{
-			int boffset = boundary[i]*dim;
-			boundaries_a[offset+k] = points[boffset+dim];
-			interior_p[k] += points[boffset+dim];
+			boundaries_a[offset+k] = points[boffset+k];
+			interior_p[k] += points[boffset+k];
 			interior_p[k] /= nboundary;
 		}
 	}
+	std::cout << "Mesh Construction Completed" << std::endl;
 	rboundary= new Boundary<dim>(boundaries_a,nboundary,interior_p);
 			         
 }
@@ -319,7 +342,8 @@ template <class KD,int dim>
 bool Mesh<KD,dim>::reflect(Particles *p_data,int id, double *old_pos)
 {
 	typename Boundary<dim>::VectorD voldpos(old_pos);
-	return rboundary->reflect_trajectory(p_data->pos+id*dim*2,voldpos); //should be true
+	return false;
+	//return rboundary->reflect_trajectory(p_data->pos+id*dim*2,voldpos); //should be true
 }
 
 //has_escaped

@@ -4,15 +4,18 @@
 
 
 using namespace std;
-Material::Material(double _electron_mass, double *_random_momentum,
-		int _max_n,int _dim)
+Material::Material(double _electron_mass, double _free_dist,
+		   double *_random_momentum,
+		   int _max_n,int _dim)
 {
 	random_momentum = new double[_dim*_max_n];
 	dim = _dim;
 	electron_mass = _electron_mass; 
 	max_n = _max_n; 
 	dim = _dim;
-	for(int i = 0; i < dim*max_n; i++)
+	free_dist = _free_dist;
+
+	for(int i = 0; i < max_n; i++)
 	{
 		random_momentum[i] = _random_momentum[i];
 	}
@@ -31,10 +34,11 @@ void material_random_momentum(	Material *material,double *momentum,
 }
 
 extern "C" Material *new_material(double electron_mass,
+			 	  double free_dist,
 				  double *random_momentum,
 				  int max_n, int dim)
 {
-	return new Material(electron_mass,
+	return new Material(electron_mass, free_dist,
 				  random_momentum,max_n,dim);
 }
 

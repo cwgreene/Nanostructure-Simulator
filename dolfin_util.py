@@ -9,7 +9,7 @@ def boundary_dict(mesh):
 	bmesh = BoundaryMesh(mesh)
 	boundary_coordinates = []
 	for x in bmesh.coordinates():
-		boundary_coordinates.append(np.array(x))
+		boundary_coordinates.append(tuple(x))
 	return boundary_coordinates
 
 def boundary_id_dict(mesh,boundary):
