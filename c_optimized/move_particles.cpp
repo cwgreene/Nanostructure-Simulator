@@ -288,14 +288,12 @@ double update_density(Particles *p_data,
 			//charge value
 			//Ntype is assumed high voltage, so particles move
 			int nearest_exit = mesh->find_point_id(p_data->pos+2*dim*i);
-			if(mesh->is_n_type[nearest_exit])	
+			if(mesh->is_n_type[nearest_exit])//Electrons are supposed to leave through n_side
+			{
 				current -= (mesh->current_exit(p_data,	
 						i))*EC
 						*p_data->p_charge[i];
-			else
-				current += (mesh->current_exit(p_data,
-						i))*EC
-						*p_data->p_charge[i];
+			}
 			it = destroy_particle(p_data,i,it);
 			--it;
 		}
@@ -474,7 +472,7 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 		if(mesh->is_n_type[mpos_id])
 		{
 			//Currently positive
-			current -= mesh->particle_weight;
+			current -= mesh->particle_weight*EC;
 		}
 		//Incoming particles on p side are going the 'wrong' way.
 	}
@@ -495,7 +493,7 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 		//Injecting minority carrier from the n_side... good god
 		if(mesh->is_n_type[mpos_id])
 		{
-			current -= mesh->current_exit(p_data,i)*empty_sign; 
+			current += mesh->current_exit(p_data,i)*empty_sign*EC; 
 		}
 //		int i = *doomed;
 //		pick_up_particle<kdtree>(i,p_data,density,mesh);

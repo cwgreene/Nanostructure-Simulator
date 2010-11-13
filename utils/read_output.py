@@ -51,12 +51,12 @@ def current_values(options):
 		for v in voltages:
 			print v
 			if v[0] == 0.0:
+				print "Valsv:",vals[v]
 				offset_current=mean(map(lambda x: x[0],vals[v]))
 				print offset_current
 		for v in voltages:
 			vlist+= map(str,[v[0]]*len(vals[v]))
-			print vals[v]
-			curs = map(lambda x: x[1]-x[0]+offset_current,vals[v])
+			curs = map(lambda x: x[1]-x[0]-offset_current,vals[v])
 			pcurs += map(lambda x: str(x[1]),vals[v])
 			dcurs += map(lambda x: str(x[0]),vals[v])
 			ilist+=map(str,curs)
