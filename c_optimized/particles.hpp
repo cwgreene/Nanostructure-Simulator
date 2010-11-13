@@ -166,7 +166,7 @@ int create_particle(int mpos_id, Particles *p_data,int *density,
 	double *particles = p_data->pos;
 	for(int c= 0; c < dim;c++)
 	{
-		pnx(i,c) = mesh->mpos[dim*mpos_id+c];
+	pnx(i,c) = mesh->mpos[dim*mpos_id+c];
 	}
 	bool valid_trajectory = false;
 	while(valid_trajectory != true){

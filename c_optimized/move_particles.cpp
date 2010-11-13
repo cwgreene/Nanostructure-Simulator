@@ -25,6 +25,7 @@ extern "C" {
 }
 //Macro Definitions
 #define sq(x) (x*x)
+#define SIGN(x) (((x)+1)/2)
 #define EC (1.60217646e-19)
 using namespace std;
 using namespace debug;
@@ -73,6 +74,7 @@ void scatter(double *particles, int dim,int i)
  * inline it. Possibly not a bad idea. As far as I know
  * only two functions actually call this.
  */
+static int count_doom = 0;
 template<class KD,int dim>
 void randomElectronMovement(Particles *p_data,
 				int i,
@@ -127,6 +129,7 @@ void randomElectronMovement(Particles *p_data,
 	if(p_data->p_dist[i] > mesh->materials[mpos_id]->free_dist)
 	{
 		p_data->p_dist[i] = 0;
+		scatter(p_data->pos,dim,i);
 	}
 }
 /**
@@ -193,12 +196,14 @@ void move_particles(Particles *p_data,
 		p_data->p_id[i] = mesh->find_point_id(p_data->pos + 2*dim*i); //find nearest spot
 		//After random movement, check to see if the nearest point
 		//Is a reflecting boundary. If it is, we reflect
-		int loc = mesh->find_point_id(p_data->pos+2*dim*i);
+		//int loc = mesh->find_point_id(p_data->pos+2*dim*i);
 //		if(mesh->is_reflect[loc])
 //		{
 //			mesh->reflect(p_data,i,old_pos);
 //		}
 	}
+	//std::cout<<"Doom count:"<<100.*count_doom/((double)p_data->p_live->size())<<"%"<<std::endl;
+	count_doom=0;
 	printf("Particles Moved\n");
 }
 
@@ -363,13 +368,13 @@ double handle_region(int mpos_id, Mesh<kdtree3,3> *mesh,
 					*sign; 
 		}
 		//Incoming particles on p side are going the 'wrong' way.
-		if(mesh->is_p_type[i])
-		{ 
+//		if(mesh->is_p_type[i])
+//		{ 
 			//leaving from ptype side
-			current += mesh->current_exit(p_data,i,
-					mesh->nearest_edge(p_data->pos))
-					*sign; 
-		}
+//			current += mesh->current_exit(p_data,i,
+//					mesh->nearest_edge(p_data->pos))
+//				   *sign; 
+//		}
 	}
 	return current;
 }
@@ -432,6 +437,15 @@ void test_sum_failure(int mpos_id, Mesh<KD,dim> *mesh, int *density,
 	}
 }
 
+/*template<class KD, int dim>
+double suck_out_particle(mpos_id,p_data,density,-empty_sign,
+				    mesh->materials[mpos_id]->electron_mass,
+				    mesh)
+{
+	mesh->local_particles[mpos_id][sign]
+}*/
+
+
 template<>
 double handle_region(int mpos_id, Mesh<kdtree,2> *mesh, 
 			Particles *p_data, int *density, int empty_sign)
@@ -443,31 +457,33 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 	//too few carriers of another
 
 	//If the empty_sign of the region is the same as
-	//sign as the density, then we're empty, and we need more particles
-	while (density[mpos_id]*empty_sign > 0) //not charge netural, need more
+	//sign as the density, then either
+	//1) We have an excess of minority carriers
+	//2) We have a lack of majority carriers
+	while (density[mpos_id]*empty_sign > 0)
 	{
+		//Too many minority carriers?
 		int i = create_particle(mpos_id,p_data,density,-empty_sign,
-				    mesh->materials[mpos_id]->electron_mass,
-				    mesh); 
-	
-		//ntype is higher voltage, so incoming particles
-		//are going the 'right way'
+			    mesh->materials[mpos_id]->electron_mass,
+			    mesh);
+
+		//ntype is (+) voltage, so, we expect positive
+		//to enter, and go to ptype (0). This means that
+		//having an electron crossing our barrier
+		//subtracts from the current
 		if(mesh->is_n_type[mpos_id])
 		{
 			//Currently positive
-			current -= mesh->current_exit(p_data,i)*empty_sign; 
+			current -= mesh->particle_weight;
 		}
 		//Incoming particles on p side are going the 'wrong' way.
-		if(mesh->is_p_type[mpos_id])
-		{ 
-			//leaving from ptype side
-			current += mesh->current_exit(p_data,i)*empty_sign; 
-		}
 	}
 	//If the sign of the density is different than the empty_sign
-	//of the region that means we have an excess of minority
-	//carriers
-	//In a p_region (empty means -100), this means we have
+	//of the region that means either we have
+	//1) An excess of majority carriers
+	//2) A lack of minority carriers. We never inject minority carriers*.
+	//*Technically not true, we should inject them according to the n*p=ni
+	//But this will usually be larger than n*pi;
 	while (density[mpos_id]*empty_sign < 0) 
 	{	
 		int i = create_particle(mpos_id,p_data,density,empty_sign,
@@ -475,20 +491,12 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 				    mesh); 
 		//Need Less, suck or inject opposite?
 		//Pretty sure I'm supposed to suck...
-		//or does it depend on which side we're on?
-		//check bluebook
 		list<int>::iterator doomed;
-		if(density[mpos_id] > 0) //Too many holes
+		//Injecting minority carrier from the n_side... good god
+		if(mesh->is_n_type[mpos_id])
 		{
-			//doomed = mesh->holes_pos[mpos_id].begin();
 			current -= mesh->current_exit(p_data,i)*empty_sign; 
 		}
-		else if(density[mpos_id] < 0) //Too many electrons
-		{
-			//doomed = mesh->electrons_pos[mpos_id].begin();
-			current += mesh->current_exit(p_data,i)*empty_sign; 
-		}
-
 //		int i = *doomed;
 //		pick_up_particle<kdtree>(i,p_data,density,mesh);
 //		destroy_particle(p_data,i,doomed);

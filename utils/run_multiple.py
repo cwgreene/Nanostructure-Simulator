@@ -6,7 +6,7 @@ start =-1.0
 end   = 1.0
 max   = 11 
 total_time = time.time()
-tag = "MostThingsFixedNoBoundary"
+tag = "ChangedCurrentCount"
 
 for x in range(0,max):
 	start_time = time.time()

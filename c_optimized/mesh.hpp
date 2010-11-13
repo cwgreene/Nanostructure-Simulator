@@ -53,6 +53,9 @@ public:
 	//Inverse hole and electron count lookup, indexed by mesh_pos_id
 	list<int> *electrons_pos;//array of lists, indexed by mesh_pos_id
 	list<int> *holes_pos;//Array of lists
+
+	list<int> ***local_particles;//Array for sign based indexing
+
 	KD *kdt;
 
 	//These are indexed by mesh_pos_id	
@@ -138,6 +141,9 @@ Mesh<KD,dim>::Mesh(double *points,
 	this->materials = new Material_Ptr[n_points];
 	this->electrons_pos = new list<int>[n_points];
 	this->holes_pos = new list<int>[n_points];
+	
+	this->local_particles = new list<int> **[n_points];
+
 	this->particle_weight = particle_weight;
 	this->gen_num = gen_num;
 
@@ -202,6 +208,10 @@ Mesh<KD,dim>::Mesh(double *points,
 	{
 		electrons_pos[i]= list<int>();
 		holes_pos[i] = list<int>();
+		local_particles[i] = new list<int> *[2];
+
+		local_particles[i][0] = electrons_pos;
+		local_particles[i][1] = holes_pos;
 	}
 	cout<<"Attaching kdtree"<<std::endl;
 	//Attach kdtree.
