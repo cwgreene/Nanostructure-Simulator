@@ -288,7 +288,9 @@ double update_density(Particles *p_data,
 			//charge value
 			//Ntype is assumed high voltage, so particles move
 			int nearest_exit = mesh->find_point_id(p_data->pos+2*dim*i);
-			if(mesh->is_n_type[nearest_exit])//Electrons are supposed to leave through n_side
+			//Electrons are supposed to leave through n_side
+			//so we subtract off negatvie charges
+			if(mesh->is_n_type[nearest_exit])
 			{
 				current -= (mesh->current_exit(p_data,	
 						i))*EC
@@ -467,7 +469,7 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 
 		//ntype is (+) voltage, so, we expect positive
 		//to enter, and go to ptype (0). This means that
-		//having an electron crossing our barrier
+		//having an electron crossing the barrier into the device
 		//subtracts from the current
 		if(mesh->is_n_type[mpos_id])
 		{
@@ -491,6 +493,7 @@ double handle_region(int mpos_id, Mesh<kdtree,2> *mesh,
 		//Pretty sure I'm supposed to suck...
 		list<int>::iterator doomed;
 		//Injecting minority carrier from the n_side... good god
+		//It's going to be positive, so it will contribute 
 		if(mesh->is_n_type[mpos_id])
 		{
 			current += mesh->current_exit(p_data,i)*empty_sign*EC; 
@@ -515,7 +518,7 @@ template<class KD,int dim>double replenish_boundary(Particles *p_data,
 		if(mesh->is_p_type[id])
 		{
 			sign = -1; //empty is negative
-			current += handle_region(id,mesh,p_data,
+			/*current +=*/ handle_region(id,mesh,p_data,
 						 nextDensity,sign);
 		}
 		else if(mesh->is_n_type[id])
