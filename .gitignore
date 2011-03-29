@@ -9,3 +9,4 @@ results2
 .DS_Store
 config
 !database/*
+*.swp

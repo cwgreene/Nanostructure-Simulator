@@ -29,14 +29,14 @@ move_particles.so: move_particles.cpp kdtree.o materials.cpp particles.cpp\
 			 kdtree.o kdtree3.o materials.o
 
 kdtree.o: kdtree.c  
-	gcc -fPIC -O2 -c -Wall kdtree.c
+	gcc -m32 -fPIC -O2 -c -Wall kdtree.c
 
 kdtree3.o: kdtree3.c  
-	gcc -fPIC -O2 -c -Wall kdtree3.c
+	gcc -m32 -fPIC -O2 -c -Wall kdtree3.c
 
 
 kdtree.so: kdtree.o test_kdtree.c 
-	gcc -Wall -o test_kdtree test_kdtree.c kdtree.o
+	gcc -m32 -Wall -o test_kdtree test_kdtree.c kdtree.o
 	ld -bundle -flat_namespace -undefined suppress -o kdtree.so kdtree.o
 
 kdtree3.so: kdtree3.o
