@@ -18,7 +18,7 @@ public:
 	Vector3d point;
 	Matrix3d projection;
 	
-	Vector3d Plane::project(const Vector3d &vec);
+	Vector3d project(const Vector3d &vec);
 	Plane(Vector3d _v1,Vector3d _v2,Vector3d point);
 };
 
@@ -48,7 +48,7 @@ public:
 //				const Vector3d &vec);//detection only
 	Face *nearest_face(Vector3d point);
 	Face *nearest_face(Vector3d point,double *dist);
-	double Face::distance(const Vector3d &point);
+	double distance(const Vector3d &point);
 };
 
 Plane::Plane(Vector3d _v1, Vector3d _v2,Vector3d _p)
