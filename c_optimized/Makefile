@@ -1,28 +1,28 @@
 all: kdtree.so kdtree3.so move_particles.so
 
-BOOST = $(wildcard ~)/boost_1_38_0
-EIGEN = /opt/local/include/eigen2
+BOOST = `pkg-config --cflags boost`
+EIGEN = `pkg-config --cflags eigen2`
 EIGEN3 = /Users/christophergreene/src/eigen
 
 Face: Face.hpp
 	 g++ -g -fPIC -O2 -c -Wall -x c++ -I $(EIGEN) Face.hpp
 
 tests: Boundary.hpp Boundary_Test.cpp
-	g++ -g -Wall -x c++ -I $(EIGEN) Boundary_Test.cpp -o tests/boundarytest
+	g++ -g -Wall -x c++ $(EIGEN) Boundary_Test.cpp -o tests/boundarytest
 
 testGeometry: 
-	 g++ -g -O2 -Wall -x c++ -I $(EIGEN) testGeometry.cpp -o testGeometry
+	 g++ -g -O2 -Wall -x c++ $(EIGEN) testGeometry.cpp -o testGeometry
 
 testPolytope: testPolytope.cpp Polytope.hpp Face.hpp
-	 g++ -g -O2 -Wall -x c++ -I $(EIGEN) testPolytope.cpp -o testPolytope
+	 g++ -g -O2 -Wall -x c++ $(EIGEN) testPolytope.cpp -o testPolytope
 
 move_particles.so: move_particles.cpp kdtree.o materials.cpp particles.cpp\
 		   mesh.cpp kdtree.o particles.hpp statistics.cpp\
 		   statistics.hpp mesh.hpp Face.hpp Polytope.hpp particles.hpp Boundary.hpp
 #	g++ -g -fPIC -O2 -c -Wall -I $(EIGEN) mesh.cpp
-	g++ -fPIC -02 -c -Wall -I $(EIGEN) materials.cpp
+	g++ -m32 -fPIC -02 -c -Wall $(EIGEN) materials.cpp
 #	g++ -g -fPIC -O2 -c -Wall -I $(EIGEN) particles.cpp
-	g++ -fPIC -02 -c -Wall -I $(EIGEN) move_particles.cpp
+	g++ -m32 -fPIC -02 -c -Wall  $(EIGEN) move_particles.cpp
 #	g++ -g -fPIC -O2 -c -Wall statistics.cpp -I$(BOOST) #killing for now
 	ld -bundle -flat_namespace -undefined suppress \
 			-o move_particles.so move_particles.o \

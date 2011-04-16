@@ -97,8 +97,8 @@ void pick_up_particle(int part_id, Particles *p_data,
 			int *density, Mesh<KD,dim> *mesh)
 {
 	int mesh_pos_id = p_data->p_id[part_id];
-	if(p_data->local_id[part_id] == NULL)
-		cout << "We're about to die"<<endl;
+//	if(p_data->local_id[part_id] == NULL)
+//		cout << "We're about to die"<<endl;
 	list<int>::iterator it = p_data->local_id[part_id];
 	if(p_data->p_charge[part_id] < 0) //it's an electron
 	{
