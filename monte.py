@@ -1,21 +1,3 @@
-"""This demo program solves Poisson's equation
-
-    - div grad u(x, y) = f(x, y)
-
-on the unit square with source f given by
-
-    f(x, y) = 500*exp(-((x - 0.5)^2 + (y - 0.5)^2) / 0.02)
-
-and boundary conditions given by
-
-    u(x, y) = 0 for x = 0 or x = 1
-"""
-
-__author__ = "Chris Greene"
-__date__ = "2009-08-18"
-__copyright__ = "Copyright (C) 2007-2008 Anders Logg"
-__license__  = "GNU LGPL Version 2.1"
-
 from dolfin import *
 import montecarlo_mockup as mc
 import move_particles_c as c_interface
@@ -192,7 +174,8 @@ def mainloop(mesh,system,problem,df,rf,scale):
 				current_values)
 		end2 = time.time()
 		#Report
-		write_results(df,rf,problem,sol,electric_field,current_values)
+		write_results(df,rf,problem,
+				sol,electric_field,current_values)
 		end = time.time()
 		print "Monte Took: ",end2-start2
 		print "Loop Took:",end-start1
@@ -230,8 +213,8 @@ def main():
 	V2 = VectorFunctionSpace(mesh,"CG",1,2)
 	problem = init_problem(mesh,V,V2,options)
 	system = c_interface.init_system(mesh,
-				problem.density_funcs.poisson_density.vector().array(),
-				options.gen_num, options.length)
+		  problem.density_funcs.poisson_density.vector().array(),
+		  options.gen_num, options.length)
 
 	#init Files
 	(dolfinFiles,rf)=init_files()
