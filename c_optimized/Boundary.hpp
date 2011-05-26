@@ -22,7 +22,7 @@ public:
 	double right;
 	double bottom;
 	double top;
-	Line(VectorD start,VectorD end);
+	Line(const VectorD &start,const VectorD &end);
 
 	double distance_to(const VectorD &point);
 	bool intersects(const Line &line2) const;
@@ -165,15 +165,15 @@ public:
 	
 	Boundary(double *points,int n,const VectorD &interior_point);
 
-	Line<dim> nearest_line(VectorD p);
-	std::pair<int,VectorD> nearest_mapped_point(VectorD p);//mapped point means it's
+	Line<dim> nearest_line(const VectorD &p);
+	std::pair<int,VectorD> nearest_mapped_point(const VectorD &p);//mapped point means it's
 						//in boundary_points
 
-	bool reflect_trajectory(double *pos,const VectorD old_pos);
-	bool is_inward_facing(const VectorD trajectory,const VectorD point);
+	bool reflect_trajectory(double *pos,const VectorD &old_pos);
+	bool is_inward_facing(const VectorD &trajectory,const VectorD &point);
 	bool intersects_boundary(const Line<dim> &line, int *id);
 
-	void construct_normals(const typename Vector<dim>::Type point);
+	void construct_normals(const typename Vector<dim>::Type &point);
 
 	void print_lines();
 	void print_adjacent();
