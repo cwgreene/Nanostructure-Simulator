@@ -1,11 +1,12 @@
 #ifndef FACE_HPP
 #define FACE_HPP
-#include <vector>
-#include <list>
 #include <Eigen/Core>
 #include <Eigen/LU>
 #include <Eigen/Geometry>
+#include <Eigen/StdVector>
 
+#include <list>
+#include <vector>
 USING_PART_OF_NAMESPACE_EIGEN
 
 using namespace std;

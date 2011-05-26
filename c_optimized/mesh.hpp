@@ -233,6 +233,7 @@ Mesh<KD,dim>::Mesh(double *points,
 	}
 	std::cout << "Mesh Construction Completed" << std::endl;
 	rboundary= new Boundary<dim>(boundaries_a,nboundary,interior_p);
+	std::cout << "Seriously" << std::endl;
 			         
 }
 

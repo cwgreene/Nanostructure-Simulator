@@ -2,12 +2,13 @@
 #define POLYTOPE_H
 
 #include <math.h>
-#include <vector>
 #include <stdlib.h>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <Eigen/StdVector>
 
+#include <vector>
 #include "Face.hpp"
 
 //General Polytope Declaration.

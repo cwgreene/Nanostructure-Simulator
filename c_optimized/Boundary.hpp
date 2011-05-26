@@ -2,6 +2,7 @@
 #define BOUNDARY_HPP
 
 #include <Eigen/Core>
+#include <Eigen/StdVector>
 #include <vector>
 #include <utility>
 #include "Utils.hpp"
@@ -36,7 +37,7 @@ inline double min(double x,double y) { return x<y? x:y; }
 inline double max(double x,double y) { return x>y? x:y; }
 
 template<int dim>
-Line<dim>::Line(VectorD start,VectorD end)
+Line<dim>::Line(const VectorD &start,const VectorD &end)
 {
 	this->start = start;
 	this->end = end;
@@ -159,8 +160,8 @@ public:
 
 	std::vector<std::vector<Line<dim> *> > adjacent;//adjacent normals
 	std::vector<Line<dim> > boundary_lines;//lines
-	std::vector<VectorD > boundary_points;//Points.
-	std::vector<typename Vector<dim>::Type> normals;
+	std::vector<VectorD,Eigen::aligned_allocator<VectorD> > boundary_points;//Points.
+	std::vector<typename Vector<dim>::Type, Eigen::aligned_allocator<VectorD> > normals;
 	
 	Boundary(double *points,int n,const VectorD &interior_point);
 
@@ -182,7 +183,7 @@ public:
 
 //strictly speaking the following code is only correct in 2 dimensions.
 template<int dim>
-void Boundary<dim>::construct_normals(const VectorD point)
+void Boundary<dim>::construct_normals(const VectorD &point)
 {
 	for(unsigned int i = 0;i < boundary_lines.size();i++)
 	{
@@ -262,6 +263,7 @@ void Boundary<dim>::print_normals()
 template<int dim>
 Boundary<dim>::Boundary(double *points,int n, const VectorD &interior_point)
 {
+	std::cout << "Init adjacent to right size"<<std::endl;
 	//Init adjacent to right size
 	for(int i = 0; i < n;i++)
 	{
@@ -269,21 +271,27 @@ Boundary<dim>::Boundary(double *points,int n, const VectorD &interior_point)
 		adjacent.push_back(empty);
 	}
 
+	std::cout << "Init adjacent to right size"<<std::endl;
 	//Init each point and associated lines
  	for(int i = 0 ;i < n;i++)
 	{
+	std::cout << "1Init adjacent to right size"<<std::endl;
 		boundary_points.push_back(VectorD(points+i*dim));
+	std::cout << "2Init adjacent to right size"<<std::endl;
 		boundary_lines.push_back(Line<dim>
 			  (VectorD(points+i*dim),
 			   VectorD(points+((i*dim+dim)%(dim*n)))));
 	}
+	std::cout << "Init adjacent to right size"<<std::endl;
 	for(int i = 0; i < n;i++)
 	{
 		adjacent[i].push_back(&(boundary_lines[(n+i-1)%n]));
 		adjacent[i].push_back(&(boundary_lines[i]));
 	}
+	std::cout << "Init adjacent to right size"<<std::endl;
 	construct_normals(interior_point);
 	//construct_reflect_matrices(interior_point);//Don't need this now.
+	std::cout << "Init adjacent to right size"<<std::endl;
 }
 
 /**/
@@ -328,7 +336,7 @@ inline typename Vector<dim>::Type FarthestPoint()
 
 
 template<int dim>
-Line<dim> Boundary<dim>::nearest_line(VectorD point)
+Line<dim> Boundary<dim>::nearest_line(const VectorD &point)
 {
 	double dist = HUGE_VAL;//Big. Ideally should be infinity
 	Line<dim> nearest;
@@ -346,7 +354,7 @@ Line<dim> Boundary<dim>::nearest_line(VectorD point)
 
 template<int dim>
 std::pair<int,typename Vector<dim>::Type> 
-Boundary<dim>::nearest_mapped_point(VectorD point)
+Boundary<dim>::nearest_mapped_point(const VectorD &point)
 {
 	double dist = HUGE_VAL;//Big. Ideally should be infinity
 	VectorD nearest;
@@ -369,7 +377,7 @@ Boundary<dim>::nearest_mapped_point(VectorD point)
 //Takes a trajectory, and a point,
 //verifies that the trajectory is between the two lines
 template<int dim>
-bool Boundary<dim>::is_inward_facing(VectorD trajectory,VectorD point)
+bool Boundary<dim>::is_inward_facing(const VectorD &trajectory,const VectorD &point)
 {
 	//Want point, since that's where we generate at
 	//points.
@@ -403,7 +411,7 @@ bool Boundary<dim>::intersects_boundary(const Line<dim> &line, int *id)
 
 //pos: direct reference to array location
 template<int dim>
-bool Boundary<dim>::reflect_trajectory(double *pos, typename Vector<dim>::Type oldpos)
+bool Boundary<dim>::reflect_trajectory(double *pos, const typename Vector<dim>::Type &oldpos)
 {
 	VectorD vpos(pos);
 	Line<dim> trajectory(typename Vector<dim>::Type(pos), oldpos);
