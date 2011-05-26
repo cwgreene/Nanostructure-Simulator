@@ -1,9 +1,13 @@
+__author__ = "Chris Greene"
+
+import pdb
+import time
+
 from dolfin import *
 import montecarlo_mockup as mc
 import move_particles_c as c_interface
 import numpy as np
 import dolfin_util as du
-import time
 import mcoptions,sys,os
 import re
 import photocurrent as pc
@@ -33,8 +37,8 @@ def init_problem(mesh,V,V2,options):
 	# Define boundary condition
 	#for reasons I don't know, pBoundary needs to be 
 	#kept globally
-	pBoundary = Constant(mesh, 0.0)
-	nBoundary = Constant(mesh, options.V) 
+	pBoundary = Constant(0.0)
+	nBoundary = Constant(options.V) 
 
 	bc0 = DirichletBC(V, pBoundary, mesh.InnerBoundary)
 	bc1 = DirichletBC(V, nBoundary, mesh.OuterBoundary)
@@ -60,7 +64,10 @@ def init_problem(mesh,V,V2,options):
 	problem.density_funcs.combined_density = Function(V)
 	problem.density_funcs.poisson_density = Function(V)
 	problem.density_funcs.scaled_density = Function(V)
-	problem.density_funcs.poisson_density.vector().set(problem.density_funcs.combined_density.vector().array())
+	print dir(problem.density_funcs.poisson_density.vector())
+	temp = problem.density_funcs.poisson_density.vector()
+	temp[:] = problem.density_funcs.combined_density.vector().array()
+	
 
 	print "Creating Average Densities"
 	problem.avg_dens = mc.AverageFunc(problem.density_funcs.combined_density.vector().array())
@@ -174,8 +181,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 				current_values)
 		end2 = time.time()
 		#Report
-		write_results(df,rf,problem,
-				sol,electric_field,current_values)
+		write_results(df,rf,problem,sol,electric_field,current_values)
 		end = time.time()
 		print "Monte Took: ",end2-start2
 		print "Loop Took:",end-start1
@@ -213,8 +219,8 @@ def main():
 	V2 = VectorFunctionSpace(mesh,"CG",1,2)
 	problem = init_problem(mesh,V,V2,options)
 	system = c_interface.init_system(mesh,
-		  problem.density_funcs.poisson_density.vector().array(),
-		  options.gen_num, options.length)
+				problem.density_funcs.poisson_density.vector().array(),
+				options.gen_num, options.length)
 
 	#init Files
 	(dolfinFiles,rf)=init_files()

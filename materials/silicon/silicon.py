@@ -25,6 +25,7 @@ class Silicon:
 		filename=("materials/momentum_tables/silicon_"+mtype+
 			 "array.npy")
 		if os.path.exists(filename):
+			print "found file"
 			retarray= np.load(filename)
 			return retarray
 		print "Generating",mtype,"momentum table"

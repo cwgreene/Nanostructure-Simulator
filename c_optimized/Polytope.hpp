@@ -31,17 +31,22 @@ class Polytope<2>//Polygon
 {
 public:
 	bool contains(double *point);
-	vector<Vector2d> points;
+	vector<Vector2d,Eigen::aligned_allocator<Eigen::Vector2d> > points;
 	Polytope(double * _points,int num);
 };
 
 //Polytope<2> Constructor
 Polytope<2>::Polytope(double *_points,int num)
 {
+	std::cout <<"Hey!"<<std::endl;
 	for(int i= 0; i < num;i++)
 	{
+		Vector2d x(1,2);
+		std::cout<<"Adding point"<<std::cout;
 		points.push_back(Vector2d(_points[2*i],_points[2*i+1]));
+		std::cout<<"Point: "<<i<<" added"<<std::endl;
 	}
+	std::cout <<"Polytope Constructed"<<std::endl;
 }
 
 

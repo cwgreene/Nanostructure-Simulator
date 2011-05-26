@@ -26,15 +26,18 @@ def mesh_creator(triangles):
 	print len(points),len(point_ids)
 
 	#Init Points, now that we know how many
-	editor.initCells(len(triangles))
-	editor.initVertices(len(point_ids))
+	#editor.initCells(len(triangles))
+	editor.init_cells(len(triangles))
+	#editor.initVertices(len(point_ids))
+	editor.init_vertices(len(point_ids))
 	for point,id in izip(point_ids,count()):
 		point_ids[point] = id
-		editor.addVertex(id,*point)
+		editor.add_vertex(id,*point)
+		#editor.addVertex(id,*point)
 	#now add cells
 	for tri,id in izip(triangles,count()):
 		tri_id = map(lambda p: point_ids[tuple(p)],tri)
-		editor.addCell(id,*tri_id)
+		editor.add_cell(id,*tri_id)
 	editor.close()
 	print "Mesh triangles:points",len(triangles),":",len(mesh.coordinates())
 	return mesh

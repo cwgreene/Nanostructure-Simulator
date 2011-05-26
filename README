@@ -7,6 +7,9 @@ python:
 c++:
 	Eigen
 
+3rd party Applications:
+	qhull
+
 To run the Monte Carlo simulator execute
 
 $ python monte.py [-V (desired voltage)]

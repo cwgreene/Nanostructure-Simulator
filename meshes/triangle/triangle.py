@@ -1,4 +1,5 @@
 from dolfin import *
+import dolfin
 import meshtest
 import trianglemesh as tm
 import numpy as np
@@ -14,7 +15,7 @@ class TriangleMesh(mc.ParticleMesh):
 
 		mesh = meshtest.TestMesh()
 		for x in range(options.size):
-			mesh.refine()
+			dolfin.mesh.refine(mesh)
 		mc.ParticleMesh.__init__(self,mesh,
 			options.scale,options.length,options.dt,options.gen_num)
 

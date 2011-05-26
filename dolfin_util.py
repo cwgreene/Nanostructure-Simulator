@@ -5,7 +5,6 @@ from random import randint as rndi
 import itertools as it
 
 def boundary_dict(mesh):
-	cells = ArrayUInt()
 	bmesh = BoundaryMesh(mesh)
 	boundary_coordinates = []
 	for x in bmesh.coordinates():
@@ -13,7 +12,6 @@ def boundary_dict(mesh):
 	return boundary_coordinates
 
 def boundary_id_dict(mesh,boundary):
-	cells = ArrayUInt()
 	bmesh = BoundaryMesh(mesh)
 	boundary_coordinates = {}
 	bcprime = {}
@@ -59,10 +57,8 @@ def feval_p(function,point):
 
 def cell_index(mesh,apoint):
 	point = Point(*apoint)
-	cells = ArrayUInt()
 	mesh.intersection(point,cells)
 	result = cells[0]
-	delete(cells)
 	return result
 
 def vert_index(mesh,point):
@@ -119,7 +115,7 @@ def alter_cellid(mesh,function,id,delta):
 	set_cellid(mesh,function,id,value+delta)
 
 def out_of_bounds(mesh,pos):
-	inter =  ArrayUInt()
+	inter =  STLVectorUInt()
 	mesh.intersection(Point(*pos),inter)
 	if(inter.size() == 0):
 		delete(inter)

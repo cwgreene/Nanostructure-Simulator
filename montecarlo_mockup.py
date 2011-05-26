@@ -63,7 +63,7 @@ class ParticleMesh(Mesh):
 		count = 0
 		self.super_particles_count = (n_material.doping*
 					     (self.length_scale**self.dim)/
-						self.numCells())
+						self.num_cells())
 		for x in self.coordinates():
 			if(p_region_func(x)):
 				self.material[tuple(x)] = n_material
