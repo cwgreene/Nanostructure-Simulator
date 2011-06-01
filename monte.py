@@ -1,9 +1,9 @@
 __author__ = "Chris Greene"
 
 import pdb
-import time
 
 from dolfin import *
+import time
 import montecarlo_mockup as mc
 import move_particles_c as c_interface
 import numpy as np
@@ -100,6 +100,7 @@ def new_file(name):
 	files = os.listdir("results")
 	num=max([0]+map(int,re.findall("([0-9]+)"+name," ".join(files))))
 	num += 1
+	print time
 	filename = ("results/"+str(num)+name+
 			"_".join(map(str,time.gmtime())))
 	print "Creating:",filename
@@ -125,8 +126,8 @@ def init_database():
 
 def PoissonSolve(mesh,density,bcs,V):
 	print "Solving Poisson Equation"
-	lengthr = Constant(mesh,1./mesh.length_scale)
-	length = Constant(mesh,mesh.length_scale)
+	lengthr = Constant(1./mesh.length_scale)#Constant(mesh,1./mesh.length_scale)
+	length = Constant(mesh.length_scale)
 	u = TrialFunction(V)
 	v = TestFunction(V)
 	a = dot(grad(v), grad(u))*lengthr*dx
