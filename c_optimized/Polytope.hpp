@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+#define EIGEN_DONT_VECTORIZE
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>

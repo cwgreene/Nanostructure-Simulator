@@ -94,6 +94,7 @@ public:
 		int gen_num,double particle_weight,
 		Polytope<dim> *outer, Polytope<dim> *inner);
 	Face *nearest_edge(double *point);
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 };
 
 template <class KD,int dim>

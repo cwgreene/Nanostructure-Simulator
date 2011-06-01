@@ -1,8 +1,9 @@
 #ifndef BOUNDARY_HPP
 #define BOUNDARY_HPP
 
-#include <Eigen/Core>
+#define EIGEN_DONT_VECTORIZE
 #include <Eigen/StdVector>
+#include <Eigen/Core>
 #include <vector>
 #include <utility>
 #include "Utils.hpp"
@@ -31,6 +32,7 @@ public:
 	//Eigen::Matrix<double,dim,dim> reflect_matrix;//Don't need yet.
 
 	std::string toString();
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 };
 
 inline double min(double x,double y) { return x<y? x:y; }
@@ -39,6 +41,7 @@ inline double max(double x,double y) { return x>y? x:y; }
 template<int dim>
 Line<dim>::Line(const VectorD &start,const VectorD &end)
 {
+	std::cout<<"Hola"<<std::endl;
 	this->start = start;
 	this->end = end;
 
@@ -179,6 +182,7 @@ public:
 	void print_adjacent();
 	void print_points();
 	void print_normals();
+EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 };
 
 //strictly speaking the following code is only correct in 2 dimensions.
@@ -275,12 +279,14 @@ Boundary<dim>::Boundary(double *points,int n, const VectorD &interior_point)
 	//Init each point and associated lines
  	for(int i = 0 ;i < n;i++)
 	{
-	std::cout << "1Init adjacent to right size"<<std::endl;
+		VectorD x(VectorD(points+i*dim));
+		VectorD y(points+((i*dim+dim)%(dim*n)));
+		std::cout << "0Init adjacent to right size"<<std::endl;
+		Line<dim> theline(x,y);
+		std::cout << "1Init adjacent to right size"<<std::endl;
 		boundary_points.push_back(VectorD(points+i*dim));
-	std::cout << "2Init adjacent to right size"<<std::endl;
-		boundary_lines.push_back(Line<dim>
-			  (VectorD(points+i*dim),
-			   VectorD(points+((i*dim+dim)%(dim*n)))));
+		std::cout << "2Init adjacent to right size"<<std::endl;
+		boundary_lines.push_back(theline);
 	}
 	std::cout << "Init adjacent to right size"<<std::endl;
 	for(int i = 0; i < n;i++)
