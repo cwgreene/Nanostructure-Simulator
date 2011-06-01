@@ -1,7 +1,7 @@
 all: kdtree.so kdtree3.so move_particles.so
 
 BOOST = `pkg-config --cflags boost`
-EIGEN = /usr/include/eigen2
+EIGEN = /home/chris/include/eigen/
 EIGEN3 = /Users/christophergreene/src/eigen
 
 Face: Face.hpp

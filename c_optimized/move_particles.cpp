@@ -7,6 +7,7 @@
 #include <iostream>
 
 //3rd Party
+#define EIGEN_DONT_VECTORIZE
 #include <Eigen/Core>
 
 //HPP Includes
