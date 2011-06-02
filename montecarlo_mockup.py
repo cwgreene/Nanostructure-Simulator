@@ -4,6 +4,7 @@ from dolfin import *
 from numpy import *
 import itertools as it
 import time
+import pdb
 #import triangle
 import sys
 
@@ -193,6 +194,9 @@ def pre_compute_field(mesh,field):
 	print max(c_efield,key=lambda x: x[0]**2+x[1]**2)
 	return c_efield
 
+def scaled_density_f(spc,particle_count,charge,gen_num,doping3d,length_scale,epsilon):
+	return (spc*(particle_count*charge/gen_num)* 
+		(doping3d*((length_scale)**3) /epsilon)))
 def calculate_scaled_density(mesh,nextDensity):
 	start = time.time()
 	scaled_density = array(nextDensity.astype('double'))
@@ -201,11 +205,14 @@ def calculate_scaled_density(mesh,nextDensity):
 		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
 		id = mesh.point_index[tuple(point)]
 		spc = mesh.super_particles_count
-		scaled_density[id] = spc*(nextDensity[id]*
-				  constants.eC/mesh.gen_num*
-				  (material.doping3d\
-					*((mesh.length_scale)**3)
-				  /material.epsilon))
+		print "Hi",spc,nextDensity[id],mesh.gen_num,\
+			material.doping3d,mesh.length_scale**3,\
+			nextDensity[id],material.epsilon,
+			
+		scaled_density[id] = scaled_density_f(spc,nextDensity[id],
+					constants.eC,mesh.gen_num,mesh.doping3d,
+					mesh.length_scale,material.epsilon)
+		print scaled_density[id]
 		stats.avg_charge += abs(scaled_density[id])
 	return scaled_density
 
@@ -259,9 +266,9 @@ def MonteCarlo(mesh,system,potential_field,electric_field,
 	#update avg_dens
 	scaled_density = calculate_scaled_density(mesh,nextDensity)
 	avg_dens.inc(scaled_density)
-	density_funcs.combined_density.vector().set(
-			nextDensity.astype('double'))
-	density_funcs.scaled_density.vector().set(scaled_density)
+	density_funcs.combined_density.vector()[:]= nextDensity.astype('double')
+	density_funcs.scaled_density.vector()[:]=scaled_density
+	print density_funcs.scaled_density.vector().array()
 	#print "doom",density_funcs.combined_density.vector().array()
 
 	#print stats
