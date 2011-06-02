@@ -195,8 +195,11 @@ def pre_compute_field(mesh,field):
 	return c_efield
 
 def scaled_density_f(spc,particle_count,charge,gen_num,doping3d,length_scale,epsilon):
-	return (spc*(particle_count*charge/gen_num)* 
-		(doping3d*((length_scale)**3) /epsilon)))
+	result1=spc*(int(particle_count)*charge/gen_num) 
+	result2 = result1*(doping3d*((length_scale)**3) /epsilon)
+	result3 = result1*result2
+	return result3
+
 def calculate_scaled_density(mesh,nextDensity):
 	start = time.time()
 	scaled_density = array(nextDensity.astype('double'))
@@ -205,12 +208,8 @@ def calculate_scaled_density(mesh,nextDensity):
 		#Q/eps=(particles*particle_charge*electrons_per_particle)*V/eps
 		id = mesh.point_index[tuple(point)]
 		spc = mesh.super_particles_count
-		print "Hi",spc,nextDensity[id],mesh.gen_num,\
-			material.doping3d,mesh.length_scale**3,\
-			nextDensity[id],material.epsilon,
-			
 		scaled_density[id] = scaled_density_f(spc,nextDensity[id],
-					constants.eC,mesh.gen_num,mesh.doping3d,
+					constants.eC,mesh.gen_num,material.doping3d,
 					mesh.length_scale,material.epsilon)
 		print scaled_density[id]
 		stats.avg_charge += abs(scaled_density[id])

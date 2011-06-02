@@ -100,7 +100,6 @@ def new_file(name):
 	files = os.listdir("results")
 	num=max([0]+map(int,re.findall("([0-9]+)"+name," ".join(files))))
 	num += 1
-	print time
 	filename = ("results/"+str(num)+name+
 			"_".join(map(str,time.gmtime())))
 	print "Creating:",filename
@@ -140,9 +139,9 @@ def PoissonSolve(mesh,density,bcs,V):
 def write_results(df,rf,problem,sol,electric_field,current_values):
 	#Write Results
 	df.file << sol
-	df.dfile << problem.density_funcs.combined_density
-	df.adfile << problem.density_funcs.poisson_density
-	df.gradfile << electric_field #moved, might have destabilized it.
+#	df.dfile << problem.density_funcs.combined_density
+#	df.adfile << problem.density_funcs.poisson_density
+#	df.gradfile << electric_field #moved, might have destabilized it.
 
 	#write current
 	rf.current.write(str(current_values[-1]));
@@ -152,7 +151,7 @@ def final_record_files(df,rf,sol,problem,mesh):
 	df.file << sol
 	df.dfile << problem.density_funcs.combined_density
 	#dump average
-	problem.density_funcs.combined_density.vector().set(problem.avg_dens.func)
+	problem.density_funcs.combined_density.vector()[:]=problem.avg_dens.func
 	for x in problem.avg_dens.func:
 		rf.density.write(str(x)+" ")
 	df.adfile << problem.density_funcs.combined_density
@@ -169,6 +168,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 		start1 = time.time()
 
 		#Solve equation using avg_dens
+		print "combined_density",problem.density_funcs.combined_density
 		sol = PoissonSolve(mesh,
 				problem.density_funcs.scaled_density,
 				problem.bcs,problem.space)
@@ -181,6 +181,7 @@ def mainloop(mesh,system,problem,df,rf,scale):
 				problem.avg_electrons,problem.avg_holes,
 				current_values)
 		end2 = time.time()
+		print problem.density_funcs.combined_density
 		#Report
 		write_results(df,rf,problem,sol,electric_field,current_values)
 		end = time.time()
