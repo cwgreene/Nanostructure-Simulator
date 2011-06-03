@@ -15,7 +15,10 @@ class TriangleMesh(mc.ParticleMesh):
 
 		mesh = meshtest.TestMesh()
 		for x in range(options.size):
-			dolfin.mesh.refine(mesh)
+			if dolfin.__version__=='0.9.7':
+				mesh.refine()
+			else:
+				dolfin.mesh.refine(mesh)
 		mc.ParticleMesh.__init__(self,mesh,
 			options.scale,options.length,options.dt,options.gen_num)
 
