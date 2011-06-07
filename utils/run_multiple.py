@@ -2,11 +2,11 @@ import os,time,sys
 import run_options
 
 options = run_options.create_options(sys.argv)
-start =-1.0
-end   = 1.0
+start = -1.0
+end   = -2.0
 max   = 11 
 total_time = time.time()
-tag = "UpdateDensityFixed"
+tag = "Thesis1"
 
 for x in range(0,max):
 	start_time = time.time()
